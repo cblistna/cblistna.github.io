@@ -1,32 +1,65 @@
 "use strict";
 
 const events = (function() {
-  return {
-    parseName(event) {
-      if (!event || typeof event !== "object") {
-        throw new Error("event not defined");
-      }
-      let name = (event.summary && event.summary.trim()) || "";
-      const tags = [];
-      const tagPattern = / #([\w-]+)/g;
-      let tagMatch;
-      do {
-        tagMatch = tagPattern.exec(name);
-        if (tagMatch) {
-          tags.push(tagMatch[1]);
-        }
-      } while (tagMatch);
-      name = name.replace("  ", " ");
-      name = name.replace(tagPattern, "").trim();
+  const tagPattern = / #([\w-]+)/g;
+  const commentPattern = /\/\/(.*)$/g;
 
-      let comment;
-      const commentPattern = /\/\/(.*)$/;
-      const commentMatch = commentPattern.exec(name);
-      if (commentMatch) {
-        comment = commentMatch[1].trim();
-        name = name.replace(commentPattern, "").trim();
+  function parseMatchingGroupOf(pattern, text) {
+    pattern.lastIndex = 0;
+    const matches = [];
+    let match;
+    do {
+      match = pattern.exec(text);
+      if (match) {
+        matches.push(match[1].trim());
       }
+    } while (match);
+    return matches;
+  }
+
+  function assertEvent(event) {
+    if (!event || typeof event !== "object") {
+      throw new Error("event not defined");
+    }
+  }
+
+  return {
+    parseSummary(event) {
+      assertEvent(event);
+      let name = (event.summary && event.summary.trim()) || "";
+
+      const tags = parseMatchingGroupOf(tagPattern, name);
+
+      name = name.replace(tagPattern, "").trim();
+      name = name.replace("  ", " ");
+
+      const comment = parseMatchingGroupOf(commentPattern, name).pop();
+      name = name.replace(commentPattern, "").trim();
+
       return { name, tags, comment };
+    },
+
+    parseDates(event) {
+      assertEvent(event);
+      const start = new Date(
+        event.start.dateTime
+          ? event.start.dateTime
+          : event.start.date + "T00:00:00+01:00"
+      );
+      const end = new Date(
+        event.end.dateTime
+          ? event.end.dateTime
+          : event.end.date + "T23:59:59+01:00"
+      );
+      return { start, end };
+    },
+
+    parseDescription(event) {
+      assertEvent(event);
+    },
+
+    parseAttachments(event) {
+      assertEvent(event);
     }
   };
 })();
