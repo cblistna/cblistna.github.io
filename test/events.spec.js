@@ -20,20 +20,29 @@ describe("Google event", function() {
       const event = events.parseName({ summary: "Summary // comment" });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql([]);
-      expect(event.comment).to.equal("comment")
+      expect(event.comment).to.equal("comment");
     });
 
     it("should parse summary tags in comment", () => {
-      const event = events.parseName({ summary: "Summary #tag1 // comment #tag2" });
+      const event = events.parseName({
+        summary: "Summary #tag1 // comment #tag2"
+      });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql(["tag1", "tag2"]);
-      expect(event.comment).to.equal("comment")
+      expect(event.comment).to.equal("comment");
     });
 
     it("should strip leading and trailing spaces from summary", () => {
-      const event = events.parseName({ summary: "  Summary  " });
+      const event = events.parseName({ summary: " Summary " });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql([]);
+      expect(event.comment).to.be.undefined;
+    });
+
+    it("should remove extra spaces from summary with tags", () => {
+      const event = events.parseName({ summary: "Summary #tag1  cont  #tag2" });
+      expect(event.name).to.equal("Summary cont");
+      expect(event.tags).to.eql(["tag1", "tag2"]);
       expect(event.comment).to.be.undefined;
     });
 
@@ -45,7 +54,7 @@ describe("Google event", function() {
     });
 
     it("should parse comment only summary", () => {
-      const event = events.parseName({ summary: "// comment"});
+      const event = events.parseName({ summary: "// comment" });
       expect(event.name).to.equal("");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.equal("comment");
@@ -55,8 +64,28 @@ describe("Google event", function() {
       expect(() => events.parseName()).to.throw("event not defined");
       expect(() => events.parseName(null)).to.throw("event not defined");
       expect(() => events.parseName(undefined)).to.throw("event not defined");
-      expect(() => events.parseName('not an object')).to.throw("event not defined");
+      expect(() => events.parseName("not an object")).to.throw(
+        "event not defined"
+      );
       expect(() => events.parseName(() => {})).to.throw("event not defined");
+    });
+  });
+
+  describe("#parseDates()", () => {
+    it("should parse dates", () => {
+      expect(events.parseDates({})).to.be.true;
+    });
+  });
+
+  describe("#parseDescription()", () => {
+    it("should parse description", () => {
+      expect(events.parseDescription({})).to.be.true;
+    });
+  });
+
+  describe("#parseAttachments()", () => {
+    it("should parse description", () => {
+      expect(events.parseDescription({})).to.be.true;
     });
   });
 });
