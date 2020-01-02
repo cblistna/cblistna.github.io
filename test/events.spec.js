@@ -1,6 +1,12 @@
 const expect = chai.expect;
 
 describe("Google event", function() {
+  function throwOnNoEvent(fn) {
+    [undefined, null, "not and object", () => {}].forEach(event => {
+      expect(() => fn(event)).to.throw("event not defined");
+    });
+  }
+
   describe("#parseSummary()", () => {
     it("should parse simple summary", () => {
       const event = events.parseSummary({ summary: "Summary" });
@@ -40,7 +46,9 @@ describe("Google event", function() {
     });
 
     it("should remove extra spaces from summary with tags", () => {
-      const event = events.parseSummary({ summary: "Summary #tag1  cont  #tag2" });
+      const event = events.parseSummary({
+        summary: "Summary #tag1  cont  #tag2"
+      });
       expect(event.name).to.equal("Summary cont");
       expect(event.tags).to.eql(["tag1", "tag2"]);
       expect(event.comment).to.be.undefined;
@@ -61,13 +69,7 @@ describe("Google event", function() {
     });
 
     it("should throw on no event", () => {
-      expect(() => events.parseSummary()).to.throw("event not defined");
-      expect(() => events.parseSummary(null)).to.throw("event not defined");
-      expect(() => events.parseSummary(undefined)).to.throw("event not defined");
-      expect(() => events.parseSummary("not an object")).to.throw(
-        "event not defined"
-      );
-      expect(() => events.parseSummary(() => {})).to.throw("event not defined");
+      throwOnNoEvent(events.parseSummary);
     });
   });
 
@@ -103,45 +105,59 @@ describe("Google event", function() {
     });
 
     it("should throw on no event", () => {
-      expect(() => events.parseDates()).to.throw("event not defined");
-      expect(() => events.parseDates(null)).to.throw("event not defined");
-      expect(() => events.parseDates(undefined)).to.throw("event not defined");
-      expect(() => events.parseDates("not an object")).to.throw(
-        "event not defined"
-      );
-      expect(() => events.parseDates(() => {})).to.throw("event not defined");
+      throwOnNoEvent(events.parseDates);
     });
   });
 
   describe("#parseDescription()", () => {
     it("should parse description", () => {
-      expect(events.parseDescription({})).to.be.true;
+      expect(events.parseDescription({})).to.be.undefined;
+      expect(
+        events.parseDescription({ description: "description" })
+      ).to.be.equal("description");
+      expect(
+        events.parseDescription({ description: " description\ncont\n" })
+      ).to.be.equal("description\ncont");
     });
 
     it("should throw on no event", () => {
-      expect(() => events.parseDescription()).to.throw("event not defined");
-      expect(() => events.parseDescription(null)).to.throw("event not defined");
-      expect(() => events.parseDescription(undefined)).to.throw("event not defined");
-      expect(() => events.parseDescription("not an object")).to.throw(
-        "event not defined"
-      );
-      expect(() => events.parseDates(() => {})).to.throw("event not defined");
+      throwOnNoEvent(events.parseDescription);
     });
   });
 
   describe("#parseAttachments()", () => {
-    it("should parse attachments", () => {
-      expect(events.parseDescription({})).to.be.true;
+    it("should parse no attachments", () => {
+      expect(events.parseAttachments({})).to.eql([]);
+    });
+
+    it("should parse simple attachment", () => {
+      expect(
+        events.parseAttachments({
+          attachments: [
+            {
+              title: " title ",
+              fileUrl: "url"
+            }
+          ]
+        })
+      ).to.eql([{ name: "title", url: "url" }]);
+    });
+
+    it("should parse attachment with file extension", () => {
+      expect(
+        events.parseAttachments({
+          attachments: [
+            {
+              title: "title.pdf",
+              fileUrl: "url"
+            }
+          ]
+        })
+      ).to.eql([{ name: "title", url: "url" }]);
     });
 
     it("should throw on no event", () => {
-      expect(() => events.parseAttachments()).to.throw("event not defined");
-      expect(() => events.parseAttachments(null)).to.throw("event not defined");
-      expect(() => events.parseAttachments(undefined)).to.throw("event not defined");
-      expect(() => events.parseAttachments("not an object")).to.throw(
-        "event not defined"
-      );
-      expect(() => events.parseAttachments(() => {})).to.throw("event not defined");
+      throwOnNoEvent(events.parseAttachments);
     });
   });
 });

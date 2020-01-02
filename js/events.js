@@ -56,10 +56,19 @@ const events = (function() {
 
     parseDescription(event) {
       assertEvent(event);
+      return event.description ? event.description.trim() : undefined;
     },
 
     parseAttachments(event) {
       assertEvent(event);
+      const attachments = [];
+      if (event.attachments && event.attachments.length > 0) {
+        event.attachments.forEach(attachment => {
+          const name = attachment.title.replace(/\.\w+$/, "").trim();
+          attachments.push({ name, url: attachment.fileUrl });
+        });
+      }
+      return attachments;
     }
   };
 })();
