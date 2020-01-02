@@ -8,15 +8,23 @@ function appendEvents(events, elementId) {
     const outlet = document.getElementById(elementId);
     const header = document.createElement("span");
     header.innerText = events.summary;
-    header.classList.add('text-muted', 'font-bold', 'text-grey', 'text-2xl', 'px-3', 'mt-8', 'mb-8');
+    header.classList.add(
+      "text-muted",
+      "font-bold",
+      "text-grey",
+      "text-2xl",
+      "px-3",
+      "mt-8",
+      "mb-8"
+    );
     outlet.appendChild(header);
     const template = document.getElementById("evtTemplate");
     const eventHide = /( ?\[.*\]|!$)/g;
     events.items.forEach(event => {
       const node = document.importNode(template.content, true);
-      const title = event.summary.replace(eventHide, "");
+      const title = Events.parseSummary(event).name;
       const start = eventDate(event.start);
-      const date = dateOf(start).split(' ');
+      const date = dateOf(start).split(" ");
       node.querySelector(".evtDate").textContent = date[0];
       node.querySelector(".evtMonth").textContent = date[1];
       node.querySelector(".evtTime").textContent = timeOrBlankOf(start);
@@ -30,21 +38,16 @@ function appendEvents(events, elementId) {
       }
       const eventLinks = node.querySelector(".evtLinks");
       if (event.attachments && event.attachments.length > 0) {
-        const attachments = [];
-        event.attachments.forEach(attachment => {
-          const title = attachment.title.substring(
-            0,
-            attachment.title.length - 4
-          );
-          const link = linkOf(title, attachment.fileUrl);
-          attachments.push(link);
-        });
-        attachments.forEach((attachment, index) => {
-          if (index > 0) {
-            eventLinks.appendChild(document.createTextNode(" | "));
-          }
-          eventLinks.appendChild(attachment);
-        });
+        Events.parseAttachments(event)
+          .map(attachment =>
+            linkOf(attachment.name, attachment.url)
+          )
+          .forEach((attachment, index) => {
+            if (index > 0) {
+              eventLinks.appendChild(document.createTextNode(" | "));
+            }
+            eventLinks.appendChild(attachment);
+          });
       } else {
         eventLinks.parentNode.removeChild(eventLinks);
       }

@@ -9,28 +9,28 @@ describe("Google event", function() {
 
   describe("#parseSummary()", () => {
     it("should parse simple summary", () => {
-      const event = events.parseSummary({ summary: "Summary" });
+      const event = Events.parseSummary({ summary: "Summary" });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.be.undefined;
     });
 
     it("should parse summary tags", () => {
-      const event = events.parseSummary({ summary: "Summary #tag1 #tag2" });
+      const event = Events.parseSummary({ summary: "Summary #tag1 #tag2" });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql(["tag1", "tag2"]);
       expect(event.comment).to.be.undefined;
     });
 
     it("should parse summary comment", () => {
-      const event = events.parseSummary({ summary: "Summary // comment" });
+      const event = Events.parseSummary({ summary: "Summary // comment" });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.equal("comment");
     });
 
     it("should parse summary tags in comment", () => {
-      const event = events.parseSummary({
+      const event = Events.parseSummary({
         summary: "Summary #tag1 // comment #tag2"
       });
       expect(event.name).to.equal("Summary");
@@ -39,14 +39,14 @@ describe("Google event", function() {
     });
 
     it("should strip leading and trailing spaces from summary", () => {
-      const event = events.parseSummary({ summary: " Summary " });
+      const event = Events.parseSummary({ summary: " Summary " });
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.be.undefined;
     });
 
     it("should remove extra spaces from summary with tags", () => {
-      const event = events.parseSummary({
+      const event = Events.parseSummary({
         summary: "Summary #tag1  cont  #tag2"
       });
       expect(event.name).to.equal("Summary cont");
@@ -55,27 +55,27 @@ describe("Google event", function() {
     });
 
     it("should set default empty name from non existing summary", () => {
-      const event = events.parseSummary({});
+      const event = Events.parseSummary({});
       expect(event.name).to.equal("");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.be.undefined;
     });
 
     it("should parse comment only summary", () => {
-      const event = events.parseSummary({ summary: "// comment" });
+      const event = Events.parseSummary({ summary: "// comment" });
       expect(event.name).to.equal("");
       expect(event.tags).to.eql([]);
       expect(event.comment).to.equal("comment");
     });
 
     it("should throw on no event", () => {
-      throwOnNoEvent(events.parseSummary);
+      throwOnNoEvent(Events.parseSummary);
     });
   });
 
   describe("#parseDates()", () => {
     it("should parse dates", () => {
-      const event = events.parseDates({
+      const event = Events.parseDates({
         start: {
           dateTime: "2019-12-31T17:00:00+01:00",
           timeZone: "Europe/Prague"
@@ -90,7 +90,7 @@ describe("Google event", function() {
     });
 
     it("should parse dates of all day events", () => {
-      const event = events.parseDates({
+      const event = Events.parseDates({
         start: {
           date: "2019-12-30"
         },
@@ -105,34 +105,34 @@ describe("Google event", function() {
     });
 
     it("should throw on no event", () => {
-      throwOnNoEvent(events.parseDates);
+      throwOnNoEvent(Events.parseDates);
     });
   });
 
   describe("#parseDescription()", () => {
     it("should parse description", () => {
-      expect(events.parseDescription({})).to.be.undefined;
+      expect(Events.parseDescription({})).to.be.undefined;
       expect(
-        events.parseDescription({ description: "description" })
+        Events.parseDescription({ description: "description" })
       ).to.be.equal("description");
       expect(
-        events.parseDescription({ description: " description\ncont\n" })
+        Events.parseDescription({ description: " description\ncont\n" })
       ).to.be.equal("description\ncont");
     });
 
     it("should throw on no event", () => {
-      throwOnNoEvent(events.parseDescription);
+      throwOnNoEvent(Events.parseDescription);
     });
   });
 
   describe("#parseAttachments()", () => {
     it("should parse no attachments", () => {
-      expect(events.parseAttachments({})).to.eql([]);
+      expect(Events.parseAttachments({})).to.eql([]);
     });
 
     it("should parse simple attachment", () => {
       expect(
-        events.parseAttachments({
+        Events.parseAttachments({
           attachments: [
             {
               title: " title ",
@@ -145,7 +145,7 @@ describe("Google event", function() {
 
     it("should parse attachment with file extension", () => {
       expect(
-        events.parseAttachments({
+        Events.parseAttachments({
           attachments: [
             {
               title: "title.pdf",
@@ -157,7 +157,7 @@ describe("Google event", function() {
     });
 
     it("should throw on no event", () => {
-      throwOnNoEvent(events.parseAttachments);
+      throwOnNoEvent(Events.parseAttachments);
     });
   });
 });

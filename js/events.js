@@ -1,6 +1,6 @@
 "use strict";
 
-const events = (function() {
+const Events = (function() {
   const tagPattern = / #([\w-]+)/g;
   const commentPattern = /\/\/(.*)$/g;
 
