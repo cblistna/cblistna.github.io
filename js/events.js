@@ -16,7 +16,7 @@ const events = (function() {
           tags.push(tagMatch[1]);
         }
       } while (tagMatch);
-      name = name.replace("  ", " ").trim();
+      name = name.replace("  ", " ");
       name = name.replace(tagPattern, "").trim();
 
       let comment;
