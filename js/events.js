@@ -42,14 +42,10 @@ const events = (function() {
     parseDates(event) {
       assertEvent(event);
       const start = new Date(
-        event.start.dateTime
-          ? event.start.dateTime
-          : event.start.date + "T00:00:00+01:00"
+        event.start.dateTime || event.start.date + "T00:00:00+01:00"
       );
       const end = new Date(
-        event.end.dateTime
-          ? event.end.dateTime
-          : event.end.date + "T23:59:59+01:00"
+        event.end.dateTime || event.end.date + "T23:59:59+01:00"
       );
       return { start, end };
     },
@@ -61,14 +57,10 @@ const events = (function() {
 
     parseAttachments(event) {
       assertEvent(event);
-      const attachments = [];
-      if (event.attachments && event.attachments.length > 0) {
-        event.attachments.forEach(attachment => {
-          const name = attachment.title.replace(/\.\w+$/, "").trim();
-          attachments.push({ name, url: attachment.fileUrl });
-        });
-      }
-      return attachments;
+      return (event.attachments || []).map(attachment => ({
+        name: attachment.title.replace(/\.\w+$/, "").trim(),
+        url: attachment.fileUrl
+      }));
     }
   };
 })();
