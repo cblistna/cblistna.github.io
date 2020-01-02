@@ -19,11 +19,10 @@ function appendEvents(events, elementId) {
     );
     outlet.appendChild(header);
     const template = document.getElementById("evtTemplate");
-    const eventHide = /( ?\[.*\]|!$)/g;
     events.items.forEach(event => {
       const node = document.importNode(template.content, true);
       const title = Events.parseSummary(event).name;
-      const start = eventDate(event.start);
+      const start = DateTime.fromJSDate(Events.parseDates(event).start).setLocale("cs");
       const date = dateOf(start).split(" ");
       node.querySelector(".evtDate").textContent = date[0];
       node.querySelector(".evtMonth").textContent = date[1];
@@ -63,12 +62,6 @@ function linkOf(title, url) {
   a.href = url;
   a.target = "_blank";
   return a;
-}
-
-function eventDate(date) {
-  return DateTime.fromISO(date.dateTime ? date.dateTime : date.date).setLocale(
-    "cs"
-  );
 }
 
 function weekDayOf(date) {
