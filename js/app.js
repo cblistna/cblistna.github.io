@@ -19,16 +19,16 @@ function appendEvents(events, elementId) {
     );
     outlet.appendChild(header);
     const template = document.getElementById("evtTemplate");
-    events.items.forEach(event => {
+    events.items.forEach(googleEvent => {
       const node = document.importNode(template.content, true);
-      const title = Events.parseSummary(event).name;
-      const start = DateTime.fromJSDate(Events.parseDates(event).start).setLocale("cs");
+      const event = Events.parse(googleEvent);
+      const start = DateTime.fromJSDate(event.start).setLocale("cs");
       const date = dateOf(start).split(" ");
       node.querySelector(".evtDate").textContent = date[0];
       node.querySelector(".evtMonth").textContent = date[1];
       node.querySelector(".evtTime").textContent = timeOrBlankOf(start);
       node.querySelector(".evtWeekDay").textContent = weekDayOf(start);
-      node.querySelector(".evtTitle").textContent = title;
+      node.querySelector(".evtTitle").textContent = event.name;
       const eventDetail = node.querySelector(".evtDetail");
       if (event.description) {
         eventDetail.innerHTML = event.description;
@@ -37,7 +37,7 @@ function appendEvents(events, elementId) {
       }
       const eventLinks = node.querySelector(".evtLinks");
       if (event.attachments && event.attachments.length > 0) {
-        Events.parseAttachments(event)
+        event.attachments
           .map(attachment =>
             linkOf(attachment.name, attachment.url)
           )

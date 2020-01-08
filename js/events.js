@@ -1,6 +1,6 @@
 "use strict";
 
-const Events = (function() {
+const Events = (function () {
   const tagPattern = / #([\w-]+)/g;
   const commentPattern = /\/\/(.*)$/g;
 
@@ -24,6 +24,22 @@ const Events = (function() {
   }
 
   return {
+    parse(event) {
+      assertEvent(event);
+      return {
+        ...this.parseId(event),
+        ...this.parseSummary(event),
+        ...this.parseDescription(event),
+        ...this.parseDates(event),
+        ...this.parseAttachments(event)
+      };
+    },
+
+    parseId(event) {
+      assertEvent(event);
+      return { eventId: event.id.replace(/_\w+$/, '') };
+    },
+
     parseSummary(event) {
       assertEvent(event);
       let name = (event.summary && event.summary.trim()) || "";
@@ -52,15 +68,17 @@ const Events = (function() {
 
     parseDescription(event) {
       assertEvent(event);
-      return event.description ? event.description.trim() : undefined;
+      const description = event.description ? event.description.trim() : undefined;
+      return { description };
     },
 
     parseAttachments(event) {
       assertEvent(event);
-      return (event.attachments || []).map(attachment => ({
+      const attachments = (event.attachments || []).map(attachment => ({
         name: attachment.title.replace(/\.\w+$/, "").trim(),
         url: attachment.fileUrl
       }));
+      return { attachments };
     }
   };
 })();

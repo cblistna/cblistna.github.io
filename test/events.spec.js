@@ -1,11 +1,64 @@
 const expect = chai.expect;
 
-describe("Google event", function() {
+describe("Google event", function () {
+
   function throwOnNoEvent(fn) {
-    [undefined, null, "not and object", () => {}].forEach(event => {
+    [undefined, null, "not and object", () => { }].forEach(event => {
       expect(() => fn(event)).to.throw("event not defined");
     });
   }
+
+  describe('#parse()', () => {
+    it('should parse google event', () => {
+      const event = Events.parse({
+        id: "event1_suffix",
+        summary: "Summary #tag1 // comment #tag2",
+        description: "Description",
+        start: {
+          dateTime: "2020-01-10T10:20:00+01:00",
+          timeZone: "Europe/Prague"
+        },
+        end: {
+          dateTime: "2020-01-10T12:20:00+01:00",
+          timeZone: "Europe/Prague"
+        },
+        attachments: [
+          {
+            title: "Attachment",
+            fileUrl: "https://seznam.cz/file"
+          }
+        ]
+      });
+      expect(event.eventId).to.equal('event1');
+      expect(event.name).to.equal('Summary');
+      expect(event.tags).to.eql(['tag1', 'tag2']);
+      expect(event.comment).to.equal('comment');
+      expect(event.description).to.equal('Description');
+      expect(event.start.getTime()).to.equal(Date.parse("2020-01-10T09:20Z"));
+      expect(event.end.getTime()).to.equal(Date.parse("2020-01-10T11:20Z"));
+      expect(event.attachments).to.eql([{ name: 'Attachment', url: 'https://seznam.cz/file' }]);
+    });
+
+    it("should throw on no event", () => {
+      throwOnNoEvent(Events.parse);
+    });
+  });
+
+  describe('#parseId()', () => {
+    it('should parse event id', () => {
+      const event = Events.parseId({ id: 'id1' });
+      expect(event).to.eql({ eventId: 'id1' });
+    });
+
+    it('should parse recurring event id', () => {
+      const event = Events.parseId({ id: 'id2_suffix' });
+      expect(event).to.eql({ eventId: 'id2' });
+    });
+
+    it("should throw on no event", () => {
+      throwOnNoEvent(Events.parse);
+    });
+  });
 
   describe("#parseSummary()", () => {
     it("should parse simple summary", () => {
@@ -111,12 +164,12 @@ describe("Google event", function() {
 
   describe("#parseDescription()", () => {
     it("should parse description", () => {
-      expect(Events.parseDescription({})).to.be.undefined;
+      expect(Events.parseDescription({}).description).to.be.undefined;
       expect(
-        Events.parseDescription({ description: "description" })
+        Events.parseDescription({ description: "description" }).description
       ).to.be.equal("description");
       expect(
-        Events.parseDescription({ description: " description\ncont\n" })
+        Events.parseDescription({ description: " description\ncont\n" }).description
       ).to.be.equal("description\ncont");
     });
 
@@ -127,7 +180,7 @@ describe("Google event", function() {
 
   describe("#parseAttachments()", () => {
     it("should parse no attachments", () => {
-      expect(Events.parseAttachments({})).to.eql([]);
+      expect(Events.parseAttachments({})).to.eql({ attachments: [] });
     });
 
     it("should parse simple attachment", () => {
@@ -140,7 +193,7 @@ describe("Google event", function() {
             }
           ]
         })
-      ).to.eql([{ name: "title", url: "url" }]);
+      ).to.eql({ attachments: [{ name: "title", url: "url" }] });
     });
 
     it("should parse attachment with file extension", () => {
@@ -153,7 +206,7 @@ describe("Google event", function() {
             }
           ]
         })
-      ).to.eql([{ name: "title", url: "url" }]);
+      ).to.eql({ attachments: [{ name: "title", url: "url" }] });
     });
 
     it("should throw on no event", () => {
