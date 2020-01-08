@@ -4,24 +4,11 @@ const DateTime = luxon.DateTime;
 const today = DateTime.local().setLocale("cs");
 
 function appendEvents(events, elementId) {
-  if (events.items.length > 0) {
+  if (events.length > 0) {
     const outlet = document.getElementById(elementId);
-    const header = document.createElement("span");
-    header.innerText = events.summary;
-    header.classList.add(
-      "text-muted",
-      "font-bold",
-      "text-grey",
-      "text-2xl",
-      "px-3",
-      "mt-8",
-      "mb-8"
-    );
-    outlet.appendChild(header);
     const template = document.getElementById("evtTemplate");
-    events.items.forEach(googleEvent => {
+    events.forEach(event => {
       const node = document.importNode(template.content, true);
-      const event = Events.parse(googleEvent);
       const start = DateTime.fromJSDate(event.start).setLocale("cs");
       const date = dateOf(start).split(" ");
       node.querySelector(".evtDate").textContent = date[0];
@@ -49,6 +36,9 @@ function appendEvents(events, elementId) {
           });
       } else {
         eventLinks.parentNode.removeChild(eventLinks);
+      }
+      if (event.tags.includes('JFYI')) {
+        node.querySelector(".calEvent").classList.add('text-gray-500');
       }
       outlet.appendChild(node);
     });
@@ -140,36 +130,22 @@ ga.init()
       timeMin: now.toISOString(),
       singleEvents: true,
       orderBy: "startTime",
-      maxResults: 10
+      maxResults: 100
     };
 
     const regularEventsQuery = Object.assign(
       {
-        timeMax: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        timeMax: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
       },
       eventsBaseQuery
     );
 
-    ga.eventsOf("cblistna@gmail.com", regularEventsQuery).then(events => {
+    ga.eventsOf("cblistna@gmail.com", regularEventsQuery).then(googleEvents => {
+      const events = Events.dropRecurringNotImportant(
+        googleEvents.items.map(event => Events.parse(event))
+      );
       appendEvents(events, "regularEvents");
     });
-
-    ga.eventsOf(
-      "seps8o249ihvkvdhgael78ofg0@group.calendar.google.com",
-      eventsBaseQuery
-    ).then(events => appendEvents(events, "irregularEvents"));
-
-    ga.eventsOf(
-      "852scvjhsuhhl97lv3kb8r7be8@group.calendar.google.com",
-      eventsBaseQuery
-    ).then(events => appendEvents(events, "otherEvents"));
-
-    // ga
-    //   .eventsOf(
-    //     'm1b2v3tb387ace2jjub70mq6vo@group.calendar.google.com',
-    //     eventsBaseQuery
-    //   )
-    //   .then(events => appendEvents(events, 'worshipEvents'));
 
     const messagesQuery = {
       orderBy: "name desc",

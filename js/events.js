@@ -35,6 +35,16 @@ const Events = (function () {
       };
     },
 
+    dropRecurringNotImportant(events) {
+      const ids = {};
+      return events.filter(event => {
+        const unique = !!!ids[event.eventId];
+        const important = (event.tags || []).includes('important');
+        ids[event.eventId] = true;
+        return unique || important;
+      });
+    },
+
     parseId(event) {
       assertEvent(event);
       return { eventId: event.id.replace(/_\w+$/, '') };

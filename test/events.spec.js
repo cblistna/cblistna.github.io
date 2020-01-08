@@ -8,6 +8,18 @@ describe("Google event", function () {
     });
   }
 
+  describe('#dropRecuuringNotImportant()', () => {
+    it('should drop reccuring not important events', () => {
+      const events = Events.dropRecurringNotImportant([
+        { eventId: "1", name: "name1" },
+        { eventId: "2", name: "name2" },
+        { eventId: "1", name: "name12" },
+        { eventId: "1", name: "name13", tags: ['important'] }
+      ]);
+      expect(events.map(e => e.name)).to.eql(["name1", "name2", "name13"])
+    });
+  });
+
   describe('#parse()', () => {
     it('should parse google event', () => {
       const event = Events.parse({
