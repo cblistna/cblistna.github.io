@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="https://trello.com/1/client.js?key=1cdc213d07b88247ec846f90400f3ce8"></script>
+  <title>Elders</title>
+</head>
+<body>
+  <h1>Elders</h1> 
+  <script>
+    Trello.authorize({
+      type: 'popup',
+      name: 'cblistna-elders',
+      persist: true,
+      scope: {
+        read: true,
+        write: false
+      },
+      success: () => {
+        console.log('authorized');
+      },
+      error: () => {
+        console.log('not authorized');
+      }
+    })
+  </script>
+</body>
+</html>
