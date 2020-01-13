@@ -7,63 +7,86 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
   <script src="https://trello.com/1/client.js?key=1cdc213d07b88247ec846f90400f3ce8"></script>
-  <title>Elders</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue "></script>
+  <link href="../css/tailwind.min.css" rel="stylesheet" />
 </head>
 
 <body>
-  <h1>Elders</h1>
-  <script>
-    Trello.authorize({
-      type: 'popup',
-      name: 'cblistna-elders',
-      persist: true,
-      scope: {
-        read: true,
-        write: false
-      },
-      success: () => {
-        function fetch(path, options = { fields: 'id' }) {
-          return new Promise((resolve, reject) => Trello.get(path, options, resolve, reject));
+
+  <div id="minutes" class="px-4">
+    <p class="text-3xl font-medium mb-2">Zápis ze staršovstva</p>
+    <p class="text-xl font-medium mb-2 text-blue-700">
+      <a href="https://bit.ly/kalendar-cblistna" target="_blank">Kalendář</a>
+    </p>
+    <div v-for="item in items">
+      <p class="text-xl mb-1">{{item.name}}</p>
+      <div class="mb-4 ml-3">
+        <p v-for="line in item.lines" class="leading-snug mb-2">{{line}}</p>
+      </div>
+    </div>
+    <script>
+      Trello.authorize({
+        type: 'popup',
+        name: 'cblistna-elders',
+        persist: true,
+        scope: {
+          read: true,
+          write: false
+        },
+        success: () => {
+          function fetch(path, options = { fields: 'id' }) {
+            return new Promise((resolve, reject) => Trello.get(path, options, resolve, reject));
+          }
+
+          function boards(options) {
+            return fetch(`/members/me/boards`, options);
+          }
+
+          function lists(boardId, options) {
+            return fetch(`/boards/${boardId}/lists`, options);
+          }
+
+          function cards(listId, options) {
+            return fetch(`/lists/${listId}/cards`, options);
+          }
+
+          function comments(cardId, options) {
+            return fetch(`/cards/${cardId}/actions`, { ...options, type: 'commentCard' });
+          }
+
+          // boards({ fields: 'id,name' })
+          //   .then(boards => console.log(boards));
+
+          // lists('5a1cff3fdfb628293cd818c4', { fields: 'id,name,closed', filter: 'all' })
+          //   .then(lists => console.log(lists));
+
+          // cards('5c09598c21ac1822f3816079')
+          //   .then(cards => console.log(cards));
+
+          cards('5c09598c21ac1822f3816079', { fields: 'id,name,desc,closed' })
+            .then(cards => Promise.all(
+              cards.map(
+                card => comments(card.id, { fields: 'id,data,date' })
+                  .then(comments => ({ ...card, lines: card.desc.split("\n"), comments })))
+            ))
+            .then(cards => minutes.items = cards);
+
+          const minutes = new Vue({
+            el: '#minutes',
+            data: {
+              items: undefined
+            }
+          });
+
+        },
+        error: () => {
+          console.log('not authorized');
         }
+      });
 
-        function boards(options) {
-          return fetch(`/members/me/boards`, options);
-        }
 
-        function lists(boardId, options) {
-          return fetch(`/boards/${boardId}/lists`, options);
-        }
+    </script>
 
-        function cards(listId, options) {
-          return fetch(`/lists/${listId}/cards`, options);
-        }
-
-        function comments(cardId, options) {
-          return fetch(`/cards/${cardId}/actions`, { ...options, type: 'commentCard' });
-        }
-
-        boards({ fields: 'id,name' })
-          .then(boards => console.log(boards));
-
-        lists('5a1cff3fdfb628293cd818c4', { fields: 'id,name,closed', filter: 'all' })
-          .then(lists => console.log(lists));
-
-        cards('5c09598c21ac1822f3816079')
-          .then(cards => console.log(cards));
-
-        cards('5c09598c21ac1822f3816079', { fields: 'id,name,desc,closed'})
-          .then(cards => Promise.all(
-            cards.map(card => comments(card.id, { fields: 'id,data,date'}).then(comments => ({ ...card, comments })))
-          ))
-          .then(cards => console.log(cards))
-
-      },
-      error: () => {
-        console.log('not authorized');
-      }
-    });
-
-  </script>
 </body>
 
 </html>
