@@ -63,7 +63,8 @@
           // cards('5c09598c21ac1822f3816079')
           //   .then(cards => console.log(cards));
 
-          cards('5c09598c21ac1822f3816079', { fields: 'id,name,desc,closed' })
+          // cards('5c09598c21ac1822f3816079', { fields: 'id,name,desc,closed' })
+          cards('5e1df77304493955bf77714d', { fields: 'id,name,desc,closed' })
             .then(cards => Promise.all(
               cards.map(
                 card => comments(card.id, { fields: 'id,data,date' })
