@@ -8,6 +8,9 @@ function appendEvents(events, elementId) {
     const outlet = document.getElementById(elementId);
     const template = document.getElementById("evtTemplate");
     events.forEach(event => {
+      if (event.tags.includes("hide")) {
+        return;
+      }
       const node = document.importNode(template.content, true);
       const start = DateTime.fromJSDate(event.start).setLocale("cs");
       const date = dateOf(start).split(" ");
@@ -25,9 +28,7 @@ function appendEvents(events, elementId) {
       const eventLinks = node.querySelector(".evtLinks");
       if (event.attachments && event.attachments.length > 0) {
         event.attachments
-          .map(attachment =>
-            linkOf(attachment.name, attachment.url)
-          )
+          .map(attachment => linkOf(attachment.name, attachment.url))
           .forEach((attachment, index) => {
             if (index > 0) {
               eventLinks.appendChild(document.createTextNode(" | "));
@@ -37,8 +38,8 @@ function appendEvents(events, elementId) {
       } else {
         eventLinks.parentNode.removeChild(eventLinks);
       }
-      if (event.tags.includes('JFYI')) {
-        node.querySelector(".calEvent").classList.add('text-gray-500');
+      if (event.tags.includes("JFYI")) {
+        node.querySelector(".calEvent").classList.add("text-gray-500");
       }
       outlet.appendChild(node);
     });
@@ -127,7 +128,7 @@ ga.init()
   .then(() => {
     const now = new Date();
     const eventsBaseQuery = {
-      timeMin: now.toISOString(),
+      timeMin: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
       singleEvents: true,
       orderBy: "startTime",
       maxResults: 100
@@ -135,7 +136,9 @@ ga.init()
 
     const regularEventsQuery = Object.assign(
       {
-        timeMax: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+        timeMax: new Date(
+          now.getTime() + 60 * 24 * 60 * 60 * 1000
+        ).toISOString()
       },
       eventsBaseQuery
     );
