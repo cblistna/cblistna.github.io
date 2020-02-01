@@ -7,9 +7,18 @@ function appendEvents(events, elementId) {
   if (events.length > 0) {
     const outlet = document.getElementById(elementId);
     const template = document.getElementById("evtTemplate");
+    const nowPlus7Days = new Date(
+      new Date().getTime() + 8 * 24 * 60 * 60 * 1000
+    );
+    let weekSeparatorRendered = false;
     events.forEach(event => {
       if (event.tags.includes("hide")) {
         return;
+      }
+      if (!weekSeparatorRendered && event.start > nowPlus7Days) {
+        outlet.appendChild(document.createElement("hr"));
+        outlet.appendChild(document.createElement("br"));
+        weekSeparatorRendered = true;
       }
       const node = document.importNode(template.content, true);
       const start = DateTime.fromJSDate(event.start).setLocale("cs");
