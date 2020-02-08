@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="cz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Události</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue "></script>
+    <link rel="stylesheet" href="../css/tailwind.min.css" />
+    <style>
+      html {
+        scroll-snap-type: y mandatory;
+      }
+      .slide {
+        height: 100vh;
+        scroll-snap-align: start;
+      }
+    </style>
+  </head>
+  <body class="mx-4 bg-gray-100">
+    <div class="slide">
+      <p id="title" class="text-4xl pt-2 font-medium">
+        Oznámení <span class="text-3xl font-light">9. února 2020</span>
+      </p>
+    </div>
+    <div id="next-week-events" class="slide pt-1">
+      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+        Týden
+      </p>
+      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+    </div>
+    <div id="upcoming-events" class="slide pt-1">
+      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+        Nadcházející události
+      </p>
+      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+    </div>
+    <script src="../js/lib/luxon.min.js"></script>
+    <script>
+      Vue.component("calendar-day", {
+        props: ["day"],
+        template: `
+          <div class="mt-1">
+            <p class="text-2xl mb-1">
+              <span class="text-xl font-normal"
+                >{{ day.date.toFormat('cccc') }},
+                 {{day.date.toFormat('d. MMMM')}}</span>
+            </p>
+            <p v-for="event in day.events" class="text-2xl mb-2">
+              <span class="inline-block w-10 font-light"
+                >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
+                  >.{{ event.start.toFormat('mm')}}</span></span>
+              <span class="ml-5 font-medium"
+                >{{ event.description}}</span>
+              <span v-if="event.detail" class="text-xl ml-1 text-gray-600 font-light"
+              >{{ event.detail }}</span>
+            </p>
+          </div>
+        `
+      });
+
+      new Vue({
+        el: "#next-week-events",
+        data: {
+          calendar: [
+            {
+              date: luxon.DateTime.fromISO("2020-02-10").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-02-10T09:30").setLocale(
+                    "cs"
+                  ),
+                  description: "Setkávání maminek",
+                  detail: "Sluníčko, Sosna"
+                }
+              ]
+            },
+            {
+              date: luxon.DateTime.fromISO("2020-02-12").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-02-12T18:00").setLocale(
+                    "cs"
+                  ),
+                  description: "Modlitby"
+                }
+              ]
+            },
+            {
+              date: luxon.DateTime.fromISO("2020-02-14").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-04-12T17:00").setLocale(
+                    "cs"
+                  ),
+                  description: "Dorost"
+                }
+              ]
+            },
+            {
+              date: luxon.DateTime.fromISO("2020-02-15").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-02-15T09:00").setLocale(
+                    "cs"
+                  ),
+                  description: "Poslední kapka",
+                  detail: "Plakát"
+                },
+                {
+                  start: luxon.DateTime.fromISO("2020-02-15T18:00").setLocale(
+                    "cs"
+                  ),
+                  description: "Mládež"
+                }
+              ]
+            },
+            {
+              date: luxon.DateTime.fromISO("2020-02-16").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-02-16T09:30").setLocale(
+                    "cs"
+                  ),
+                  description: "Shromáždění"
+                },
+                {
+                  start: luxon.DateTime.fromISO("2020-02-16T11:15").setLocale(
+                    "cs"
+                  ),
+                  description: "Miničlenské"
+                }
+              ]
+            }
+          ]
+        }
+      });
+      new Vue({
+        el: "#upcoming-events",
+        data: {
+          calendar: [
+            {
+              date: luxon.DateTime.fromISO("2020-03-01").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-03-01T11:15").setLocale(
+                    "cs"
+                  ),
+                  description: "Výroční členské shromáždění"
+                }
+              ]
+            },
+            {
+              date: luxon.DateTime.fromISO("2020-03-02").setLocale("cs"),
+              events: [
+                {
+                  start: luxon.DateTime.fromISO("2020-02-01T17:00").setLocale(
+                    "cs"
+                  ),
+                  description: "Setkávání žen"
+                }
+              ]
+            }
+          ]
+        }
+      });
+    </script>
+  </body>
+</html>
