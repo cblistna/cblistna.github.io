@@ -144,13 +144,13 @@ ga.init()
       timeMin: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
       singleEvents: true,
       orderBy: "startTime",
-      maxResults: 100
+      maxResults: 150
     };
 
     const regularEventsQuery = Object.assign(
       {
         timeMax: new Date(
-          now.getTime() + 60 * 24 * 60 * 60 * 1000
+          now.getTime() + 200 * 24 * 60 * 60 * 1000
         ).toISOString()
       },
       eventsBaseQuery
