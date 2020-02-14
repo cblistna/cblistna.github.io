@@ -1,41 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://trello.com/1/client.js?key=1cdc213d07b88247ec846f90400f3ce8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue "></script>
+    <link href="../css/tailwind.min.css" rel="stylesheet" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-  <script src="https://trello.com/1/client.js?key=1cdc213d07b88247ec846f90400f3ce8"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vue "></script>
-  <link href="../css/tailwind.min.css" rel="stylesheet" />
-</head>
-
-<body>
-
-  <div id="minutes" class="px-4">
-    <p class="text-3xl font-medium mb-2">Zápis ze staršovstva</p>
-    <p class="text-xl font-medium mb-2 text-blue-700">
-      <a href="https://bit.ly/kalendar-cblistna" target="_blank">Kalendář</a>
-    </p>
-    <div v-for="item in items">
-      <p class="text-xl mb-1">{{item.name}}</p>
-      <div class="mb-4 ml-3">
-        <p v-for="line in item.lines" class="leading-snug mb-2">{{line}}</p>
-      </div>
+  <body>
+    <div id="meetings">
+      <em-minutes v-for="meeting in meetings" :meeting="meeting" />
     </div>
+
     <script>
       Trello.authorize({
-        type: 'popup',
-        name: 'cblistna-elders',
+        type: "popup",
+        name: "cblistna-elders",
         persist: true,
         scope: {
           read: true,
           write: false
         },
         success: () => {
-          function fetch(path, options = { fields: 'id' }) {
-            return new Promise((resolve, reject) => Trello.get(path, options, resolve, reject));
+          function fetch(path, options = { fields: "id" }) {
+            return new Promise((resolve, reject) =>
+              Trello.get(path, options, resolve, reject)
+            );
           }
 
           function boards(options) {
@@ -51,7 +44,10 @@
           }
 
           function comments(cardId, options) {
-            return fetch(`/cards/${cardId}/actions`, { ...options, type: 'commentCard' });
+            return fetch(`/cards/${cardId}/actions`, {
+              ...options,
+              type: "commentCard"
+            });
           }
 
           // boards({ fields: 'id,name' })
@@ -60,38 +56,80 @@
           const listDatePattern = /^.*#em-(\d{4}-\d{2}-\d{2})$/;
 
           function dateOf(name) {
-            return (name.match(listDatePattern) || [])[1] || '';
+            return (name.match(listDatePattern) || [])[1] || "";
           }
 
-          const compareListDates = (a, b) => dateOf(b.name).localeCompare(dateOf(a.name));
+          const compareListDates = (a, b) =>
+            dateOf(b.name).localeCompare(dateOf(a.name));
 
-          lists('5a1cff3fdfb628293cd818c4', { fields: 'id,name,closed', filter: 'all' })
-            .then(lists => lists.filter(list => list.name.match(listDatePattern)))
+          lists("5a1cff3fdfb628293cd818c4", {
+            fields: "id,name,closed",
+            filter: "all"
+          })
+            .then(lists =>
+              lists.filter(list => list.name.match(listDatePattern))
+            )
             .then(lists => lists.sort(compareListDates))
-            .then(lists => cards(lists[0].id, { fields: 'id,name,desc,closed' })
-            .then(cards => Promise.all(
-              cards.map(
-                card => comments(card.id, { fields: 'id,data,date' })
-                  .then(comments => ({ ...card, lines: card.desc.split("\n"), comments })))
-            )))
-            .then(cards => minutes.items = cards)
+            .then(lists =>
+              Promise.all(
+                lists.map(list =>
+                  cards(list.id, {
+                    fields: "id,name,desc,closed"
+                  })
+                    .then(cards =>
+                      Promise.all(
+                        cards.map(card =>
+                          comments(card.id, {
+                            fields: "id,data,date"
+                          }).then(comments => ({
+                            ...card,
+                            lines: card.desc.split("\n"),
+                            comments
+                          }))
+                        )
+                      )
+                    )
+                    .then(cards => ({
+                      ...list,
+                      name: `Zápis ze staršovstva, ${dateOf(list.name)}`,
+                      items: cards
+                    }))
+                )
+              )
+            )
+            .then(lists => (meetings.meetings = lists));
 
-          const minutes = new Vue({
-            el: '#minutes',
-            data: {
-              items: undefined
-            }
+          Vue.component("em-minutes", {
+            props: ["meeting"],
+            template: `
+              <div class="px-4">
+                <p class="text-3xl font-medium mb-2 cursor-pointer" @click="meeting.closed=!meeting.closed" style="page-break-before: always">{{meeting.name}}</p>
+                <div v-if="!meeting.closed">
+                  <p class="text-xl font-medium mb-2 text-blue-700">
+                    <a href="https://bit.ly/kalendar-cblistna" target="_blank">Kalendář</a>
+                  </p>
+                  <div v-for="item in meeting.items">
+                    <p class="text-xl mb-1">{{item.name}}</p>
+                    <div class="mb-4 ml-3">
+                      <p v-for="line in item.lines" class="leading-snug mb-2">{{line}}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `
           });
 
+          const meetings = new Vue({
+            el: "#meetings",
+            data: {
+              meetings: []
+            }
+          });
         },
         error: () => {
-          console.log('not authorized');
+          console.log("not authorized");
         }
       });
-
-
     </script>
-
-</body>
-
+  </body>
 </html>
