@@ -159,7 +159,7 @@ ga.init()
     ga.eventsOf("cblistna@gmail.com", regularEventsQuery).then(googleEvents => {
       const events = Events.dropRecurringNotImportant(
         googleEvents.items.map(event => Events.parse(event))
-      );
+      ).filter(event => !(event.tags || []).includes("hide"));
       appendEvents(events, "regularEvents");
     });
 
