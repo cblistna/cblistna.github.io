@@ -166,7 +166,7 @@ ga.init()
     const messagesQuery = {
       orderBy: "name desc",
       pageSize: 10,
-      q: "mimeType='audio/mp3' and trashed=false",
+      q: "mimeType contains 'audio' and trashed=false",
       fields: "files(id, name, webViewLink, webContentLink)"
     };
 
