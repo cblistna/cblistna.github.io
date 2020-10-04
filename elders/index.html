@@ -76,23 +76,23 @@
                   cards(list.id, {
                     fields: "id,name,desc,closed",
                   })
-                    .then((cards) =>
-                      Promise.all(
-                        cards.map((card) =>
-                          comments(card.id, {
-                            fields: "id,data,date",
-                          }).then((comments) => ({
-                            ...card,
-                            lines: card.desc.split("\n"),
-                            comments,
-                          }))
-                        )
-                      )
-                    )
+                    // .then((cards) =>
+                    //   Promise.all(
+                    //     cards.map((card) =>
+                    //       comments(card.id, {
+                    //         fields: "id,data,date",
+                    //       }).then((comments) => ({
+                    //         ...card,
+                    //         lines: card.desc.split("\n"),
+                    //         comments,
+                    //       }))
+                    //     )
+                    //   )
+                    // )
                     .then((cards) => ({
                       ...list,
                       name: `Zápis ze staršovstva, ${dateOf(list.name)}`,
-                      items: cards,
+                      items: cards.map((card) => ({...card, lines: card.desc.split("\n"), comments: []})),
                     }))
                 )
               )
