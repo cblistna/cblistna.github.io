@@ -15,8 +15,11 @@
     <script class="mocha-init">
       mocha.setup('bdd');
       mocha.checkLeaks();
+      const expect = chai.expect;
     </script>
+    <script src="../js/messages.js"></script>
     <script src="../js/events.js"></script>
+    <script src="messages.spec.js"></script>
     <script src="events.spec.js"></script>
     <script src="events.fixture.js"></script>
     <script class="mocha-exec">
