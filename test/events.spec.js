@@ -1,5 +1,3 @@
-const expect = chai.expect;
-
 describe("Google event", function () {
 
   function throwOnNoEvent(fn) {
