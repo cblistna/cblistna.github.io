@@ -11,7 +11,7 @@ function appendEvents(events, elementId) {
       new Date().getTime() + 8 * 24 * 60 * 60 * 1000
     );
     let weekSeparatorRendered = false;
-    events.forEach(event => {
+    events.forEach((event) => {
       if (event.tags.includes("hide")) {
         return;
       }
@@ -37,7 +37,7 @@ function appendEvents(events, elementId) {
       const eventLinks = node.querySelector(".evtLinks");
       if (event.attachments && event.attachments.length > 0) {
         event.attachments
-          .map(attachment => linkOf(attachment.name, attachment.url))
+          .map((attachment) => linkOf(attachment.name, attachment.url))
           .forEach((attachment, index) => {
             if (index > 0) {
               eventLinks.appendChild(document.createTextNode(" | "));
@@ -81,7 +81,7 @@ function timeOrBlankOf(date) {
 function appendMessages(files, elementId) {
   const outlet = document.getElementById(elementId);
   const template = document.getElementById("msgTemplate");
-  files.forEach(file => {
+  files.forEach((file) => {
     const meta = parseFile(file);
     console.log(meta);
     if (!(meta.date.isValid && meta.title && meta.author)) {
@@ -108,7 +108,7 @@ function appendMessages(files, elementId) {
 
 function parseFile(file) {
   const meta = {
-    file: file.name
+    file: file.name,
   };
   const parts = file.name.substring(0, file.name.length - 4).split(/-/, -1);
   const dateRaw = parts.shift();
@@ -122,7 +122,7 @@ function parseFile(file) {
   meta.author = parts.shift();
   meta.title = parts.shift();
   meta.tags = [];
-  parts.forEach(part => {
+  parts.forEach((part) => {
     if (part.startsWith("#")) {
       meta.tags.push(part.substring(1));
     }
@@ -132,9 +132,9 @@ function parseFile(file) {
 
 const ga = new GoogleAccess(
   "cblistna",
-  "122939969451-nm6pc9104kg6m7avh3pq8sn735ha9jja.apps.googleusercontent.com",
-  "iFas6FSxexJ0ztqx6QfUH8kK",
-  "1/4tbmdLZ3tItmdMx1zIoc9ZdlBZ8E854-t1whajGynYw"
+  "1043527471308-e4sb65ute0jda6dh6bjtflru1tkn21ht.apps.googleusercontent.com",
+  "olF2_9TK9Bbx-lXfySvqVIAR",
+  "1//09uLIidhMVPw_CgYIARAAGAkSNwF-L9Irc_SRAnAv3XUrLlqB5d3iEpOMnoaBquYgrIVY105eiRCwwUiIUaes7MRgsEwAbP7uvfw"
 );
 
 ga.init()
@@ -144,22 +144,22 @@ ga.init()
       timeMin: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
       singleEvents: true,
       orderBy: "startTime",
-      maxResults: 150
+      maxResults: 150,
     };
 
     const regularEventsQuery = Object.assign(
       {
         timeMax: new Date(
           now.getTime() + 200 * 24 * 60 * 60 * 1000
-        ).toISOString()
+        ).toISOString(),
       },
       eventsBaseQuery
     );
 
-    ga.eventsOf("cblistna@gmail.com", regularEventsQuery).then(googleEvents => {
+    ga.eventsOf("trinec.v@cb.cz", regularEventsQuery).then((googleEvents) => {
       const events = Events.dropRecurringNotImportant(
-        googleEvents.items.map(event => Events.parse(event))
-      ).filter(event => !(event.tags || []).includes("hide"));
+        googleEvents.items.map((event) => Events.parse(event))
+      ).filter((event) => !(event.tags || []).includes("hide"));
       appendEvents(events, "regularEvents");
     });
 
@@ -167,10 +167,10 @@ ga.init()
       orderBy: "name desc",
       pageSize: 10,
       q: "mimeType contains 'audio' and trashed=false",
-      fields: "files(id, name, webViewLink, webContentLink)"
+      fields: "files(id, name, webViewLink, webContentLink)",
     };
 
-    ga.files(messagesQuery).then(res =>
+    ga.files(messagesQuery).then((res) =>
       appendMessages(res.files, "messages-list")
     );
   })
