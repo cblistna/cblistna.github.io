@@ -110,15 +110,8 @@ function parseFile(file) {
   const meta = {
     file: file.name,
   };
-  const parts = file.name.substring(0, file.name.length - 4).split(/-/, -1);
-  const dateRaw = parts.shift();
-  meta.date = DateTime.fromISO(
-    dateRaw.substring(0, 4) +
-      "-" +
-      dateRaw.substring(4, 6) +
-      "-" +
-      dateRaw.substring(6, 8)
-  ).setLocale("cs");
+  const parts = file.name.substring(0, file.name.length - 4).split(/_/, -1);
+  meta.date = DateTime.fromISO(parts.shift()).setLocale("cs");
   meta.author = parts.shift();
   meta.title = parts.shift();
   meta.tags = [];
@@ -166,7 +159,7 @@ ga.init()
     const messagesQuery = {
       orderBy: "name desc",
       pageSize: 10,
-      q: "mimeType contains 'audio' and trashed=false",
+      q: "trashed=false and 'trinec.v@cb.cz' in owners and mimeType contains 'audio'",
       fields: "files(id, name, webViewLink, webContentLink)",
     };
 
