@@ -61,7 +61,7 @@ describe("Google event", function () {
     });
   });
 
-  describe("#parseId()", () => {
+  describe("parse id", () => {
     it("should parse event id", () => {
       const event = Events.parse({ ...minimalGoogleEvent, id: "id1" });
       expect(event.eventId).to.eql("id1");
@@ -73,7 +73,7 @@ describe("Google event", function () {
     });
   });
 
-  describe("#parseSummary()", () => {
+  describe("parse summary", () => {
     it("should parse simple summary", () => {
       const event = Events.parse({ ...minimalGoogleEvent, summary: "Summary" });
       expect(event.name).to.equal("Summary");
@@ -149,7 +149,7 @@ describe("Google event", function () {
     });
   });
 
-  describe("#parseDates()", () => {
+  describe("parse dates", () => {
     it("should parse dates", () => {
       const event = Events.parse({
         ...minimalGoogleEvent,
@@ -183,7 +183,7 @@ describe("Google event", function () {
     });
   });
 
-  describe("#parseDescription()", () => {
+  describe("parse description", () => {
     it("should parse description", () => {
       expect(Events.parse({ ...minimalGoogleEvent }).description).to.be
         .undefined;
@@ -200,7 +200,7 @@ describe("Google event", function () {
     });
   });
 
-  describe("#parseAttachments()", () => {
+  describe("parse attachments", () => {
     it("should parse no attachments", () => {
       expect(Events.parse({ ...minimalGoogleEvent }).attachments).to.eql([]);
     });
@@ -231,6 +231,38 @@ describe("Google event", function () {
           ],
         }).attachments
       ).to.eql([{ name: "title", url: "url" }]);
+    });
+  });
+  describe("#thisWeek()", () => {
+    it("should return week on Sunday", () => {
+      const now = new Date("2021-05-16T00:00:00");
+      const monday = new Date("2021-05-17T00:00:00");
+      const sunday = new Date("2021-05-23T23:59:59");
+      const week = Events.thisWeek(now); // Sunday
+      console.log(week);
+      expect(week.now.toISOString()).to.eq(now.toISOString());
+      expect(week.monday.toISOString()).to.eq(monday.toISOString());
+      expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
+    });
+    it("should return week on Monday", () => {
+      const now = new Date("2021-05-17T00:00:00");
+      const monday = new Date("2021-05-17T00:00:00");
+      const sunday = new Date("2021-05-23T23:59:59");
+      const week = Events.thisWeek(now); // Monday
+      console.log(week);
+      expect(week.now.toISOString()).to.eq(now.toISOString());
+      expect(week.monday.toISOString()).to.eq(monday.toISOString());
+      expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
+    });
+    it("should return week on Saturay", () => {
+      const now = new Date("2021-05-22T23:59:59");
+      const monday = new Date("2021-05-17T00:00:00");
+      const sunday = new Date("2021-05-23T23:59:59");
+      const week = Events.thisWeek(now); // Monday
+      console.log(week);
+      expect(week.now.toISOString()).to.eq(now.toISOString());
+      expect(week.monday.toISOString()).to.eq(monday.toISOString());
+      expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
     });
   });
 });

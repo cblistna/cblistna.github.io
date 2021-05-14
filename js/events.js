@@ -92,5 +92,25 @@ const Events = (function () {
         return unique || important;
       });
     },
+
+    thisWeek(now = new Date()) {
+      const monday = now.getDate() - now.getDay() + 1;
+      const sunday = monday + 6;
+      const mondayStart = new Date(now);
+      mondayStart.setDate(monday);
+      mondayStart.setHours(0);
+      mondayStart.setMinutes(0);
+      mondayStart.setSeconds(0);
+      const sundayEnd = new Date(now);
+      sundayEnd.setDate(sunday);
+      sundayEnd.setHours(23);
+      sundayEnd.setMinutes(59);
+      sundayEnd.setSeconds(59);
+      return {
+        now: new Date(now),
+        monday: mondayStart,
+        sunday: sundayEnd,
+      };
+    },
   };
 })();
