@@ -92,15 +92,8 @@ function parseFile(file) {
     file: file.name,
     link: file.webContentLink,
   };
-  const parts = file.name.substring(0, file.name.length - 4).split(/-/, -1);
-  const dateRaw = parts.shift();
-  meta.date = DateTime.fromISO(
-    dateRaw.substring(0, 4) +
-      "-" +
-      dateRaw.substring(4, 6) +
-      "-" +
-      dateRaw.substring(6, 8)
-  ).setLocale("cs");
+  const parts = file.name.substring(0, file.name.length - 4).split(/_/, -1);
+  meta.date = DateTime.fromISO(parts.shift()).setLocale("cs");
   meta.author = parts.shift();
   meta.title = parts.shift();
   meta.tags = [];
@@ -114,9 +107,9 @@ function parseFile(file) {
 
 const ga = new GoogleAccess(
   "cblistna",
-  "122939969451-nm6pc9104kg6m7avh3pq8sn735ha9jja.apps.googleusercontent.com",
-  "iFas6FSxexJ0ztqx6QfUH8kK",
-  "1/4tbmdLZ3tItmdMx1zIoc9ZdlBZ8E854-t1whajGynYw"
+  "1043527471308-e4sb65ute0jda6dh6bjtflru1tkn21ht.apps.googleusercontent.com",
+  "olF2_9TK9Bbx-lXfySvqVIAR",
+  "1//09uLIidhMVPw_CgYIARAAGAkSNwF-L9Irc_SRAnAv3XUrLlqB5d3iEpOMnoaBquYgrIVY105eiRCwwUiIUaes7MRgsEwAbP7uvfw"
 );
 
 function fetchArchiveMessages(ga, messagesYear = new Date().getFullYear()) {
@@ -125,7 +118,7 @@ function fetchArchiveMessages(ga, messagesYear = new Date().getFullYear()) {
       let messagesQuery = {
         orderBy: "name asc",
         pageSize: 100,
-        q: `mimeType contains 'audio' and name contains '${messagesYear}' and trashed=false`,
+        q: `mimeType contains 'audio' and name contains '${messagesYear}' and trashed=false and 'trinec.v@cb.cz' in owners`,
         fields: "files(id, name, webViewLink, webContentLink)",
       };
 
@@ -197,6 +190,7 @@ function getMessagesYears() {
 })();
 
 (function () {
-  fetchArchiveMessages(ga);
-  appendYearTitle();
+  const thisYear = new Date().getFullYear();
+  fetchArchiveMessages(ga, thisYear);
+  appendYearTitle(thisYear);
 })();

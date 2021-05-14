@@ -9,62 +9,47 @@
       rel="stylesheet"
       href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
     />
-    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
-
+    <link
+      href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
   </head>
-
-  <body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+  <body
+    class="flex flex-col min-h-screen font-sans leading-normal tracking-normal bg-yellow-500 "
+  >
     <header>
-      <nav class="bg-yellow-900 p-2 mt-0 w-full">
+      <nav class="w-full p-2 mt-0 bg-yellow-900">
         <!-- Add this to make the nav fixed: "fixed z-10 pin-t" -->
-        <div class="container mx-auto flex flex-wrap items-center">
+        <div class="container flex flex-wrap items-center mx-auto">
           <div
-            class="flex w-full md:w-1/2 justify-center md:justify-start text-white font-extrabold"
+            class="flex justify-center w-full font-extrabold text-white  md:w-1/2 md:justify-start"
           >
             <a class="text-white no-underline" href="index.html">
-              <span class="text-2xl pl-2">CB Třinec Dolní Lištná</span>
+              <span class="pl-2 text-2xl">CB Třinec Dolní Lištná</span>
             </a>
           </div>
           <div
-            class="flex w-full pt-2 content-center justify-between md:w-1/2 md:justify-end"
+            class="flex content-center justify-between w-full pt-2  md:w-1/2 md:justify-end"
           >
             <ul
-              class="md:flex list-reset text-center md:flex-none justify-between flex-1"
+              class="justify-between flex-1 text-center  md:flex list-reset md:flex-none"
             >
               <li class="mr-3">
                 <a
-                  class="inline-block py-2 px-4 text-white no-underline"
+                  class="inline-block px-4 py-2 text-white no-underline"
                   href="index.html"
                   >Domů</a
                 >
               </li>
-              <li class="mr-3 border-t md:border-0 dropdown text-white">
+              <li class="mr-3 text-white border-t md:border-0 dropdown">
                 <a href="#" class="text-white no-underline">
-                  <span class="inline-block py-2 px-4"
+                  <span class="inline-block px-4 py-2"
                     >Archív kázaní <i class="fa fa-caret-down"></i
                   ></span>
                 </a>
-                <ul class="dropdown-content list-reset text-center hidden md:absolute ml-2 mt-2">
-
-                    <!-- <li class="border-b border-brown-dark pt-2 pb-2 md:w-32 bg-yellow-900" id="2019">
-                    <a class="block text-white no-underline">
-                      2019</a>
-                  </li>
-
-                  <li class="border-b pt-2 pb-2 md:w-32 bg-yellow-900" id="2018">
-                    <a class="block text-white no-underline">
-                      2018</a>
-
-                  </li>
-                  <li class="border-b pt-2 pb-2 md:w-32 bg-yellow-900" id="2017">
-                    <a class="block text-white no-underline">
-                      2017</a>
-                  </li>
-                  <li class="border-b pt-2 pb-2 md:w-32 bg-yellow-900">
-                      <a class="block text-white no-underline" href="http://cb.cz/trinec.listna/kazani/2018-2">
-                        Starší kázání</a>
-                    </li> -->
-                </ul>
+                <ul
+                  class="hidden mt-2 ml-2 text-center  dropdown-content list-reset md:absolute"
+                ></ul>
               </li>
             </ul>
           </div>
@@ -72,49 +57,77 @@
       </nav>
     </header>
 
-    <div class="bg-white pb-8 my-auto flex-1">
-      <div class="container mx-auto px-0 pt-16 sm:pt-0 md:px-12 lg:px-6">
+    <div class="flex-1 pb-8 my-auto bg-white">
+      <div class="container px-0 pt-16 mx-auto sm:pt-0 md:px-12 lg:px-6">
         <p
           id="archive-title"
-          class="font-bold text-grey-darkest text-4xl px-3 section-heading">
+          class="px-3 text-4xl font-bold text-grey-darkest section-heading"
+        >
           Rok
-      </p>
+        </p>
 
-       
-      <section class="content-section-a">
+        <section class="content-section-a">
           <div class="container">
             <hr class="section-heading-spacer" />
             <div class="clearfix"></div>
             <p
               id="messages"
-              class="font-bold text-grey-darkest text-4xl px-3 section-heading">
+              class="px-3 text-4xl font-bold text-grey-darkest section-heading"
+            >
               Kázání
             </p>
-            <div id="msgContainer">
-            </div>
+            <div id="msgContainer"></div>
           </div>
-      </section>
+        </section>
       </div>
     </div>
 
-    <div class="mx-auto p-4 w-full flex-no-shrink bg-yellow-500 text-center">
-      <span> Copyright&copy; 2019. All rights reserved.</span>
+    <div class="container px-6 py-5 mx-auto">
+      <div class="flex content-center justify-center w-full pt-2">
+        <ul
+          class="flex items-center justify-between flex-1  list-reset md:flex-none"
+        >
+          <li class="mr-3">
+            <a class="inline-block px-3 py-2 no-underline" href="#">Domů</a>
+          </li>
+          <li class="mr-3">
+            <a class="inline-block px-3 py-2 no-underline" href="#calendar"
+              >Oznámení</a
+            >
+          </li>
+          <li class="mr-3">
+            <a class="inline-block px-3 py-2 no-underline" href="#messages"
+              >Kázání</a
+            >
+          </li>
+          <li class="mr-3">
+            <a class="inline-block px-3 py-2 no-underline" href="#gallery"
+              >Fotogalerie</a
+            >
+          </li>
+          <li>
+            <a class="inline-block px-3 py-2 no-underline" href="#contact"
+              >Kontakt</a
+            >
+          </li>
+        </ul>
+      </div>
     </div>
 
     <template id="msgTemplate">
-      <div class="msgRow flex flex-col md:flex-row flex-wrap px-3 text-xl pb-2">
-        <div class="msgDate w-32 mr-2 font-weight-normal "></div>
-        <div class="msgTitle mr-2 font-semibold text-blue-600"></div>
+      <div class="flex flex-col flex-wrap px-3 pb-2 text-xl msgRow md:flex-row">
+        <div class="w-32 mr-2 msgDate font-weight-normal"></div>
+        <div class="mr-2 font-semibold text-blue-600 msgTitle"></div>
         <div
-          class="msgAuthor font-weight-normal text-muted mr-3 font-light"
+          class="mr-3 font-light msgAuthor font-weight-normal text-muted"
         ></div>
       </div>
     </template>
     <template id="msgMonthly">
-      <h2 class="msgMonthTitle font-bold text-lg"></h2>
+      <h2 class="text-lg font-bold msgMonthTitle"></h2>
       <div class="msgList"></div>
     </template>
-    
+
     <script src="https://moment.github.io/luxon/global/luxon.min.js"></script>
 
     <script src="js/google-access.js"></script>
