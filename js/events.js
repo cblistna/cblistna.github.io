@@ -23,72 +23,74 @@ const Events = (function () {
     }
   }
 
+  function parseId(event) {
+    assertEvent(event);
+    return { eventId: event.id.replace(/_\w+$/, "") };
+  }
+
+  function parseSummary(event) {
+    assertEvent(event);
+    let name = (event.summary && event.summary.trim()) || "";
+
+    const tags = parseMatchingGroupOf(tagPattern, name);
+
+    name = name.replace(tagPattern, "").trim();
+    name = name.replace("  ", " ");
+
+    const comment = parseMatchingGroupOf(commentPattern, name).pop();
+    name = name.replace(commentPattern, "").trim();
+
+    return { name, tags, comment };
+  }
+
+  function parseDates(event) {
+    assertEvent(event);
+    const start = new Date(
+      event.start.dateTime || event.start.date + "T00:00:00+01:00"
+    );
+    const end = new Date(
+      event.end.dateTime || event.end.date + "T23:59:59+01:00"
+    );
+    return { start, end };
+  }
+
+  function parseDescription(event) {
+    assertEvent(event);
+    const description = event.description
+      ? event.description.trim()
+      : undefined;
+    return { description };
+  }
+
+  function parseAttachments(event) {
+    assertEvent(event);
+    const attachments = (event.attachments || []).map((attachment) => ({
+      name: attachment.title.replace(/\.\w+$/, "").trim(),
+      url: attachment.fileUrl,
+    }));
+    return { attachments };
+  }
+
   return {
     parse(event) {
       assertEvent(event);
       return {
-        ...this.parseId(event),
-        ...this.parseSummary(event),
-        ...this.parseDescription(event),
-        ...this.parseDates(event),
-        ...this.parseAttachments(event)
+        ...parseId(event),
+        ...parseSummary(event),
+        ...parseDescription(event),
+        ...parseDates(event),
+        ...parseAttachments(event),
       };
     },
 
     dropRecurringNotImportant(events) {
       const ids = {};
-      return events.filter(event => {
+      return events.filter((event) => {
         const unique = !!!ids[event.eventId];
-        const important = (event.tags || []).includes('important');
+        const important = (event.tags || []).includes("important");
         ids[event.eventId] = true;
         return unique || important;
       });
     },
-
-    parseId(event) {
-      assertEvent(event);
-      return { eventId: event.id.replace(/_\w+$/, '') };
-    },
-
-    parseSummary(event) {
-      assertEvent(event);
-      let name = (event.summary && event.summary.trim()) || "";
-
-      const tags = parseMatchingGroupOf(tagPattern, name);
-
-      name = name.replace(tagPattern, "").trim();
-      name = name.replace("  ", " ");
-
-      const comment = parseMatchingGroupOf(commentPattern, name).pop();
-      name = name.replace(commentPattern, "").trim();
-
-      return { name, tags, comment };
-    },
-
-    parseDates(event) {
-      assertEvent(event);
-      const start = new Date(
-        event.start.dateTime || event.start.date + "T00:00:00+01:00"
-      );
-      const end = new Date(
-        event.end.dateTime || event.end.date + "T23:59:59+01:00"
-      );
-      return { start, end };
-    },
-
-    parseDescription(event) {
-      assertEvent(event);
-      const description = event.description ? event.description.trim() : undefined;
-      return { description };
-    },
-
-    parseAttachments(event) {
-      assertEvent(event);
-      const attachments = (event.attachments || []).map(attachment => ({
-        name: attachment.title.replace(/\.\w+$/, "").trim(),
-        url: attachment.fileUrl
-      }));
-      return { attachments };
-    }
   };
 })();
