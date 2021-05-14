@@ -22,17 +22,40 @@
         <!-- Add this to make the nav fixed: "fixed z-10 pin-t" -->
         <div class="container mx-auto flex flex-wrap items-center">
           <div
-            class="flex w-full md:w-1/2 justify-center md:justify-start text-white font-extrabold"
+            class="
+              flex
+              w-full
+              md:w-1/2
+              justify-center
+              md:justify-start
+              text-white
+              font-extrabold
+            "
           >
             <a class="text-white no-underline" href="#">
               <span class="text-2xl pl-2">CB Třinec Dolní Líštná</span>
             </a>
           </div>
           <div
-            class="flex w-full pt-2 content-center justify-between md:w-1/2 md:justify-end"
+            class="
+              flex
+              w-full
+              pt-2
+              content-center
+              justify-between
+              md:w-1/2
+              md:justify-end
+            "
           >
             <ul
-              class="md:flex list-reset text-center md:flex-none justify-between flex-1"
+              class="
+                md:flex
+                list-reset
+                text-center
+                md:flex-none
+                justify-between
+                flex-1
+              "
             >
               <li class="mr-3">
                 <a
@@ -69,10 +92,27 @@
     </header>
 
     <div
-      class="container mx-auto flex flex-col md:flex-row items-center my-6 md:my-24"
+      class="
+        container
+        mx-auto
+        flex flex-col
+        md:flex-row
+        items-center
+        my-6
+        md:my-24
+      "
     >
       <div
-        class="flex flex-col w-full lg:w-1/2 justify-center items-start pt-12 pb-24 px-6"
+        class="
+          flex flex-col
+          w-full
+          lg:w-1/2
+          justify-center
+          items-start
+          pt-12
+          pb-24
+          px-6
+        "
       >
         <p class="uppercase tracking-loose">Rádi tě uvidíme mezi námi</p>
         <h1 class="mt-4">Církev bratrská</h1>
@@ -202,7 +242,14 @@
     <div class="container mx-auto py-5 px-6">
       <div class="flex w-full pt-2 content-center justify-center">
         <ul
-          class="list-reset flex justify-between flex-1 md:flex-none items-center"
+          class="
+            list-reset
+            flex
+            justify-between
+            flex-1
+            md:flex-none
+            items-center
+          "
         >
           <li class="mr-3">
             <a class="inline-block py-2 px-3 no-underline" href="#">Domů</a>
@@ -279,37 +326,5 @@
     <script src="js/google-access.js"></script>
     <script src="js/events.js"></script>
     <script src="js/app.js"></script>
-    <script>
-      const overlay = document.querySelector(".modal-overlay");
-      overlay.addEventListener("click", toggleModal);
-
-      var closemodal = document.querySelectorAll(".modal-close");
-      for (var i = 0; i < closemodal.length; i++) {
-        closemodal[i].addEventListener("click", toggleModal);
-      }
-
-      document.onkeydown = function (evt) {
-        evt = evt || window.event;
-        var isEscape = false;
-        if ("key" in evt) {
-          isEscape = evt.key === "Escape" || evt.key === "Esc";
-        } else {
-          isEscape = evt.keyCode === 27;
-        }
-        if (isEscape && document.body.classList.contains("modal-active")) {
-          toggleModal();
-        }
-      };
-
-      function toggleModal() {
-        const body = document.querySelector("body");
-        const modal = document.querySelector(".modal");
-        modal.classList.toggle("opacity-0");
-        modal.classList.toggle("pointer-events-none");
-        body.classList.toggle("modal-active");
-      }
-
-      toggleModal();
-    </script>
   </body>
 </html>
