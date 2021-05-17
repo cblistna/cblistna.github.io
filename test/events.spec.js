@@ -242,7 +242,7 @@ describe("Google event", function () {
       ).to.eql([{ name: "title", url: "url" }]);
     });
   });
-  describe("#thisWeek()", () => {
+  describe("#weekOf()", () => {
     it("should return week on Sunday", () => {
       const now = new Date("2021-05-16T09:00:00");
       const monday = new Date("2021-05-17T00:00:00");
