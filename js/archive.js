@@ -105,13 +105,6 @@ function parseFile(file) {
   return meta;
 }
 
-const ga = new GoogleAccess(
-  "cblistna",
-  "1043527471308-e4sb65ute0jda6dh6bjtflru1tkn21ht.apps.googleusercontent.com",
-  "olF2_9TK9Bbx-lXfySvqVIAR",
-  "1//09uLIidhMVPw_CgYIARAAGAkSNwF-L9Irc_SRAnAv3XUrLlqB5d3iEpOMnoaBquYgrIVY105eiRCwwUiIUaes7MRgsEwAbP7uvfw"
-);
-
 function fetchArchiveMessages(ga, messagesYear = new Date().getFullYear()) {
   ga.init()
     .then(() => {
