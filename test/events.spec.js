@@ -258,7 +258,7 @@ describe("Google event", function () {
       const now = new Date("2021-05-22T23:59:59");
       const monday = new Date("2021-05-17T00:00:00");
       const sunday = new Date("2021-05-23T23:59:59");
-      const week = Events.thisWeek(now); // Monday
+      const week = Events.thisWeek(now); // Saturday
       console.log(week);
       expect(week.now.toISOString()).to.eq(now.toISOString());
       expect(week.monday.toISOString()).to.eq(monday.toISOString());
