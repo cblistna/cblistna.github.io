@@ -6,6 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Události</title>
     <script src="https://cdn.jsdelivr.net/npm/vue "></script>
+    <script src="../js/google-access.js"></script>
+    <script src="../js/events.js"></script>
+    <script src="../js/lib/luxon.min.js"></script>
     <link rel="stylesheet" href="../css/tailwind.min.css" />
     <style>
       html {
@@ -35,7 +38,6 @@
       </p>
       <calendar-day v-for="day in calendar" :day="day"></calendar-day>
     </div>
-    <script src="../js/lib/luxon.min.js"></script>
     <script>
       Vue.component("calendar-day", {
         props: ["day"],
@@ -56,107 +58,70 @@
               >{{ event.detail }}</span>
             </p>
           </div>
-        `
+        `,
       });
 
-      new Vue({
-        el: "#next-week-events",
-        data: {
-          calendar: [
-            {
-              date: luxon.DateTime.fromISO("2020-02-10").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-02-10T09:30").setLocale(
-                    "cs"
-                  ),
-                  description: "Setkávání maminek",
-                  detail: "Sluníčko, Sosna"
-                }
-              ]
-            },
-            {
-              date: luxon.DateTime.fromISO("2020-02-12").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-02-12T18:00").setLocale(
-                    "cs"
-                  ),
-                  description: "Modlitby"
-                }
-              ]
-            },
-            {
-              date: luxon.DateTime.fromISO("2020-02-14").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-04-12T17:00").setLocale(
-                    "cs"
-                  ),
-                  description: "Dorost"
-                }
-              ]
-            },
-            {
-              date: luxon.DateTime.fromISO("2020-02-15").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-02-15T18:00").setLocale(
-                    "cs"
-                  ),
-                  description: "Mládež"
-                }
-              ]
-            },
-            {
-              date: luxon.DateTime.fromISO("2020-02-16").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-02-16T09:30").setLocale(
-                    "cs"
-                  ),
-                  description: "Shromáždění"
-                },
-                {
-                  start: luxon.DateTime.fromISO("2020-02-16T11:15").setLocale(
-                    "cs"
-                  ),
-                  description: "Miničlenské"
-                }
-              ]
-            }
-          ]
-        }
-      });
-      new Vue({
-        el: "#upcoming-events",
-        data: {
-          calendar: [
-            {
-              date: luxon.DateTime.fromISO("2020-03-01").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-03-01T11:15").setLocale(
-                    "cs"
-                  ),
-                  description: "Výroční členské shromáždění"
-                }
-              ]
-            },
-            {
-              date: luxon.DateTime.fromISO("2020-03-02").setLocale("cs"),
-              events: [
-                {
-                  start: luxon.DateTime.fromISO("2020-02-01T17:00").setLocale(
-                    "cs"
-                  ),
-                  description: "Setkávání žen"
-                }
-              ]
-            }
-          ]
-        }
-      });
+      function toDate(date) {
+        return luxon.DateTime.fromJSDate(date).setLocale("cs");
+      }
+
+      function toCalendar(events) {
+        const calendar = events.reduce((calendar, event) => {
+          const date = toDate(event.start).toFormat("yyyy-MM-dd");
+          if (!calendar[date]) {
+            calendar[date] = [];
+          }
+          calendar[date].push(event);
+          return calendar;
+        }, {});
+        return Object.keys(calendar)
+          .sort()
+          .map((date) => ({
+            date: luxon.DateTime.fromISO(date),
+            events: calendar[date].map((event) => ({
+              start: toDate(event.start),
+              description: event.name,
+              detail: event.description,
+            })),
+          }));
+      }
+
+      ga.init()
+        .then(() => {
+          const week = Events.weekOf();
+
+          ga.eventsOf("trinec.v@cb.cz", {
+            timeMin: new Date(
+              week.now.getTime() + 30 * 60 * 1000
+            ).toISOString(),
+            timeMax: new Date(
+              week.now.getTime() + 200 * 24 * 60 * 60 * 1000
+            ).toISOString(),
+            singleEvents: true,
+            orderBy: "startTime",
+            maxResults: 150,
+          }).then((googleEvents) => {
+            const schedule = Events.schedule(
+              Events.parse(googleEvents.items),
+              week
+            );
+
+            new Vue({
+              el: "#next-week-events",
+              data: {
+                calendar: toCalendar(schedule.events.week),
+              },
+            });
+
+            new Vue({
+              el: "#upcoming-events",
+              data: {
+                calendar: toCalendar(schedule.events.incoming),
+              },
+            });
+          });
+        })
+        .catch(console.error);
     </script>
   </body>
 </html>
