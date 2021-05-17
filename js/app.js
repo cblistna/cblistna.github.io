@@ -158,7 +158,7 @@ ga.init()
 
     const messagesQuery = {
       orderBy: "name desc",
-      pageSize: 10,
+      pageSize: 7,
       q: "trashed=false and 'trinec.v@cb.cz' in owners and mimeType contains 'audio'",
       fields: "files(id, name, webViewLink, webContentLink)",
     };
