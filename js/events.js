@@ -71,18 +71,28 @@ const Events = (function () {
     return { attachments };
   }
 
+  function parseSingleEvent(event) {
+    assertEvent(event);
+    return {
+      ...parseId(event),
+      ...parseSummary(event),
+      ...parseDescription(event),
+      ...parseDates(event),
+      ...parseAttachments(event),
+    };
+  }
+
   return {
-    parse(event) {
-      assertEvent(event);
-      return {
-        ...parseId(event),
-        ...parseSummary(event),
-        ...parseDescription(event),
-        ...parseDates(event),
-        ...parseAttachments(event),
-      };
+    parse(events) {
+      if (Array.isArray(events)) {
+        return events.map((event) => parseSingleEvent(event));
+      }
+      return parseSingleEvent(events);
     },
 
+    /**
+     * @deprecated
+     */
     dropRecurringNotImportant(events) {
       const ids = {};
       return events.filter((event) => {
@@ -93,23 +103,61 @@ const Events = (function () {
       });
     },
 
-    thisWeek(now = new Date()) {
+    weekOf(now = new Date()) {
       const monday = now.getDate() - now.getDay() + 1;
       const sunday = monday + 6;
-      const mondayStart = new Date(now);
+      const mondayStart = new Date(now.getTime());
       mondayStart.setDate(monday);
       mondayStart.setHours(0);
       mondayStart.setMinutes(0);
       mondayStart.setSeconds(0);
-      const sundayEnd = new Date(now);
+      const sundayEnd = new Date(now.getTime());
       sundayEnd.setDate(sunday);
       sundayEnd.setHours(23);
       sundayEnd.setMinutes(59);
       sundayEnd.setSeconds(59);
+      const sundayBefore = new Date(mondayStart.getTime());
+      sundayBefore.setDate(mondayStart.getDate() - 1);
       return {
-        now: new Date(now),
+        sundayBefore,
+        now: new Date(now.getTime()),
         monday: mondayStart,
         sunday: sundayEnd,
+      };
+    },
+
+    schedule(events, week) {
+      const sundayBeforeEvents = events.filter(
+        (event) =>
+          event.start > week.sundayBefore &&
+          event.start < week.monday &&
+          event.start > week.now
+      );
+
+      const weekEvents = events.filter(
+        (event) => event.start > week.monday && event.start < week.sunday
+      );
+
+      const seenEventIds = new Set(weekEvents.map((event) => event.eventId));
+      const incomingEvents = events.filter((event) => {
+        const seen = seenEventIds.has(event.eventId);
+        seenEventIds.add(event.eventId);
+        const important = (event.tags || []).includes("important");
+        return event.start > week.sunday && (!seen || important);
+      });
+
+      const topEvents = events.filter((event) =>
+        (event.tags || []).includes("top")
+      );
+
+      return {
+        week,
+        events: {
+          sundayBefore: sundayBeforeEvents,
+          week: weekEvents,
+          incoming: incomingEvents,
+          top: topEvents,
+        },
       };
     },
   };

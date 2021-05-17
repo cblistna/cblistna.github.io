@@ -147,6 +147,15 @@ describe("Google event", function () {
       expect(event.tags).to.eql([]);
       expect(event.comment).to.equal("comment");
     });
+
+    it("should parse list of google events", () => {
+      const events = Events.parse([
+        {
+          ...minimalGoogleEvent,
+        },
+      ]);
+      expect(events.length).to.eq(1);
+    });
   });
 
   describe("parse dates", () => {
@@ -235,11 +244,13 @@ describe("Google event", function () {
   });
   describe("#thisWeek()", () => {
     it("should return week on Sunday", () => {
-      const now = new Date("2021-05-16T00:00:00");
+      const now = new Date("2021-05-16T09:00:00");
       const monday = new Date("2021-05-17T00:00:00");
       const sunday = new Date("2021-05-23T23:59:59");
-      const week = Events.thisWeek(now); // Sunday
-      console.log(week);
+      const week = Events.weekOf(now); // Sunday
+      expect(week.sundayBefore.toISOString()).to.eq(
+        new Date("2021-05-16T00:00:00").toISOString()
+      );
       expect(week.now.toISOString()).to.eq(now.toISOString());
       expect(week.monday.toISOString()).to.eq(monday.toISOString());
       expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
@@ -248,8 +259,10 @@ describe("Google event", function () {
       const now = new Date("2021-05-17T00:00:00");
       const monday = new Date("2021-05-17T00:00:00");
       const sunday = new Date("2021-05-23T23:59:59");
-      const week = Events.thisWeek(now); // Monday
-      console.log(week);
+      const week = Events.weekOf(now); // Monday
+      expect(week.sundayBefore.toISOString()).to.eq(
+        new Date("2021-05-16T00:00:00").toISOString()
+      );
       expect(week.now.toISOString()).to.eq(now.toISOString());
       expect(week.monday.toISOString()).to.eq(monday.toISOString());
       expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
@@ -258,11 +271,113 @@ describe("Google event", function () {
       const now = new Date("2021-05-22T23:59:59");
       const monday = new Date("2021-05-17T00:00:00");
       const sunday = new Date("2021-05-23T23:59:59");
-      const week = Events.thisWeek(now); // Saturday
-      console.log(week);
+      const week = Events.weekOf(now); // Saturday
+      expect(week.sundayBefore.toISOString()).to.eq(
+        new Date("2021-05-16T00:00:00").toISOString()
+      );
       expect(week.now.toISOString()).to.eq(now.toISOString());
       expect(week.monday.toISOString()).to.eq(monday.toISOString());
       expect(week.sunday.toISOString()).to.eq(sunday.toISOString());
+    });
+  });
+
+  describe("#shedule()", () => {
+    function eventNames(events) {
+      return events.map((event) => event.name);
+    }
+
+    const week = Events.weekOf(new Date("2021-05-16T10:00:00")); // Sunday at 10:00
+
+    const events = Events.parse([
+      {
+        id: "1",
+        summary: "Sunday before 10:00",
+        start: { dateTime: "2021-05-16T09:59:59" },
+        end: { dateTime: "2021-05-16T11:00:00" },
+      },
+      {
+        id: "2",
+        summary: "Sunday evening",
+        start: { dateTime: "2021-05-16T19:00:00" },
+        end: { dateTime: "2021-05-16T21:00:00" },
+      },
+      {
+        id: "3",
+        summary: "Monday afternoon",
+        start: { dateTime: "2021-05-17T16:00:00" },
+        end: { dateTime: "2021-05-17T18:00:00" },
+      },
+      {
+        id: "4",
+        summary: "Next sunday morning // 1",
+        start: { dateTime: "2021-05-23T09:30:00" },
+        end: { dateTime: "2021-05-23T11:30:00" },
+      },
+      {
+        id: "5",
+        summary: "Incoming 1",
+        start: { dateTime: "2021-05-24T00:00:00" },
+        end: { dateTime: "2021-05-24T08:00:00" },
+      },
+      {
+        id: "6_a",
+        summary: "Incoming 2a",
+        start: { dateTime: "2021-05-30T09:00:00" },
+        end: { dateTime: "2021-05-30T10:00:00" },
+      },
+      {
+        id: "6_b",
+        summary: "Incoming 2b",
+        start: { dateTime: "2021-05-30T09:00:00" },
+        end: { dateTime: "2021-05-30T10:00:00" },
+      },
+      {
+        id: "4_a",
+        summary: "Next sunday morning // 2",
+        start: { dateTime: "2021-05-30T09:30:00" },
+        end: { dateTime: "2021-05-30T11:30:00" },
+      },
+      {
+        id: "7",
+        summary: "Incoming 3 highlight // #top",
+        start: { dateTime: "2021-06-14T00:00:00" },
+        end: { dateTime: "2021-06-14T08:00:00" },
+      },
+      {
+        id: "4_b",
+        summary: "Next sunday morning // 3 #important",
+        start: { dateTime: "2021-06-20T09:30:00" },
+        end: { dateTime: "2021-06-20T11:30:00" },
+      },
+    ]);
+
+    const schedule = Events.schedule(events, week);
+
+    it("should contain week", () => {
+      expect(schedule.week).to.eql(week);
+    });
+
+    it("should schedule today's events", () => {
+      expect(eventNames(schedule.events.sundayBefore)).to.eql([
+        "Sunday evening",
+      ]);
+    });
+    it("should schedule week events", () => {
+      expect(eventNames(schedule.events.week)).to.eql([
+        "Monday afternoon",
+        "Next sunday morning",
+      ]);
+    });
+    it("should schedule incoming events", () => {
+      expect(eventNames(schedule.events.incoming)).to.eql([
+        "Incoming 1",
+        "Incoming 2a",
+        "Incoming 3 highlight",
+        "Next sunday morning",
+      ]);
+    });
+    it("should schedule top events", () => {
+      expect(eventNames(schedule.events.top)).to.eql(["Incoming 3 highlight"]);
     });
   });
 });
