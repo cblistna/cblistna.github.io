@@ -126,7 +126,7 @@ const Events = (function () {
       };
     },
 
-    schedule(events, week) {
+    schedule(events, week = this.weekOf()) {
       const sundayBeforeEvents = events.filter(
         (event) =>
           event.start > week.sundayBefore &&
