@@ -97,7 +97,7 @@ const Events = (function () {
       const ids = {};
       return events.filter((event) => {
         const unique = !!!ids[event.eventId];
-        const important = (event.tags || []).includes("important");
+        const important = event.tags.includes("important");
         ids[event.eventId] = true;
         return unique || important;
       });
@@ -142,13 +142,11 @@ const Events = (function () {
       const incomingEvents = events.filter((event) => {
         const seen = seenEventIds.has(event.eventId);
         seenEventIds.add(event.eventId);
-        const important = (event.tags || []).includes("important");
+        const important = event.tags.includes("important");
         return event.start > week.sunday && (!seen || important);
       });
 
-      const topEvents = events.filter((event) =>
-        (event.tags || []).includes("top")
-      );
+      const topEvents = events.filter((event) => event.tags.includes("top"));
 
       return {
         week,

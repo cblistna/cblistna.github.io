@@ -101,7 +101,9 @@
             maxResults: 150,
           }).then((googleEvents) => {
             const schedule = Events.schedule(
-              Events.parse(googleEvents.items),
+              Events.parse(googleEvents.items).filter(
+                (event) => !event.tags.includes("hide")
+              ),
               week
             );
 
