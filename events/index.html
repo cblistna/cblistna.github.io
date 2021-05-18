@@ -21,9 +21,12 @@
     </style>
   </head>
   <body class="mx-4 bg-gray-100">
-    <div class="slide">
+    <div id="events-title" class="slide">
       <p id="title" class="text-4xl pt-2 font-medium">
-        Oznámení <span class="text-3xl font-light">9. února 2020</span>
+        Oznámení
+        <span class="text-3xl font-light"
+          >{{ date.toFormat('d. MMMM yyyy') }}</span
+        >
       </p>
     </div>
     <div id="next-week-events" class="slide pt-1">
@@ -107,6 +110,13 @@
               ),
               week
             );
+
+            new Vue({
+              el: "#events-title",
+              data: {
+                date: toDate(week.now),
+              },
+            });
 
             new Vue({
               el: "#next-week-events",
