@@ -44,6 +44,7 @@ describe("Google event", function () {
           },
         ],
       });
+      expect(event.id).to.equal("event1_suffix");
       expect(event.eventId).to.equal("event1");
       expect(event.name).to.equal("Summary");
       expect(event.tags).to.eql(["tag1", "tag2"]);
@@ -64,11 +65,13 @@ describe("Google event", function () {
   describe("parse id", () => {
     it("should parse event id", () => {
       const event = Events.parse({ ...minimalGoogleEvent, id: "id1" });
+      expect(event.id).to.eql("id1");
       expect(event.eventId).to.eql("id1");
     });
 
     it("should parse recurring event id", () => {
       const event = Events.parse({ ...minimalGoogleEvent, id: "id2_suffix" });
+      expect(event.id).to.eql("id2_suffix");
       expect(event.eventId).to.eql("id2");
     });
   });

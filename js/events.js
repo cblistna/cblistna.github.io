@@ -25,7 +25,7 @@ const Events = (function () {
 
   function parseId(event) {
     assertEvent(event);
-    return { eventId: event.id.replace(/_\w+$/, "") };
+    return { id: event.id, eventId: event.id.replace(/_\w+$/, "") };
   }
 
   function parseSummary(event) {
