@@ -55,7 +55,7 @@
               <span class="inline-block w-10 font-light"
                 >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
                   >.{{ event.start.toFormat('mm')}}</span></span>
-              <span class="ml-5 font-medium" v-html="event.description"></span>
+              <span class="ml-5 font-medium">{{ event.description }}</span>
               <span v-if="event.detail" class="text-xl ml-1 text-gray-600 font-light"
               ><span v-html="event.detail"></span></span>
             </p>
