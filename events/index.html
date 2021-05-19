@@ -146,7 +146,7 @@
           }).then((googleEvents) => {
             const events = upgradeDates(Events.parse(googleEvents.items));
             const schedule = Events.schedule(
-              events.filter((event) => !event.tags.includes("hide") || true),
+              events.filter((event) => !event.tags.includes("hide")),
               week
             );
 
