@@ -31,7 +31,7 @@
     </div>
     <div id="next-week-events" class="slide pt-1">
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
-        Týden
+        Příští týden
       </p>
       <calendar-day v-for="day in calendar" :day="day"></calendar-day>
     </div>
@@ -39,7 +39,10 @@
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
         Nadcházející události
       </p>
-      <upcoming-event v-for="event in events" :event="event"></upcoming-event>
+      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+    </div>
+    <div id="highlight-events">
+      <event-highlight v-for="event in events" :event="event"></event-highlight>
     </div>
 
     <script>
@@ -64,7 +67,7 @@
         `,
       });
 
-      Vue.component("upcoming-event", {
+      Vue.component("event-highlight", {
         props: ["event"],
         template: `
           <div class="slide  mt-1">
@@ -154,7 +157,14 @@
             new Vue({
               el: "#upcoming-events",
               data: {
-                events: schedule.events.upcoming,
+                calendar: toCalendar(schedule.events.upcoming),
+              },
+            });
+
+            new Vue({
+              el: "#highlight-events",
+              data: {
+                events: schedule.events.highlight,
               },
             });
           });
