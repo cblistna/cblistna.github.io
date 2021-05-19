@@ -138,7 +138,7 @@ const Events = (function () {
         (event) => event.start > week.monday && event.start < week.sunday
       );
 
-      const occurences = events.reduce((acc, event) => {
+      const eventOccurrences = events.reduce((acc, event) => {
         const eventId = event.eventId;
         if (!acc[eventId]) {
           acc[eventId] = [];
@@ -147,14 +147,14 @@ const Events = (function () {
         return acc;
       }, {});
 
-      const incomingEvents = events.filter((event) => {
-        const repeating = occurences[event.eventId].length > 1;
-        const firstOccurence =
-          occurences[event.eventId].indexOf(event.id) === 0;
+      const upcomingEvents = events.filter((event) => {
+        const repeating = eventOccurrences[event.eventId].length > 1;
+        const firstOccurrence =
+          eventOccurrences[event.eventId].indexOf(event.id) === 0;
         const important = event.tags.includes("important");
         return (
           event.start > week.sunday &&
-          (!repeating || firstOccurence || important)
+          (!repeating || firstOccurrence || important)
         );
       });
 
@@ -165,7 +165,7 @@ const Events = (function () {
         events: {
           sundayBefore: sundayBeforeEvents,
           week: weekEvents,
-          incoming: incomingEvents,
+          upcoming: upcomingEvents,
           top: topEvents,
         },
       };
