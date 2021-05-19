@@ -158,7 +158,19 @@ const Events = (function () {
         );
       });
 
-      const topEvents = events.filter((event) => event.tags.includes("top"));
+      const displayEvents = [
+        ...sundayBeforeEvents,
+        ...weekEvents,
+        ...upcomingEvents,
+      ];
+
+      const topEvents = displayEvents.filter((event) =>
+        event.tags.includes("top")
+      );
+
+      const highlightEvents = displayEvents.filter((event) =>
+        event.tags.includes("highlight")
+      );
 
       return {
         week,
@@ -167,6 +179,7 @@ const Events = (function () {
           week: weekEvents,
           upcoming: upcomingEvents,
           top: topEvents,
+          highlight: highlightEvents,
         },
       };
     },

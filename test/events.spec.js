@@ -324,13 +324,13 @@ describe("Google event", function () {
       },
       {
         id: "6_a",
-        summary: "Upcoming 2a",
+        summary: "Upcoming 2a #highlight",
         start: { dateTime: "2021-05-30T09:00:00" },
         end: { dateTime: "2021-05-30T10:00:00" },
       },
       {
         id: "6_b",
-        summary: "Upcoming 2b",
+        summary: "Upcoming 2b #highlight",
         start: { dateTime: "2021-05-30T09:00:00" },
         end: { dateTime: "2021-05-30T10:00:00" },
       },
@@ -342,7 +342,7 @@ describe("Google event", function () {
       },
       {
         id: "7",
-        summary: "Upcoming 3 highlight // #top",
+        summary: "Upcoming 3 top // #top",
         start: { dateTime: "2021-06-14T00:00:00" },
         end: { dateTime: "2021-06-14T08:00:00" },
       },
@@ -375,12 +375,15 @@ describe("Google event", function () {
       expect(eventNames(schedule.events.upcoming)).to.eql([
         "Upcoming 1",
         "Upcoming 2a",
-        "Upcoming 3 highlight",
+        "Upcoming 3 top",
         "Next sunday morning",
       ]);
     });
     it("should schedule top events", () => {
-      expect(eventNames(schedule.events.top)).to.eql(["Upcoming 3 highlight"]);
+      expect(eventNames(schedule.events.top)).to.eql(["Upcoming 3 top"]);
+    });
+    it("should schedule highlight events", () => {
+      expect(eventNames(schedule.events.highlight)).to.eql(["Upcoming 2a"]);
     });
   });
 });
