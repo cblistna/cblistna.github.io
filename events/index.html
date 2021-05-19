@@ -88,50 +88,53 @@
           }));
       }
 
+      function daysInMillis(days) {
+        return days * 24 * 60 * 60 * 1000;
+      }
+
+      const week = Events.weekOf();
+
+      new Vue({
+        el: "#events-title",
+        data: {
+          date: toDate(week.now),
+        },
+      });
+
       ga.init()
         .then(() => {
-          const week = Events.weekOf();
+          const days200 = ga
+            .eventsOf("trinec.v@cb.cz", {
+              timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
+              timeMax: new Date(
+                week.sunday.getTime() + daysInMillis(200)
+              ).toISOString(),
+              singleEvents: true,
+              orderBy: "startTime",
+              maxResults: 150,
+            })
+            .then((googleEvents) => {
+              const schedule = Events.schedule(
+                Events.parse(googleEvents.items).filter(
+                  (event) => !event.tags.includes("hide") || true
+                ),
+                week
+              );
 
-          ga.eventsOf("trinec.v@cb.cz", {
-            timeMin: new Date(
-              week.now.getTime() + 30 * 60 * 1000
-            ).toISOString(),
-            timeMax: new Date(
-              //                   days
-              week.now.getTime() + 200 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-            singleEvents: true,
-            orderBy: "startTime",
-            maxResults: 150,
-          }).then((googleEvents) => {
-            const schedule = Events.schedule(
-              Events.parse(googleEvents.items).filter(
-                (event) => !event.tags.includes("hide")
-              ),
-              week
-            );
+              new Vue({
+                el: "#next-week-events",
+                data: {
+                  calendar: toCalendar(schedule.events.week),
+                },
+              });
 
-            new Vue({
-              el: "#events-title",
-              data: {
-                date: toDate(week.now),
-              },
+              new Vue({
+                el: "#upcoming-events",
+                data: {
+                  calendar: toCalendar(schedule.events.incoming),
+                },
+              });
             });
-
-            new Vue({
-              el: "#next-week-events",
-              data: {
-                calendar: toCalendar(schedule.events.week),
-              },
-            });
-
-            new Vue({
-              el: "#upcoming-events",
-              data: {
-                calendar: toCalendar(schedule.events.incoming),
-              },
-            });
-          });
         })
         .catch(console.error);
     </script>
