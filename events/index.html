@@ -39,8 +39,9 @@
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
         Nadcházející události
       </p>
-      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+      <upcoming-event v-for="event in events" :event="event"></upcoming-event>
     </div>
+
     <script>
       Vue.component("calendar-day", {
         props: ["day"],
@@ -55,9 +56,9 @@
               <span class="inline-block w-10 font-light"
                 >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
                   >.{{ event.start.toFormat('mm')}}</span></span>
-              <span class="ml-5 font-medium">{{ event.description }}</span>
-              <span v-if="event.detail" class="text-xl ml-1 text-gray-600 font-light"
-              ><span v-html="event.detail"></span></span>
+              <span class="ml-5 font-medium">{{ event.name }}</span>
+              <span v-if="event.description" class="text-xl ml-1 text-gray-600 font-light"
+              ><span v-html="event.description"></span></span>
             </p>
           </div>
         `,
@@ -66,19 +67,19 @@
       Vue.component("upcoming-event", {
         props: ["event"],
         template: `
-          <div class="mt-1">
+          <div class="slide  mt-1">
             <p class="text-2xl mb-1">
               <span class="text-xl font-normal"
                 >{{ event.start.toFormat('cccc') }},
                  {{ event.start.toFormat('d. MMMM') }}</span>
             </p>
-            <p v-for="event in day.events" class="text-2xl mb-2">
+            <p class="text-2xl mb-2">
               <span class="inline-block w-10 font-light"
                 >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
                   >.{{ event.start.toFormat('mm')}}</span></span>
-              <span class="ml-5 font-medium">{{ event.description }}</span>
-              <span v-if="event.detail" class="text-xl ml-1 text-gray-600 font-light"
-              ><span v-html="event.detail"></span></span>
+              <span class="ml-5 font-medium">{{ event.name }}</span>
+              <span v-if="event.description" class="text-xl ml-1 text-gray-600 font-light"
+              ><span v-html="event.description"></span></span>
             </p>
           </div>
         `,
@@ -88,9 +89,17 @@
         return luxon.DateTime.fromJSDate(date).setLocale("cs");
       }
 
+      function upgradeDates(events) {
+        return events.map((event) => ({
+          ...event,
+          start: toDate(event.start),
+          end: toDate(event.start),
+        }));
+      }
+
       function toCalendar(events) {
         const calendar = events.reduce((calendar, event) => {
-          const date = toDate(event.start).toFormat("yyyy-MM-dd");
+          const date = event.start.toFormat("yyyy-MM-dd");
           if (!calendar[date]) {
             calendar[date] = [];
           }
@@ -101,11 +110,7 @@
           .sort()
           .map((date) => ({
             date: luxon.DateTime.fromISO(date).setLocale("cs"),
-            events: calendar[date].map((event) => ({
-              start: toDate(event.start),
-              description: event.name,
-              detail: event.description,
-            })),
+            events: calendar[date],
           }));
       }
 
@@ -124,38 +129,35 @@
 
       ga.init()
         .then(() => {
-          const days200 = ga
-            .eventsOf("trinec.v@cb.cz", {
-              timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
-              timeMax: new Date(
-                week.sunday.getTime() + daysInMillis(200)
-              ).toISOString(),
-              singleEvents: true,
-              orderBy: "startTime",
-              maxResults: 150,
-            })
-            .then((googleEvents) => {
-              const schedule = Events.schedule(
-                Events.parse(googleEvents.items).filter(
-                  (event) => !event.tags.includes("hide") || true
-                ),
-                week
-              );
+          ga.eventsOf("trinec.v@cb.cz", {
+            timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
+            timeMax: new Date(
+              week.sunday.getTime() + daysInMillis(200)
+            ).toISOString(),
+            singleEvents: true,
+            orderBy: "startTime",
+            maxResults: 150,
+          }).then((googleEvents) => {
+            const events = upgradeDates(Events.parse(googleEvents.items));
+            const schedule = Events.schedule(
+              events.filter((event) => !event.tags.includes("hide") || true),
+              week
+            );
 
-              new Vue({
-                el: "#next-week-events",
-                data: {
-                  calendar: toCalendar(schedule.events.week),
-                },
-              });
-
-              new Vue({
-                el: "#upcoming-events",
-                data: {
-                  calendar: toCalendar(schedule.events.upcoming),
-                },
-              });
+            new Vue({
+              el: "#next-week-events",
+              data: {
+                calendar: toCalendar(schedule.events.week),
+              },
             });
+
+            new Vue({
+              el: "#upcoming-events",
+              data: {
+                events: schedule.events.upcoming,
+              },
+            });
+          });
         })
         .catch(console.error);
     </script>
