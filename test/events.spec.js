@@ -244,6 +244,27 @@ describe("Google event", function () {
         }).attachments
       ).to.eql([{ name: "title", url: "url" }]);
     });
+
+    it("should parse attachments in order", () => {
+      expect(
+        Events.parse({
+          ...minimalGoogleEvent,
+          attachments: [
+            {
+              title: "a-title #2",
+              fileUrl: "url",
+            },
+            {
+              title: "b-title #1",
+              fileUrl: "url",
+            },
+          ],
+        }).attachments
+      ).to.eql([
+        { name: "b-title", url: "url" },
+        { name: "a-title", url: "url" },
+      ]);
+    });
   });
   describe("#weekOf()", () => {
     it("should return week on Sunday", () => {

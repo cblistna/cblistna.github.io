@@ -3,6 +3,7 @@
 const Events = (function () {
   const tagPattern = / #([\w-]+)/g;
   const commentPattern = /\/\/(.*)$/g;
+  const attchmentOrderKeyPattern = /#(\d)/g;
 
   function parseMatchingGroupOf(pattern, text) {
     pattern.lastIndex = 0;
@@ -64,10 +65,23 @@ const Events = (function () {
 
   function parseAttachments(event) {
     assertEvent(event);
-    const attachments = (event.attachments || []).map((attachment) => ({
-      name: attachment.title.replace(/\.\w+$/, "").trim(),
-      url: attachment.fileUrl,
-    }));
+
+    const attachments = (event.attachments || [])
+      .map((attachment) => ({
+        name: attachment.title
+          .replace(/\.\w+$/, "")
+          .replace(attchmentOrderKeyPattern, "")
+          .trim(),
+        url: attachment.fileUrl,
+        orderKey:
+          parseMatchingGroupOf(attchmentOrderKeyPattern, attachment.title)[0] ||
+          "",
+      }))
+      .sort((a, b) => a.orderKey.localeCompare(b.orderKey))
+      .map((attachment) => {
+        delete attachment.orderKey;
+        return attachment;
+      });
     return { attachments };
   }
 
