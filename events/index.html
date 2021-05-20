@@ -63,8 +63,10 @@
                 >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
                   >.{{ event.start.toFormat('mm')}}</span></span>
               <span class="ml-5 font-medium">{{ event.name }}</span>
-              <span v-if="event.description" class="text-xl ml-1 text-gray-600 font-light"
-              ><span v-html="event.description"></span></span>
+              <span v-if="event.description" class="text-xl ml-1 text-gray-600 font-light">
+                <br />
+                <span class="ml-5" v-html="event.description"></span>
+              </span>
             </p>
           </div>
         `,
