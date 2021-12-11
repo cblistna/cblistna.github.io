@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="cz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Události</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue "></script>
+    <script src="../js/google-access.js"></script>
+    <script src="../js/lib/luxon.min.js"></script>
+    <link rel="stylesheet" href="../css/tailwind.min.css" />
+  </head>
+  <body class="mx-4 bg-gray-100">
+    <h1 class="text-xl">Services</h1>
+    <script>
+      ga.init().then(() => {
+        ga.dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:J20").then(
+          (data) => {
+            console.log("data", data);
+          }
+        );
+      });
+    </script>
+  </body>
+</html>

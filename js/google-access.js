@@ -5,7 +5,6 @@ class GoogleAccess {
     this.name = name;
     this.accessTokenKey = `${name}.AccessToken`;
     this.accessTokenExpiresAtKey = `${name}.AccessTokenExpiresAt`;
-    this.urlPrefix = "https://www.googleapis.com";
     this.authData = {
       client_id: clientId,
       client_secret: clientSecret,
@@ -23,7 +22,7 @@ class GoogleAccess {
       this._resolveAccessToken()
         .then(() => {
           this._getJson(
-            `/calendar/v3/calendars/${calendar}/events`,
+            `https://www.googleapis.com/calendar/v3/calendars/${calendar}/events`,
             query
           ).then(resolve);
         })
@@ -35,7 +34,20 @@ class GoogleAccess {
     return new Promise((resolve, reject) => {
       this._resolveAccessToken()
         .then(() => {
-          this._getJson("/drive/v3/files", query).then(resolve);
+          this._getJson("https://www.googleapis.com/drive/v3/files", query).then(resolve);
+        })
+        .catch(reject);
+    });
+  }
+  
+  dataOf(spreadsheetId, range) {
+    return new Promise((resolve, reject) => {
+      this._resolveAccessToken()
+        .then(() => {
+          this._getJson(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`, {
+            valueRenderOption: 'UNFORMATTED_VALUE',
+            dateTimeRenderOption: 'FORMATTED_STRING'
+          }).then(resolve);
         })
         .catch(reject);
     });
@@ -50,7 +62,7 @@ class GoogleAccess {
           sessionStorage.getItem(this.accessTokenExpiresAtKey) || nowMillis - 1;
       }
       if (this.accessTokenExpiresAt < nowMillis) {
-        this._postJson("/oauth2/v4/token", this.authData)
+        this._postJson("https://www.googleapis.com/oauth2/v4/token", this.authData)
           .then((auth) => {
             this.accessToken = auth.access_token;
             this.accessTokenExpiresAt = nowMillis + auth.expires_in * 1000;
@@ -69,20 +81,21 @@ class GoogleAccess {
     });
   }
 
-  _postJson(path, data) {
+  _postJson(url, data) {
     return this._ajax(
       "POST",
-      `${this.urlPrefix}${path}`,
+      url,
       { "Content-Type": "application/x-www-form-urlencoded" },
       data
     );
   }
 
-  _getJson(path, query) {
+  _getJson(url, query) {
     return this._ajax(
       "GET",
-      `${this.urlPrefix}${path}`,
-      { Authorization: `Bearer ${this.accessToken}` },
+      url,
+      { Authorization: `Bearer ${this.accessToken}`,
+      },
       query
     );
   }
@@ -128,5 +141,5 @@ const ga = new GoogleAccess(
   "cblistna",
   "1043527471308-e4sb65ute0jda6dh6bjtflru1tkn21ht.apps.googleusercontent.com",
   "olF2_9TK9Bbx-lXfySvqVIAR",
-  "1//09uLIidhMVPw_CgYIARAAGAkSNwF-L9Irc_SRAnAv3XUrLlqB5d3iEpOMnoaBquYgrIVY105eiRCwwUiIUaes7MRgsEwAbP7uvfw"
+  "1//09VRcQIU93WIsCgYIARAAGAkSNwF-L9IrOIRxB2ADgzYpau_iv5T9kpKQLJLj8gTN_ozkQ9WL34sahThAUZmGCSrrp0MXLZPKfyo"
 );
