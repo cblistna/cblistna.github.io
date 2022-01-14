@@ -4,21 +4,61 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Události</title>
+    <title>Rozpis shromáždění</title>
     <script src="https://cdn.jsdelivr.net/npm/vue "></script>
     <script src="../js/google-access.js"></script>
     <script src="../js/lib/luxon.min.js"></script>
-    <link rel="stylesheet" href="../css/tailwind.min.css" />
+    <link rel="stylesheet" href="../css/tailwind2.min.css" />
   </head>
-  <body class="mx-4 bg-gray-100">
-    <h1 class="text-xl">Services</h1>
+  <body class="m-4 bg-gray-100">
+    <h1 class="text-3xl">Rozpis shromáždění</h1>
+    <ul id="app">
+      <li v-for="event in events">
+        <service-meeting :event="event"></service-meeting>
+      </li>
+    </ul>
+    <script type="text/x-template" id="service-meeting-template">
+      <div class="mt-8">
+        <p>{{ event.start.toFormat('cccc') }} <b>{{ event.start.toFormat('d. LLLL')}}</b> {{ event.start.toFormat('yyyy')}},
+           Vedení: <b>{{ event.host }}</b>, Slovo: <b>{{ event.sermon }}</b></p>
+        <p><span class="inline-block pr-2 w-24 text-right text-sm">Chvály:</span>{{ event.worship }}</p>
+        <p><span class="inline-block pr-2 w-24 text-right text-sm">Promítání:</span>{{ event.beaming }}</p>
+        <p><span class="inline-block pr-2 w-24 text-right text-sm">Děti:</span>{{ event.kids }}</p>
+        <p><span class="inline-block pr-2 w-24 text-right text-sm">Poznámky:</span>{{ event.notes }}</p>
+        <p><span class="inline-block pr-2 w-24 text-right text-sm">Narozeniny:</span>{{ event.birthdays }}</p>
+      </div>
+    </script>
     <script>
+      Vue.component("service-meeting", {
+        props: ["event"],
+        template: "#service-meeting-template",
+      });
+
       ga.init().then(() => {
-        ga.dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:J20").then(
-          (data) => {
-            console.log("data", data);
-          }
-        );
+        ga.dataOf(
+          "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI",
+          "A1:J20"
+        ).then((data) => {
+          data.values.shift();
+          const today = luxon.DateTime.fromJSDate(new Date());
+          const events = data.values
+            .map((row) => ({
+              start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
+              host: row[2],
+              sermon: row[3],
+              notes: row[4],
+              birthdays: row[5],
+              worship: row[6],
+              kids: row[7],
+              beaming: row[9],
+            }))
+            .filter((event) => today.toISODate() <= event.start.toISODate())
+            .sort((a, b) => a.start.toMillis() - b.start.toMillis());
+          new Vue({
+            el: "#app",
+            data: { events },
+          });
+        });
       });
     </script>
   </body>
