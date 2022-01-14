@@ -9,22 +9,22 @@
     <script src="../js/google-access.js"></script>
     <script src="../js/events.js"></script>
     <script src="../js/lib/luxon.min.js"></script>
-    <link rel="stylesheet" href="../css/tailwind.min.css" />
+    <link rel="stylesheet" href="../css/tailwind2.min.css" />
     <style>
       html {
-        scroll-snap-type: y mandatory;
+        scroll-snap-type: y;
       }
       .slide {
-        height: 100vh;
+        min-height: 100vh;
         scroll-snap-align: start;
       }
     </style>
   </head>
   <body class="mx-4 bg-gray-100">
     <div id="events-title" class="flex slide">
-      <p id="title" class="text-4xl pt-2 font-medium m-auto">
+      <p id="title" class="text-5xl pt-2 font-medium m-auto">
         Oznámení
-        <span class="text-3xl font-light"
+        <span class="text-4xl font-light"
           >{{ date.toFormat('d. MMMM yyyy') }}</span
         >
       </p>
@@ -33,7 +33,9 @@
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
         Příští týden
       </p>
-      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+      <div day="day" class="-mt-4">
+        <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+      </div>
     </div>
     <div id="upcoming-events" class="slide pt-1">
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
@@ -44,27 +46,22 @@
     <div id="highlight-events">
       <event-highlight v-for="event in events" :event="event"></event-highlight>
     </div>
-    <div id="closing" class="flex slide">
-      <p class="text-4xl pt-2 font-light m-auto">https://cblistna.cz</p>
-    </div>
 
     <script>
       Vue.component("calendar-day", {
         props: ["day"],
         template: `
-          <div class="mt-1">
-            <p class="text-2xl mb-1">
-              <span class="text-xl font-normal"
-                >{{ day.date.toFormat('cccc') }},
-                 {{ day.date.toFormat('d. MMMM') }}</span>
+          <div class="mt-10">
+            <p class="text-4xl font-normal">
+              {{ day.date.toFormat('cccc') }}, {{ day.date.toFormat('d. MMMM') }}
             </p>
-            <p v-for="event in day.events" class="text-2xl mb-2">
-              <span class="inline-block w-10 font-light"
-                >{{ event.start.toFormat('H')}}<span class="text-xl font-light"
+            <p v-for="event in day.events" class="mt-3">
+              <span class="inline-block w-10 font-normal text-4xl"
+                >{{ event.start.toFormat('H')}}<span class="text-3xl font-normal"
                   >.{{ event.start.toFormat('mm')}}</span></span>
-              <span class="ml-5 font-medium">{{ event.name }}</span>
-              <span v-if="event.description" class="text-xl ml-1 text-gray-600 font-light">
-                <span class="ml-5" v-html="event.description"></span>
+              <span class="ml-14 font-medium text-5xl">{{ event.name }}</span>
+              <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                <span v-html="event.description"></span>
               </span>
             </p>
           </div>
