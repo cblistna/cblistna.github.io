@@ -50,7 +50,7 @@
               birthdays: row[5],
               worship: row[6],
               kids: row[7],
-              beaming: row[9],
+              beaming: row[8],
             }))
             .filter((event) => today.toISODate() <= event.start.toISODate())
             .sort((a, b) => a.start.toMillis() - b.start.toMillis());
