@@ -29,6 +29,12 @@
         >
       </p>
     </div>
+    <div id="upcoming-events" class="slide pt-1">
+      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+        Nadcházející události
+      </p>
+      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
+    </div>
     <div id="next-week-events" class="slide pt-1">
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
         Příští týden
@@ -36,12 +42,6 @@
       <div day="day" class="-mt-4">
         <calendar-day v-for="day in calendar" :day="day"></calendar-day>
       </div>
-    </div>
-    <div id="upcoming-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
-        Nadcházející události
-      </p>
-      <calendar-day v-for="day in calendar" :day="day"></calendar-day>
     </div>
     <div id="highlight-events">
       <event-highlight v-for="event in events" :event="event"></event-highlight>
