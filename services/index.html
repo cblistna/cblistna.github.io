@@ -19,13 +19,41 @@
     </ul>
     <script type="text/x-template" id="service-meeting-template">
       <div class="mt-8">
-        <p>{{ event.start.toFormat('cccc') }} <b>{{ event.start.toFormat('d. LLLL')}}</b> {{ event.start.toFormat('yyyy')}},
-           Vedení: <b>{{ event.host }}</b>, Slovo: <b>{{ event.sermon }}</b></p>
-        <p><span class="inline-block pr-2 w-24 text-right text-sm">Chvály:</span>{{ event.worship }}</p>
-        <p><span class="inline-block pr-2 w-24 text-right text-sm">Promítání:</span>{{ event.beaming }}</p>
-        <p><span class="inline-block pr-2 w-24 text-right text-sm">Děti:</span>{{ event.kids }}</p>
-        <p><span class="inline-block pr-2 w-24 text-right text-sm">Poznámky:</span>{{ event.notes }}</p>
-        <p><span class="inline-block pr-2 w-24 text-right text-sm">Narozeniny:</span>{{ event.birthdays }}</p>
+        <p>{{ event.start.toFormat('cccc') }} <b>{{ event.start.toFormat('d. LLLL')}}</b> {{ event.start.toFormat('yyyy')}}</p>
+        <table>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Vedení</td>
+            <td class="align-text-top"><b>{{ event.host }}</b></td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
+            <td class="align-text-top"><b>{{ event.sermon }}</b></td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Poznámky</td>
+            <td class="align-text-top">{{ event.notes }}</td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Chvály</td>
+            <td class="align-text-top">{{ event.worship }}</td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Promítání</td>
+            <td class="align-text-top">{{ event.beaming }}</td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Zvukaři</td>
+            <td class="align-text-top">{{ event.sound }}</td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Děti</td>
+            <td class="align-text-top">{{ event.kids }}</td>
+          </tr>
+          <tr>
+            <td class="text-sm text-right pr-2 align-text-top">Narozeniny</td>
+            <td class="align-text-top" v-html="event.birthdays"></td>
+          </tr>
+        </table>
       </div>
     </script>
     <script>
@@ -44,13 +72,14 @@
           const events = data.values
             .map((row) => ({
               start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
-              host: row[2],
-              sermon: row[3],
-              notes: row[4],
-              birthdays: row[5],
-              worship: row[6],
-              kids: row[7],
-              beaming: row[8],
+              host: row[2] || "-",
+              sermon: row[3] || "-",
+              notes: row[4] || "-",
+              worship: row[5] || "-",
+              kids: row[6] || "-",
+              beaming: row[7] || "-",
+              sound: row[8] || "-",
+              birthdays: (row[9] || "-").replaceAll(", ", "<br />"),
             }))
             .filter((event) => today.toISODate() <= event.start.toISODate())
             .sort((a, b) => a.start.toMillis() - b.start.toMillis());
