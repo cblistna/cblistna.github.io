@@ -46,7 +46,12 @@
     <div id="highlight-events">
       <event-highlight v-for="event in events" :event="event"></event-highlight>
     </div>
-
+    <div id="events-footer" class="flex slide">
+      <p id="title" class="text-5xl pt-2 font-medium m-auto">
+        cblistna.cz
+      </p>
+    </div>
+    
     <script>
       Vue.component("calendar-day", {
         props: ["day"],
