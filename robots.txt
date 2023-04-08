@@ -1,4 +1,4 @@
-User-Agent: *
+User-agent: *
 Disallow: /chvaly
 Disallow: /elders
 Disallow: /events
