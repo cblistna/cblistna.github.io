@@ -1,0 +1,8 @@
+User-Agent: *
+Disallow: /chvaly
+Disallow: /elders
+Disallow: /events
+Disallow: /notify
+Disallow: /services
+Disallow: /skolka
+Disallow: /test
