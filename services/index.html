@@ -28,7 +28,7 @@
           </tr>
           <tr>
             <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
-            <td class="align-text-top"><b>{{ event.sermon }}</b></td>
+            <td class="align-text-top"><b>{{ event.sermon }}</b> {{ event.title }}</td>
           </tr>
           <tr>
             <td class="text-sm text-right pr-2 align-text-top">Poznámky</td>
@@ -66,7 +66,7 @@
       ga.init().then(() => {
         ga.dataOf(
           "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI",
-          "A1:J20"
+          "A1:K20"
         ).then((data) => {
           data.values.shift();
           const today = luxon.DateTime.fromJSDate(new Date());
@@ -75,12 +75,13 @@
               start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
               host: row[2] || "-",
               sermon: row[3] || "-",
-              notes: row[4] || "-",
-              worship: row[5] || "-",
-              kids: row[6] || "-",
-              beaming: row[7] || "-",
-              sound: row[8] || "-",
-              birthdays: (row[9] || "-").replaceAll(", ", "<br />"),
+              title: row[4] || "",
+              notes: row[5] || "-",
+              worship: row[6] || "-",
+              kids: row[7] || "-",
+              beaming: row[8] || "-",
+              sound: row[9] || "-",
+              birthdays: (row[10] || "-").replaceAll(", ", "<br />"),
             }))
             .filter((event) => today.toISODate() <= event.start.toISODate())
             .sort((a, b) => a.start.toMillis() - b.start.toMillis());
