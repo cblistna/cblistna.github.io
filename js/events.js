@@ -47,10 +47,10 @@ const Events = (function () {
   function parseDates(event) {
     assertEvent(event);
     const start = new Date(
-      event.start.dateTime || event.start.date + "T00:00:00+01:00"
+      event.start.dateTime || event.start.date + "T00:00:00"
     );
     const end = new Date(
-      event.end.dateTime || event.end.date + "T23:59:59+01:00"
+      event.end.dateTime || event.end.date + "T23:59:59"
     );
     return { start, end };
   }

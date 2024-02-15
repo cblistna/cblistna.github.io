@@ -83,7 +83,6 @@ function appendMessages(files, elementId) {
   const template = document.getElementById("msgTemplate");
   files.forEach((file) => {
     const meta = parseFile(file);
-    console.log(meta);
     if (!(meta.date.isValid && meta.title && meta.author)) {
       return;
     }
