@@ -141,17 +141,6 @@ const Events = (function () {
     },
 
     schedule(events, week = this.weekOf()) {
-      const sundayBeforeEvents = events.filter(
-        (event) =>
-          event.start > week.sundayBefore &&
-          event.start < week.monday &&
-          event.start > week.now
-      );
-
-      const weekEvents = events.filter(
-        (event) => event.start > week.monday && event.start < week.sunday
-      );
-
       const eventOccurrences = events.reduce((acc, event) => {
         const eventId = event.eventId;
         if (!acc[eventId]) {
@@ -160,30 +149,46 @@ const Events = (function () {
         acc[eventId].push(event.id);
         return acc;
       }, {});
+      const repeating = (event) => eventOccurrences[event.eventId].length > 1;
+      const firstOccurrenceOf = (event) => eventOccurrences[event.eventId].indexOf(event.eventId) === 0;
+      const important = (event) => event.tags.includes("important");
+      const display = (event) => !event.tags.includes("hide");
+      const planned = (event) => event.tags.includes("plan");
 
-      const upcomingEvents = events.filter((event) => {
-        const repeating = eventOccurrences[event.eventId].length > 1;
-        const firstOccurrence =
-          eventOccurrences[event.eventId].indexOf(event.id) === 0;
-        const important = event.tags.includes("important");
-        return (
-          event.start > week.sunday &&
-          (!repeating || firstOccurrence || important)
-        );
-      });
-
-      const displayEvents = [
-        ...sundayBeforeEvents,
-        ...weekEvents,
-        ...upcomingEvents,
-      ];
-
-      const topEvents = displayEvents.filter((event) =>
-        event.tags.includes("top")
+      const sundayBeforeEvents = events.filter(
+        (event) =>
+          display(event) &&
+          event.start > week.sundayBefore &&
+          event.start < week.monday &&
+          event.start > week.now
       );
 
-      const highlightEvents = displayEvents.filter((event) =>
-        event.tags.includes("highlight")
+      const weekEvents = events.filter(
+        (event) =>
+          display(event) &&
+          repeating(event) &&
+          event.start > week.monday &&
+          event.start < week.sunday
+      );
+
+      const upcomingEvents = events.filter((event) =>
+        display(event) &&
+        !planned(event) &&
+        event.start > week.sundayBefore && (
+          !repeating(event) || (
+            repeating(event) &&
+            week.sunday < event.start &&
+            firstOccurrenceOf(event)
+          ) ||
+          important(event)
+        )
+      );
+
+      const plannedEvents = events.filter((event) =>
+        display(event) &&
+        !repeating(event) &&
+        event.start > week.sunday &&
+        planned(event)
       );
 
       return {
@@ -192,8 +197,7 @@ const Events = (function () {
           sundayBefore: sundayBeforeEvents,
           week: weekEvents,
           upcoming: upcomingEvents,
-          top: topEvents,
-          highlight: highlightEvents,
+          plan: plannedEvents,
         },
       };
     },
