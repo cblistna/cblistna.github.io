@@ -136,12 +136,17 @@
         return days * 24 * 60 * 60 * 1000;
       }
 
-      const week = Events.weekOf();
+      const url = new URL(window.location.href);
+      let dayOfWeek = new luxon.DateTime(new Date());
+      if (url.searchParams.has("w")) {
+        dayOfWeek = dayOfWeek.plus({ week: parseInt(url.searchParams.get("w")) || 0 });
+      }
+      const week = Events.weekOf(dayOfWeek.toJSDate());
 
       new Vue({
         el: "#events-title",
         data: {
-          date: toDate(week.now),
+          date: toDate(week.sundayBefore),
         },
       });
 
