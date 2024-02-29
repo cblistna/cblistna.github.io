@@ -38,7 +38,7 @@
         <calendar-day v-for="day in calendar" :day="day"></calendar-day>
       </div>
     </div>
-    <div id="upcoming-events" class="slide pt-1">
+    <div id="upcoming-events">
       <event-highlight v-for="event in calendar" :event="event"></event-highlight>
     </div>
     <div id="planned-events" class="slide pt-1">
@@ -76,29 +76,30 @@
         `,
       });
 
-
       Vue.component("event-highlight", {
         props: ["event"],
         template: `
-          <div class="slide  mt-1">
+          <div class="slide pt-1">
             <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
               Nadcházející události
             </p>
-            <p class="text-4xl font-normal">
-              {{ event.start.toFormat('cccc') }}, {{ event.start.toFormat('d. MMMM') }}
-            </p>
-            <p class="text-2xl mb-2">
-              <span class="inline-block w-10 font-normal text-4xl"
-                >{{ event.start.toFormat('Hm') === "00"  ? "" : event.start.toFormat('H') }}<span class="text-3xl font-normal"
-                  >{{ event.start.toFormat('Hm') === "00" ? "" : "." + event.start.toFormat('mm')}}</span></span>
-              <span class="ml-14 font-medium text-5xl">{{ event.name }}</span>
-              <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
-                <span v-html="event.description"></span>
-              </span>
-              <span v-for="attachment in event.attachments" class="text-blue-500">
-                <br/>
-                <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
-            </p>
+            <div class="min-h-screen flex flex-col justify-center">
+              <div class="pb-64 px-24">
+                <p class="pb-8 text-6xl font-normal">
+                  {{ event.start.toFormat('cccc, d. MMMM')  }}
+                  {{ event.start.toFormat('Hm') === '00' ? "" : "v " + event.start.toFormat('h:mm')}}
+                </p>
+                <p class="text-2xl mb-2">
+                  <span class="font-semibold text-8xl">{{ event.name }}</span>
+                  <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                    <span v-html="event.description"></span>
+                  </span>
+                  <span v-for="attachment in event.attachments" class="text-blue-500">
+                    <br/>
+                    <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
+                </p>
+              </div>
+            </div>
           </div>
         `,
       });
