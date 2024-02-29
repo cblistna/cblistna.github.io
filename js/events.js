@@ -132,11 +132,14 @@ const Events = (function () {
       sundayEnd.setSeconds(59);
       const sundayBefore = new Date(mondayStart.getTime());
       sundayBefore.setDate(mondayStart.getDate() - 1);
+      const nextSundayEnd = new Date(sundayEnd.getTime());
+      nextSundayEnd.setDate(nextSundayEnd.getDate() + 7);
       return {
         sundayBefore,
         now: new Date(now.getTime()),
         monday: mondayStart,
         sunday: sundayEnd,
+        nextSunday: nextSundayEnd
       };
     },
 
@@ -149,11 +152,26 @@ const Events = (function () {
         acc[eventId].push(event.id);
         return acc;
       }, {});
+
       const repeating = (event) => eventOccurrences[event.eventId].length > 1;
-      const firstOccurrenceOf = (event) => eventOccurrences[event.eventId].indexOf(event.eventId) === 0;
+      const firstOccurrenceOf = (event) => eventOccurrences[event.eventId].indexOf(event.id) === 0;
       const important = (event) => event.tags.includes("important");
       const display = (event) => !event.tags.includes("hide");
       const planned = (event) => event.tags.includes("plan");
+
+      events.reduce((acc, e) => {
+        if (week.monday <= e.start && (firstOccurrenceOf(e) || !repeating(e))) {
+          const disclose = { start: e.start.toFormat('yyyy-MM-dd hh:mm'), name: e.name, tags: e.tags };
+          if (repeating(e)) {
+            disclose.tags.push('repeating');
+          }
+          if (week.sunday < e.start) {
+            disclose.tags.push('upcomming');
+          }
+          acc.push(disclose);
+        }
+        return acc;
+      }, []).forEach((e) => console.log(e.start, e.name, `[${e.tags.join(', ')}]`));
 
       const sundayBeforeEvents = events.filter(
         (event) =>
@@ -175,11 +193,12 @@ const Events = (function () {
         display(event) &&
         !planned(event) &&
         event.start > week.sundayBefore && (
-          !repeating(event) || (
-            repeating(event) &&
-            week.sunday < event.start &&
-            firstOccurrenceOf(event)
-          ) ||
+          !repeating(event) ||
+          // (
+          //   repeating(event) &&
+          //   firstOccurrenceOf(event) &&
+          //   week.sunday < event.start && event.start < week.nextSunday
+          // ) ||
           important(event)
         )
       );
@@ -187,7 +206,7 @@ const Events = (function () {
       const plannedEvents = events.filter((event) =>
         display(event) &&
         !repeating(event) &&
-        event.start > week.sunday &&
+        week.sunday < event.start &&
         planned(event)
       );
 

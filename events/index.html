@@ -155,11 +155,11 @@
           ga.eventsOf("trinec.v@cb.cz", {
             timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
             timeMax: new Date(
-              week.sunday.getTime() + daysInMillis(200)
+              week.sunday.getTime() + daysInMillis(365)
             ).toISOString(),
             singleEvents: true,
             orderBy: "startTime",
-            maxResults: 150,
+            maxResults: 300,
           }).then((googleEvents) => {
             const events = upgradeDates(Events.parse(googleEvents.items));
             const schedule = Events.schedule(events, week);
