@@ -124,8 +124,8 @@
               ]
               .map((e) => ({...e, days: Math.floor(e.end.diff(e.start, ["days"]).days) }))
               .map((e) => `${
-                  e.start.toFormat('d.M. ccc HH:mm').replace(' 00:00', '') 
-                  + (e.days ? e.end.toFormat(' - d.M. ccc HH:mm').replace(' 23:59', '') + ` (${e.days}d)` : '')
+                  e.start.toFormat('d.M. ccc H:mm').replace(' 0:00', '') 
+                  + (e.days ? e.end.toFormat(' - d.M. ccc H:mm').replace(' 23:59', '') + ` (${e.days}d)` : '')
                 }${e.start.toFormat('d') ? '<span class="ml-2">' : '<span class="font-semibold">'}${
                   e.name}</span>${
                   e.description ? ` (${e.description})` : ''

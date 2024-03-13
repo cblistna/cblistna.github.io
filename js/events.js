@@ -49,9 +49,9 @@ const Events = (function () {
     const start = new Date(
       event.start.dateTime || event.start.date + "T00:00:00"
     );
-    const end = new Date(
-      event.end.dateTime || event.end.date + "T23:59:59"
-    );
+    const end = event.end.dateTime
+      ? new Date(event.end.dateTime)
+      : new Date(new Date(event.end.date + "T23:59:59").getTime() - (24 * 60 * 60 * 1000));
     return { start, end };
   }
 
