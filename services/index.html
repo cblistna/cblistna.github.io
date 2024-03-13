@@ -122,7 +122,7 @@
                   { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days: 0})}, name: 'Plánované události'},
                 ...announcements.events.plan 
               ]
-              .map((e) => ({...e, days: Math.floor(e.end.diff(e.start, ["days"]).days) }))
+              .map((e) => ({...e, days: Math.floor(e.end.diff(e.start, ["days"]).days + 0.1) }))
               .map((e) => `${
                   e.start.toFormat('d.M. ccc H:mm').replace(' 0:00', '') 
                   + (e.days ? e.end.toFormat(' - d.M. ccc H:mm').replace(' 23:59', '') + ` (${e.days}d)` : '')
