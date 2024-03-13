@@ -12,7 +12,8 @@ function appendEvents(events, elementId) {
     );
     let weekSeparatorRendered = false;
     events.forEach((event) => {
-      if (event.tags.includes("hide") || event.tags.includes("plan")) {
+      if (event.tags.includes("hide") || event.tags.includes("plan") ||
+        (event.eventId !== event.id && event.start > nowPlus7Days)) {
         return;
       }
       if (!weekSeparatorRendered && event.start > nowPlus7Days) {
