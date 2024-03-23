@@ -91,7 +91,7 @@
             .map((row) => ({
               start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
               host: row[2] || "-",
-              sermon: row[3] || "-",
+              cermon: row[3] || "-",
               title: row[4] || "",
               notes: row[5] || "-",
               worship: row[6] || "-",
@@ -112,6 +112,8 @@
               orderBy: "startTime",
               maxResults: 300,
             }).then((googleEvents) => {
+              const url = new URL(window.location.href);
+              const includePlan = url.searchParams.has("plan");
               const announcements = Events.schedule(upgradeDates(Events.parse(googleEvents.items)), week);
               console.log(announcements.events);
               events[0].announcements = [
@@ -119,9 +121,10 @@
                 ...announcements.events.week,
                   { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days:0})}, name: 'Nadcházející události'},
                 ...announcements.events.upcoming,
-                  { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days: 0})}, name: 'Plánované události'},
+                  { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days: 0})}, name: 'Plánované události', tags: ["plan"]},
                 ...announcements.events.plan 
               ]
+              .filter((e) => includePlan || !(e.tags ?? []).includes("plan"))
               .map((e) => ({...e, days: Math.floor(e.end.diff(e.start, ["days"]).days + 0.1) }))
               .map((e) => `${
                   e.start.toFormat('d.M. ccc H:mm').replace(' 0:00', '') 

@@ -138,6 +138,8 @@
       }
 
       const url = new URL(window.location.href);
+      const includePlan = url.searchParams.has("plan");
+
       let dayOfWeek = new luxon.DateTime(new Date());
       if (url.searchParams.has("w")) {
         dayOfWeek = dayOfWeek.plus({ week: parseInt(url.searchParams.get("w")) || 0 });
@@ -179,12 +181,17 @@
               },
             });
 
-            new Vue({
-              el: "#planned-events",
-              data: {
-                calendar: toCalendar(schedule.events.plan),
-              },
-            });
+            if (includePlan) {
+              new Vue({
+                el: "#planned-events",
+                data: {
+                  calendar: toCalendar(schedule.events.plan),
+                },
+              });
+            } else {
+              const plan = document.getElementById("planned-events");
+              plan.parentElement.removeChild(plan);
+            }
           });
         })
         .catch(console.error);
