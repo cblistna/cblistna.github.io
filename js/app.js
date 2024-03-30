@@ -95,9 +95,9 @@ function appendMessages(files, elementId) {
     const link = document.createElement("a");
     link.appendChild(document.createTextNode(meta.title));
     link.title = meta.title;
-    link.href = file.webContentLink.substring(
+    link.href = file.webViewLink.substring(
       0,
-      file.webContentLink.indexOf("&export=")
+      file.webViewLink.indexOf("?")
     );
     link.target = "_blank";
     node.querySelector(".msgTitle").appendChild(link);
