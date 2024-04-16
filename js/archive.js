@@ -42,7 +42,7 @@ function createMessageLink(message) {
   const link = document.createElement("a");
   link.appendChild(document.createTextNode(message.title));
   link.title = message.title;
-  link.href = message.link.substring(0, message.link.indexOf("&export="));
+  link.href = message.link.substring(0, message.link.indexOf("?"));
   link.target = "_blank";
   link.classList.add("no-underline");
 
@@ -90,7 +90,7 @@ function cleanMap() {
 function parseFile(file) {
   const meta = {
     file: file.name,
-    link: file.webContentLink,
+    link: file.webViewLink,
   };
   const parts = file.name.substring(0, file.name.length - 4).split(/_/, -1);
   meta.date = DateTime.fromISO(parts.shift()).setLocale("cs");
