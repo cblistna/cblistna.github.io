@@ -4,7 +4,7 @@ import { z } from "jsr:@prgm/zod@3.23.8-alpha.1";
 
 const EventTags = ["plan", "pin", "recur", "date", "hide", "svc"] as const;
 const TZ = "Europe/Prague" as const;
-const TAG = /#([\w-]+)/g;
+const TAG = /#([\w-:,]+)/g;
 const COMMENT = /\/\/(.*)$/g;
 
 const Event = z.object({
@@ -22,7 +22,7 @@ const Event = z.object({
     url: z.string().url(),
     ref: z.string().min(1),
   })),
-  tags: z.set(z.enum(EventTags)),
+  tags: z.map(z.enum(EventTags), z.string().optional()),
 });
 
 type Event = z.infer<typeof Event>;
@@ -91,18 +91,16 @@ describe("calendar events", () => {
           ref: (parseMatching(TAG, a.title.toLowerCase()))[0] ??
             a.title,
         })).sort((a, b) => a.ref.localeCompare(b.ref)),
-        tags: new Set(
+        tags: new Map(
           [
             e.summary,
             e.recurringEventId ? "#recur" : "",
             e.start.date && e.end.date ? "#date" : "",
             e.visibility === "private" ? "#hide" : "",
           ]
-            .flatMap((s) =>
-              parseMatching(TAG, (s ?? "").toLowerCase()).filter((t) =>
-                (EventTags as unknown as string[]).includes(t)
-              )
-            ),
+            .flatMap((s) => parseMatching(TAG, (s ?? "").toLowerCase()))
+            .map((kv) => kv.split(":") as [string, string])
+            .filter(([t]) => (EventTags as unknown as string[]).includes(t)),
         ),
       })
     );
@@ -132,7 +130,8 @@ describe("calendar events", () => {
           e.end.toISOString().substring(0, 16)
         }Z)`,
         `${e.subject}`,
-        `${[...e.tags].map((t) => `#${t}`).join(" ")}` || undefined,
+        `${[...e.tags].map(([tag, value]) => `#${tag}`).join(" ")}` ||
+        undefined,
         `[${e.durationHours}h]`,
         `${e.body}`,
         `${
@@ -166,6 +165,8 @@ describe("calendar events", () => {
 [2024-10-24T22:00Z, 2024-10-25T22:00Z) Sborový půst #recur #date [24h]
 [2024-10-25T22:00Z, 2024-10-26T22:00Z) Modlitební řetěz #recur #date [24h]
 [2024-10-31T23:00Z, 2024-11-03T23:00Z) Sesterská chata - odpočinek s Biblí v ruce #date [72h] !Pozvánka[Pozvánka.pdf]`;
+
+    // console.log(output);
 
     assertEquals(output, expected);
   });
