@@ -65,22 +65,22 @@ export const Event = z.object({
 type Event = z.infer<typeof Event>;
 
 const EventAdapter = GoogleEvent
-  .transform((ce) =>
+  .transform((e) =>
     Event.parse({
-      eventId: ce.id.split("_")[0],
+      eventId: e.id.split("_")[0],
       type: "meeting",
-      start: "dateTime" in ce.start
-        ? ce.start.dateTime
-        : `${ce.start.date} (${TZ})`,
-      end: "dateTime" in ce.end ? ce.end.dateTime : `${ce.end.date} (${TZ})`,
+      start: "dateTime" in e.start
+        ? e.start.dateTime
+        : `${e.start.date} (${TZ})`,
+      end: "dateTime" in e.end ? e.end.dateTime : `${e.end.date} (${TZ})`,
       durationHours: 0,
-      subject: ce.summary
+      subject: e.summary
         .replace(TAG, "")
         .replace(COMMENT, "")
         .replace("  ", " ")
         .trim(),
-      body: ce.description,
-      attachments: ce.attachments.map((a) => ({
+      body: e.description,
+      attachments: e.attachments.map((a) => ({
         fileId: a.fileId,
         name: a.title
           .replace(/\.\w+$/, "")
@@ -95,10 +95,10 @@ const EventAdapter = GoogleEvent
       })).sort((a, b) => a.ref.localeCompare(b.ref)),
       tags: new Map(
         [
-          ce.summary,
-          ce.recurringEventId ? "#recur" : "",
-          "date" in ce.start && "date" in ce.end ? "#date" : "",
-          ce.visibility === "private" ? "#hide" : "",
+          e.summary,
+          e.recurringEventId ? "#recur" : "",
+          "date" in e.start && "date" in e.end ? "#date" : "",
+          e.visibility === "private" ? "#hide" : "",
         ]
           .flatMap((s) => matchesOf(TAG, (s ?? "").toLowerCase()))
           .map((kv) => kv.split(":") as [string, string])
@@ -116,9 +116,9 @@ const EventAdapter = GoogleEvent
     })
   ).readonly();
 
-export const Calendar = z.object({
-  items: z.array(GoogleEvent),
-}).transform((c) => c.items.map((i) => EventAdapter.parse(i))).readonly();
+export const Calendar = z.object({ items: z.array(GoogleEvent) })
+  .transform((c) => c.items.map((i) => EventAdapter.parse(i)))
+  .readonly();
 
 export type Calendar = z.infer<typeof Calendar>;
 
@@ -129,7 +129,7 @@ const Service = z.object({
 });
 type Service = z.infer<typeof Service>;
 
-const ServicesAdapter = z.object({
+const Services = z.object({
   values: z.array(z.array(z.string())),
 }).transform((v) =>
   v.values
@@ -141,7 +141,7 @@ const ServicesAdapter = z.object({
 describe("calendar events", () => {
   it("should parse google calendar payload", () => {
     const services: Map<string, Service> = new Map(
-      ServicesAdapter.parse(JSON.parse(Deno.readTextFileSync("services.json")))
+      Services.parse(JSON.parse(Deno.readTextFileSync("services.json")))
         .map((s) => [s.date, s]),
     );
 
