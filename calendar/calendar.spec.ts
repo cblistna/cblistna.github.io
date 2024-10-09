@@ -2,7 +2,7 @@ import { describe, it } from "jsr:@std/testing/bdd";
 import { assertEquals } from "jsr:@std/assert";
 import { z } from "jsr:@prgm/zod@3.23.8-alpha.1";
 
-const EventTags = [
+const Tags = [
   "plan",
   "pin",
   "recur",
@@ -14,8 +14,7 @@ const EventTags = [
 const TZ = "Europe/Prague" as const;
 const TAG = /#([\w-:,]+)/g;
 const COMMENT = /\/\/(.*)$/g;
-
-const EventInstant = z.union([
+const Instant = z.union([
   z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
   z.object({
     dateTime: z.string().regex(
@@ -24,35 +23,14 @@ const EventInstant = z.union([
   }),
 ]);
 
-type EventInstant = z.infer<typeof EventInstant>;
+function matchesOf(pattern: RegExp, text: string): string[] {
+  return [...text.matchAll(pattern)].map((m) => m[1]);
+}
 
-const Event = z.object({
-  eventId: z.string().min(5).max(1024),
-  type: z.enum(["meeting", "news"]),
-  start: z.coerce.date(),
-  end: z.coerce.date(),
-  durationHours: z.number().min(0),
-  subject: z.string(),
-  body: z.string().default(""),
-  // FIXME: make body optional
-  attachments: z.array(z.object({
-    fileId: z.string(),
-    name: z.string().min(1),
-    mime: z.string(),
-    url: z.string().url(),
-    ref: z.string().min(1),
-  })),
-  tags: z.map(z.enum(EventTags), z.string().min(1).optional()),
-});
-
-type Event = z.infer<typeof Event>;
-
-// FIXME: make it readonly
-
-const CEvent = z.object({
+const GoogleEvent = z.object({
   id: z.string().min(5).max(1024),
-  start: EventInstant,
-  end: EventInstant,
+  start: Instant,
+  end: Instant,
   summary: z.string().trim(),
   description: z.string().trim().optional(),
   status: z.enum(["confirmed", "tentative", "cancelled"]).optional(),
@@ -65,45 +43,69 @@ const CEvent = z.object({
     mimeType: z.string(),
     fileUrl: z.string().url(),
   })).default([]),
-}).transform((v) =>
-  Event.parse({
-    eventId: v.id.split("_")[0],
-    type: "meeting",
-    start: "dateTime" in v.start ? v.start.dateTime : `${v.start.date} (${TZ})`,
-    end: "dateTime" in v.end ? v.end.dateTime : `${v.end.date} (${TZ})`,
-    durationHours: 0,
-    subject: v.summary
-      .replace(TAG, "")
-      .replace(COMMENT, "")
-      .replace("  ", " ")
-      .trim(),
-    body: v.description,
-    attachments: v.attachments.map((a) => ({
-      fileId: a.fileId,
-      name: a.title
-        .replace(/\.\w+$/, "")
+}).readonly();
+
+export const Event = z.object({
+  eventId: z.string().min(5).max(1024),
+  type: z.enum(["meeting", "news"]),
+  start: z.coerce.date(),
+  end: z.coerce.date(),
+  durationHours: z.number().min(0),
+  subject: z.string(),
+  body: z.string().default(""),
+  attachments: z.array(z.object({
+    fileId: z.string(),
+    name: z.string().min(1),
+    mime: z.string(),
+    url: z.string().url(),
+    ref: z.string().min(1),
+  })),
+  tags: z.map(z.enum(Tags), z.string().min(1).optional()),
+}).readonly();
+type Event = z.infer<typeof Event>;
+
+const CalendarAdapter = GoogleEvent
+  .transform((ce) =>
+    Event.parse({
+      eventId: ce.id.split("_")[0],
+      type: "meeting",
+      start: "dateTime" in ce.start
+        ? ce.start.dateTime
+        : `${ce.start.date} (${TZ})`,
+      end: "dateTime" in ce.end ? ce.end.dateTime : `${ce.end.date} (${TZ})`,
+      durationHours: 0,
+      subject: ce.summary
         .replace(TAG, "")
         .replace(COMMENT, "")
         .replace("  ", " ")
         .trim(),
-      mime: a.mimeType,
-      url: a.fileUrl,
-      ref: (parseMatching(TAG, a.title.toLowerCase()))[0] ??
-        a.title,
-    })).sort((a, b) => a.ref.localeCompare(b.ref)),
-    tags: new Map(
-      [
-        v.summary,
-        v.recurringEventId ? "#recur" : "",
-        "date" in v.start && "date" in v.end ? "#date" : "",
-        v.visibility === "private" ? "#hide" : "",
-      ]
-        .flatMap((s) => parseMatching(TAG, (s ?? "").toLowerCase()))
-        .map((kv) => kv.split(":") as [string, string])
-        .filter(([t]) => (EventTags as unknown as string[]).includes(t)),
-    ),
-  })
-)
+      body: ce.description,
+      attachments: ce.attachments.map((a) => ({
+        fileId: a.fileId,
+        name: a.title
+          .replace(/\.\w+$/, "")
+          .replace(TAG, "")
+          .replace(COMMENT, "")
+          .replace("  ", " ")
+          .trim(),
+        mime: a.mimeType,
+        url: a.fileUrl,
+        ref: (matchesOf(TAG, a.title.toLowerCase()))[0] ??
+          a.title,
+      })).sort((a, b) => a.ref.localeCompare(b.ref)),
+      tags: new Map(
+        [
+          ce.summary,
+          ce.recurringEventId ? "#recur" : "",
+          "date" in ce.start && "date" in ce.end ? "#date" : "",
+          ce.visibility === "private" ? "#hide" : "",
+        ]
+          .flatMap((s) => matchesOf(TAG, (s ?? "").toLowerCase()))
+          .map((kv) => kv.split(":") as [string, string])
+          .filter(([t]) => (Tags as unknown as string[]).includes(t)),
+      ),
+    })
+  )
   .transform((e) =>
     Event.parse({
       ...e,
@@ -112,63 +114,62 @@ const CEvent = z.object({
         (e.end.getTime() - e.start.getTime()) / 3600_000,
       ),
     })
-  );
+  ).readonly();
 
-// FIXME: make NEvent readonly!
+export const Calendar = z.object({
+  items: z.array(GoogleEvent),
+}).transform((c) => c.items.map((i) => CalendarAdapter.parse(i))).readonly();
 
-function parseMatching(pattern: RegExp, text: string) {
-  pattern.lastIndex = 0;
-  const matches: string[] = [];
-  let match;
-  do {
-    match = pattern.exec(text);
-    if (match) {
-      matches.push(match[1].trim());
-    }
-  } while (match);
-  return matches;
-}
+export type Calendar = z.infer<typeof Calendar>;
+
+const Service = z.object({
+  date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
+  moderator: z.string().trim().default(""),
+  teacher: z.string().trim().default(""),
+});
+type Service = z.infer<typeof Service>;
+
+const ServicesAdapter = z.object({
+  values: z.array(z.array(z.string())),
+}).transform((v) =>
+  v.values
+    .slice(1) // skip header
+    .filter((r) => !!r[1]) // skip services without date
+    .map((r) => Service.parse({ date: r[1], moderator: r[2], teacher: r[3] }))
+);
 
 describe("calendar events", () => {
   it("should parse google calendar payload", () => {
-    const events = JSON.parse(Deno.readTextFileSync("events.json")).items
-      .map((item: unknown) => CEvent.parse(item));
+    const services: Map<string, Service> = new Map(
+      ServicesAdapter.parse(JSON.parse(Deno.readTextFileSync("services.json")))
+        .map((s) => [s.date, s]),
+    );
 
-    const services = JSON.parse(Deno.readTextFileSync("services.json")).values
-      .slice(1)
-      .map((r: Array<string>) => ({ date: r[1], lead: r[2], sermon: r[3] }))
-      .reduce((acc: Record<string, unknown>, s: { date?: string }) => {
-        acc[s.date!] = s;
-        delete s.date;
-        return acc;
-      }, {});
+    const events = Calendar.parse(
+      JSON.parse(Deno.readTextFileSync("events.json")),
+    )
+      .map((event: Event) => {
+        const service = services.get(
+          event.start.toISOString().substring(0, 10),
+        );
+        if (!service || !event.tags.has("svc")) return event;
+        return Event.parse({
+          ...event,
+          body: `Vedení: ${service.moderator}, Kázání: ${service.teacher}${
+            event.body ? `<br>${event.body}` : ""
+          }`,
+        });
+      });
 
-    events.forEach((e: Event) => {
-      const date = e.start.toISOString().substring(0, 10);
-      if (e.tags.has("svc") && services[date]) {
-        const svc = services[date];
-        e.body = `Vedení: ${svc.lead}, Kázání: ${svc.sermon}${
-          e.body ? `<br>${e.body}` : ""
-        }`;
-      }
-    });
-
+    const ts = (d: Date) => `${d.toISOString().substring(0, 16)}Z`;
     const eventLine = (e: Event) =>
       [
-        `[${e.start.toISOString().substring(0, 16)}Z, ${
-          e.end.toISOString().substring(0, 16)
-        }Z)`,
+        `[${ts(e.start)}, ${ts(e.end)})`,
         `${e.subject}`,
-        `${[...e.tags].map(([tag, _value]) => `#${tag}`).join(" ")}` ||
-        undefined,
+        [...e.tags].map(([tag]) => `#${tag}`).join(" "),
         `[${e.durationHours}h]`,
         `${e.body}`,
-        `${
-          e.attachments.reduce((acc, a) => {
-            acc.push(`!${a.name}[${a.ref}]`);
-            return acc;
-          }, [] as string[])
-        }`,
+        e.attachments.map((a) => `!${a.name}[${a.ref}]`).join(","),
       ].filter((p) => p).join(" ");
 
     const plan = events.reduce((acc: Map<string, Event[]>, e: Event) => {
@@ -178,7 +179,7 @@ describe("calendar events", () => {
     }, new Map());
 
     const output = [...plan.entries()]
-      .map(([_id, el]) => eventLine(el[0]))
+      .map(([_id, series]) => eventLine(series[0]))
       .join("\n");
 
     const expected =
@@ -194,8 +195,6 @@ describe("calendar events", () => {
 [2024-10-24T22:00Z, 2024-10-25T22:00Z) Sborový půst #recur #date [24h]
 [2024-10-25T22:00Z, 2024-10-26T22:00Z) Modlitební řetěz #recur #date [24h]
 [2024-10-31T23:00Z, 2024-11-03T23:00Z) Sesterská chata - odpočinek s Biblí v ruce #date [72h] !Pozvánka[Pozvánka.pdf]`;
-
-    console.log(output);
 
     assertEquals(output, expected);
   });
