@@ -2,30 +2,119 @@ import { describe, it } from "jsr:@std/testing/bdd";
 import { assertEquals } from "jsr:@std/assert";
 import { z } from "jsr:@prgm/zod@3.23.8-alpha.1";
 
-const EventTags = ["plan", "pin", "recur", "date", "hide", "svc"] as const;
+const EventTags = [
+  "plan",
+  "pin",
+  "recur",
+  "date",
+  "hide",
+  "svc",
+  "news",
+] as const;
 const TZ = "Europe/Prague" as const;
 const TAG = /#([\w-:,]+)/g;
 const COMMENT = /\/\/(.*)$/g;
 
+const EventInstant = z.union([
+  z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+  z.object({
+    dateTime: z.string().regex(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/,
+    ),
+  }),
+]);
+
+type EventInstant = z.infer<typeof EventInstant>;
+
 const Event = z.object({
-  eventId: z.string().trim().min(4),
+  eventId: z.string().min(5).max(1024),
   type: z.enum(["meeting", "news"]),
   start: z.coerce.date(),
   end: z.coerce.date(),
   durationHours: z.number().min(0),
-  subject: z.string().trim().min(1),
-  body: z.string().trim().default(""),
+  subject: z.string(),
+  body: z.string().default(""),
+  // FIXME: make body optional
   attachments: z.array(z.object({
-    fileId: z.string().trim().min(4),
-    name: z.string().trim().min(1),
-    mime: z.string().trim().min(1),
+    fileId: z.string(),
+    name: z.string().min(1),
+    mime: z.string(),
     url: z.string().url(),
     ref: z.string().min(1),
   })),
-  tags: z.map(z.enum(EventTags), z.string().optional()),
+  tags: z.map(z.enum(EventTags), z.string().min(1).optional()),
 });
 
 type Event = z.infer<typeof Event>;
+
+// FIXME: make it readonly
+
+const CEvent = z.object({
+  id: z.string().min(5).max(1024),
+  start: EventInstant,
+  end: EventInstant,
+  summary: z.string().trim(),
+  description: z.string().trim().optional(),
+  status: z.enum(["confirmed", "tentative", "cancelled"]).optional(),
+  recurringEventId: z.string().min(5).max(1024).optional(),
+  visibility: z.enum(["default", "public", "private", "confidential"])
+    .optional(),
+  attachments: z.array(z.object({
+    fileId: z.string(),
+    title: z.string().trim().min(1),
+    mimeType: z.string(),
+    fileUrl: z.string().url(),
+  })).default([]),
+}).transform((v) =>
+  Event.parse({
+    eventId: v.id.split("_")[0],
+    type: "meeting",
+    start: "dateTime" in v.start ? v.start.dateTime : `${v.start.date} (${TZ})`,
+    end: "dateTime" in v.end ? v.end.dateTime : `${v.end.date} (${TZ})`,
+    durationHours: 0,
+    subject: v.summary
+      .replace(TAG, "")
+      .replace(COMMENT, "")
+      .replace("  ", " ")
+      .trim(),
+    body: v.description,
+    attachments: v.attachments.map((a) => ({
+      fileId: a.fileId,
+      name: a.title
+        .replace(/\.\w+$/, "")
+        .replace(TAG, "")
+        .replace(COMMENT, "")
+        .replace("  ", " ")
+        .trim(),
+      mime: a.mimeType,
+      url: a.fileUrl,
+      ref: (parseMatching(TAG, a.title.toLowerCase()))[0] ??
+        a.title,
+    })).sort((a, b) => a.ref.localeCompare(b.ref)),
+    tags: new Map(
+      [
+        v.summary,
+        v.recurringEventId ? "#recur" : "",
+        "date" in v.start && "date" in v.end ? "#date" : "",
+        v.visibility === "private" ? "#hide" : "",
+      ]
+        .flatMap((s) => parseMatching(TAG, (s ?? "").toLowerCase()))
+        .map((kv) => kv.split(":") as [string, string])
+        .filter(([t]) => (EventTags as unknown as string[]).includes(t)),
+    ),
+  })
+)
+  .transform((e) =>
+    Event.parse({
+      ...e,
+      type: e.tags.has("news") ? "news" : "meeting",
+      durationHours: Math.floor(
+        (e.end.getTime() - e.start.getTime()) / 3600_000,
+      ),
+    })
+  );
+
+// FIXME: make NEvent readonly!
 
 function parseMatching(pattern: RegExp, text: string) {
   pattern.lastIndex = 0;
@@ -41,69 +130,9 @@ function parseMatching(pattern: RegExp, text: string) {
 }
 
 describe("calendar events", () => {
-  it("should parse google calendar payload to events", () => {
-    const payload = JSON.parse(Deno.readTextFileSync("events.json"));
-    const events = payload.items.map((
-      e: {
-        id: string;
-        start: { date?: string; dateTime?: string };
-        end: { date?: string; dateTime?: string };
-        summary: string;
-        description: string;
-        recurringEventId: string;
-        visibility: string;
-        attachments: [{
-          fileId: string;
-          title: string;
-          mimeType: string;
-          fileUrl: string;
-        }];
-      },
-    ) =>
-      Event.parse({
-        eventId: e.id.split("_")[0],
-        type: "meeting",
-        start: e.start.date ? `${e.start.date} (${TZ})` : e.start.dateTime,
-        end: e.end.date ? `${e.end.date} (${TZ})` : e.end.dateTime,
-        durationHours: Math.floor(
-          (Date.parse(
-            (e.end.date ? `${e.end.date} (${TZ})` : e.end.dateTime)!,
-          ) -
-            Date.parse(
-              (e.start.date ? `${e.start.date} (${TZ})` : e.start.dateTime)!,
-            )) / 3600000,
-        ),
-        subject: (e.summary ?? "")
-          .replace(TAG, "")
-          .replace(COMMENT, "")
-          .replace("  ", " "),
-        body: (e.description ?? "").replace("  ", " "),
-        attachments: (e.attachments ?? [] as typeof e.attachments).map((
-          a,
-        ) => ({
-          fileId: a.fileId,
-          name: a.title
-            .replace(/\.\w+$/, "")
-            .replace(TAG, "")
-            .replace("  ", " "),
-          mime: a.mimeType,
-          url: a.fileUrl,
-          ref: (parseMatching(TAG, a.title.toLowerCase()))[0] ??
-            a.title,
-        })).sort((a, b) => a.ref.localeCompare(b.ref)),
-        tags: new Map(
-          [
-            e.summary,
-            e.recurringEventId ? "#recur" : "",
-            e.start.date && e.end.date ? "#date" : "",
-            e.visibility === "private" ? "#hide" : "",
-          ]
-            .flatMap((s) => parseMatching(TAG, (s ?? "").toLowerCase()))
-            .map((kv) => kv.split(":") as [string, string])
-            .filter(([t]) => (EventTags as unknown as string[]).includes(t)),
-        ),
-      })
-    );
+  it("should parse google calendar payload", () => {
+    const events = JSON.parse(Deno.readTextFileSync("events.json")).items
+      .map((item: unknown) => CEvent.parse(item));
 
     const services = JSON.parse(Deno.readTextFileSync("services.json")).values
       .slice(1)
@@ -130,7 +159,7 @@ describe("calendar events", () => {
           e.end.toISOString().substring(0, 16)
         }Z)`,
         `${e.subject}`,
-        `${[...e.tags].map(([tag, value]) => `#${tag}`).join(" ")}` ||
+        `${[...e.tags].map(([tag, _value]) => `#${tag}`).join(" ")}` ||
         undefined,
         `[${e.durationHours}h]`,
         `${e.body}`,
@@ -166,7 +195,7 @@ describe("calendar events", () => {
 [2024-10-25T22:00Z, 2024-10-26T22:00Z) Modlitební řetěz #recur #date [24h]
 [2024-10-31T23:00Z, 2024-11-03T23:00Z) Sesterská chata - odpočinek s Biblí v ruce #date [72h] !Pozvánka[Pozvánka.pdf]`;
 
-    // console.log(output);
+    console.log(output);
 
     assertEquals(output, expected);
   });
