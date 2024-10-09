@@ -64,7 +64,7 @@ export const Event = z.object({
 }).readonly();
 type Event = z.infer<typeof Event>;
 
-const CalendarAdapter = GoogleEvent
+const EventAdapter = GoogleEvent
   .transform((ce) =>
     Event.parse({
       eventId: ce.id.split("_")[0],
@@ -118,7 +118,7 @@ const CalendarAdapter = GoogleEvent
 
 export const Calendar = z.object({
   items: z.array(GoogleEvent),
-}).transform((c) => c.items.map((i) => CalendarAdapter.parse(i))).readonly();
+}).transform((c) => c.items.map((i) => EventAdapter.parse(i))).readonly();
 
 export type Calendar = z.infer<typeof Calendar>;
 
