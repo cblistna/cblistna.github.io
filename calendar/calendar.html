@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Calendar</title>
+</head>
+
+<body>
+  <main class="container mx-auto">
+    <h1 class="text-3xl">Calendar</h1>
+    <div id="app">
+      <div id="recur"></div>
+      <div id="unique"></div>
+      <div id="news"></div>
+    </div>
+  </main>
+  <script src="./luxon.min.js"></script>
+  <script src="./google-access.js"></script>
+  <script type="module">
+    import { Calendar, Event, Services } from "./calendar.js";
+
+    const CALENDAR_ID = "trinec.v@cb.cz";
+    const SERVICES_SHEET = "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI";
+    const SERVICES_RANGE = "A1:K20";
+
+    const nowPlus = (ms = 0) => new Date(new Date().getTime() + ms).toISOString();
+    const days = (d) => d * 24 * 3600_000;
+    const minutes = (m) => m * 60_000;
+
+    await ga.init();
+
+    const services = new Map(
+      Services.parse(await ga.dataOf(SERVICES_SHEET, SERVICES_RANGE))
+        .map((s) => [s.date, s])
+    );
+
+    const events = Calendar.parse(
+      await ga.eventsOf(CALENDAR_ID, {
+        timeMin: nowPlus(minutes(30)),
+        timeMax: nowPlus(days(200)),
+        singleEvents: true,
+        orderBy: "startTime",
+        maxResults: 150,
+      })
+    ).map((event) => {
+      const service = services.get(
+        event.start.toISOString().substring(0, 10),
+      );
+      if (!service || !event.tags.has("svc")) return event;
+      return Event.parse({
+        ...event,
+        body: `Vedení: ${service.moderator}, Kázání: ${service.teacher}${event.body ? `<br>${event.body}` : ""
+          }`,
+      });
+    });
+
+    const plan = Object.fromEntries(
+      Map.groupBy(
+        [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))],
+        (e) => e.tags.has("news") ? "news" : e.tags.has("recur") ? "recur" : "unique"
+      ).entries()
+    );
+
+    const append = (sep, ...items) =>
+      ['', ...(items.map((i) => i.trim() ? i.trim() : undefined))]
+        .filter((i) => i !== undefined)
+        .join(sep);
+
+    const instant = (dt) => {
+      const [year, month, day, hours, minutes, dow, dows] = `${luxon.DateTime.fromJSDate(dt).setLocale('cs').toFormat('yyyy MM dd hh mm cccc ccc')}`
+        .split(' ')
+      return { year, month, day, hours, minutes, dow, dows };
+    }
+
+    const withDate = (dt, formatFn) => formatFn(instant(dt));
+    const link = (url, name) => `<a href="${url}" class="text-indigo-600">${name}</a>`;
+    const attachmentItems = (event) => `[${event.attachments.map((a) => link(a.url, a.ref))}]`;
+    const eventItem = (event) => `<li>${withDate(event.start, (i) => `${i.day}.${i.month} ${i.hours}:${i.minutes} ${i.dows}`)} <b>${event.subject}</b>${append(' - ', renderBody(event))}</li>`;
+    const renderBody = (event) => {
+      let body = (event.body ?? '').replace(/\[(.*?)\]\((.*?)\)/, `<a href="$2" class="text-indigo-600">$1</a>`);
+      event.attachments.forEach((a) => { body = body.replace(new RegExp(`#${a.ref}`), a.url) });
+      return body;
+    }
+    const newsItem = (event) => `<li>${event.subject}${append('<br>', renderBody(event))}</li>`;
+
+
+    document.getElementById('recur').innerHTML = `
+      <h2 class="text-2xl">Meetings</h2>
+      <ul>${plan.recur.map(eventItem).join("\n")}</ul>
+    `;
+
+    document.getElementById('unique').innerHTML = `
+      <h2 class="text-2xl">Events</h2>
+      <ul>${plan.unique.map(eventItem).join("\n")}</ul>
+    `;
+
+    document.getElementById('news').innerHTML = `
+      <h2 class="text-2xl">News</h2>
+      <ul>${plan.news.map(newsItem).join("\n")}</ul>
+    `;
+
+    [...document.getElementById('app').getElementsByTagName('a')]
+      .forEach(e => e.setAttribute('target', '_blank'));
+
+  </script>
+</body>
+
+</html>
