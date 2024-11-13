@@ -60,9 +60,11 @@
     }).filter((event) => !event.tags.has('plan') && !event.tags.has('hide')
     ).filter((event) => event.tags.has('recur') ? event.start.toISOString() <= nowPlus(days(7)) : true);
 
+    const firstOccurrences = [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))];
+
     const plan = Object.fromEntries(
       Map.groupBy(
-        [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))],
+        firstOccurrences,
         (e) => e.tags.has("news") ? "news" : e.tags.has("recur") ? "meetings" : "events"
       ).entries()
     );
@@ -115,10 +117,9 @@
     [...document.getElementById('app').getElementsByTagName('a')]
       .forEach(e => e.setAttribute('target', '_blank'));
 
-
     const next = Object.fromEntries(
       Map.groupBy(
-        [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))],
+        firstOccurrences,
         (e) => e.tags.has("news") ? "news" : (e.start.toISOString() <= nowPlus(days(7)) ? "week" : "events")
       ).entries()
     );
