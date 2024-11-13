@@ -10,11 +10,13 @@
 
 <body>
   <main class="container mx-auto">
-    <h1 class="text-3xl">Calendar</h1>
+    <h1 class="pt-4 pb-2 text-4xl">Calendar</h1>
     <div id="app">
-      <div id="recur"></div>
-      <div id="unique"></div>
+      <div id="meetings"></div>
+      <div id="events"></div>
       <div id="news"></div>
+      <div id="week"></div>
+      <div id="next"></div>
     </div>
   </main>
   <script src="./luxon.min.js"></script>
@@ -43,7 +45,7 @@
         timeMax: nowPlus(days(200)),
         singleEvents: true,
         orderBy: "startTime",
-        maxResults: 150,
+        maxResults: 200,
       })
     ).map((event) => {
       const service = services.get(
@@ -55,12 +57,13 @@
         body: `Vedení: ${service.moderator}, Kázání: ${service.teacher}${event.body ? `<br>${event.body}` : ""
           }`,
       });
-    });
+    }).filter((event) => !event.tags.has('plan') && !event.tags.has('hide')
+    ).filter((event) => event.tags.has('recur') ? event.start.toISOString() <= nowPlus(days(7)) : true);
 
     const plan = Object.fromEntries(
       Map.groupBy(
         [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))],
-        (e) => e.tags.has("news") ? "news" : e.tags.has("recur") ? "recur" : "unique"
+        (e) => e.tags.has("news") ? "news" : e.tags.has("recur") ? "meetings" : "events"
       ).entries()
     );
 
@@ -70,7 +73,7 @@
         .join(sep);
 
     const instant = (dt) => {
-      const [year, month, day, hours, minutes, dow, dows] = `${luxon.DateTime.fromJSDate(dt).setLocale('cs').toFormat('yyyy MM dd hh mm cccc ccc')}`
+      const [year, month, day, hours, minutes, dow, dows] = `${luxon.DateTime.fromJSDate(dt).setLocale('cs').toFormat('yyyy MM dd HH mm cccc ccc')}`
         .split(' ')
       return { year, month, day, hours, minutes, dow, dows };
     }
@@ -78,7 +81,10 @@
     const withDate = (dt, formatFn) => formatFn(instant(dt));
     const link = (url, name) => `<a href="${url}" class="text-indigo-600">${name}</a>`;
     const attachmentItems = (event) => `[${event.attachments.map((a) => link(a.url, a.ref))}]`;
-    const eventItem = (event) => `<li>${withDate(event.start, (i) => `${i.day}.${i.month} ${i.hours}:${i.minutes} ${i.dows}`)} <b>${event.subject}</b>${append(' - ', renderBody(event))}</li>`;
+    const eventItem = (event) => `<li>${withDate(event.start,
+      (i) => `<code>${i.day.replace(/^0/, '&nbsp;')}.${i.month}. ${i.dows} ${event.tags.has('date') ?
+        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : `${i.hours.replace(/^0/, '&nbsp;')}:${i.minutes}`}`)
+      }&nbsp;&nbsp;</code><b>${event.subject}</b>${append(' - ', renderBody(event))} ${event.tags.size ? `[${[...event.tags.keys()].map((k) => `#${k}`).join(' ')}]` : ''}</li>`;
     const renderBody = (event) => {
       let body = (event.body ?? '').replace(/\[(.*?)\]\((.*?)\)/, `<a href="$2" class="text-indigo-600">$1</a>`);
       event.attachments.forEach((a) => { body = body.replace(new RegExp(`#${a.ref}`), a.url) });
@@ -86,24 +92,46 @@
     }
     const newsItem = (event) => `<li>${event.subject}${append('<br>', renderBody(event))}</li>`;
 
+    const renderTo = (id, events, contentFn) => {
+      if (!events) return;
+      document.getElementById(id).innerHTML = contentFn(events);
+    };
 
-    document.getElementById('recur').innerHTML = `
-      <h2 class="text-2xl">Meetings</h2>
-      <ul>${plan.recur.map(eventItem).join("\n")}</ul>
-    `;
+    renderTo('meetings', plan.meetings, (meetings) => `
+      <h2 class="pt-2 text-2xl">Meetings</h2>
+      <ul>${meetings.map(eventItem).join("\n")}</ul>
+    `);
 
-    document.getElementById('unique').innerHTML = `
-      <h2 class="text-2xl">Events</h2>
-      <ul>${plan.unique.map(eventItem).join("\n")}</ul>
-    `;
+    renderTo('events', plan.events, (events) => `
+      <h2 class="pt-2 text-2xl">Events</h2>
+      <ul>${events.map(eventItem).join("\n")}</ul>
+    `);
 
-    document.getElementById('news').innerHTML = `
-      <h2 class="text-2xl">News</h2>
-      <ul>${plan.news.map(newsItem).join("\n")}</ul>
-    `;
+    renderTo('news', plan.news, (news) => `
+      <h2 class="pt-2 text-2xl">News</h2>
+      <ul>${news.map(newsItem).join("\n")}</ul>
+    `);
 
     [...document.getElementById('app').getElementsByTagName('a')]
       .forEach(e => e.setAttribute('target', '_blank'));
+
+
+    const next = Object.fromEntries(
+      Map.groupBy(
+        [...Map.groupBy(events, (e) => e.eventId).values().map((series) => series.at(0))],
+        (e) => e.tags.has("news") ? "news" : (e.start.toISOString() <= nowPlus(days(7)) ? "week" : "events")
+      ).entries()
+    );
+
+    renderTo('week', next.week, (events) => `
+      <h2 class="pt-2 text-2xl">Week</h2>
+      <ul>${events.map((e) => `${eventItem(e)}`).join("\n")}</ul>
+    `);
+
+    renderTo('next', next.events, (events) => `
+      <h2 class="pt-2 text-2xl">Next</h2>
+      <ul>${events.map((e) => `${eventItem(e)}`).join("\n")}</ul>
+    `);
 
   </script>
 </body>
