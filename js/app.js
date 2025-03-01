@@ -8,12 +8,14 @@ function appendEvents(events, elementId) {
     const outlet = document.getElementById(elementId);
     const template = document.getElementById("evtTemplate");
     const nowPlus7Days = new Date(
-      new Date().getTime() + 8 * 24 * 60 * 60 * 1000
+      new Date().getTime() + 8 * 24 * 60 * 60 * 1000,
     );
     let weekSeparatorRendered = false;
     events.forEach((event) => {
-      if (event.tags.includes("hide") || event.tags.includes("plan") ||
-        (event.eventId !== event.id && event.start > nowPlus7Days)) {
+      if (
+        event.tags.includes("hide") || event.tags.includes("plan") ||
+        (event.eventId !== event.id && event.start > nowPlus7Days)
+      ) {
         return;
       }
       if (!weekSeparatorRendered && event.start > nowPlus7Days) {
@@ -79,11 +81,12 @@ function timeOrBlankOf(date) {
   return date.hour === 0 && date.minute === 0 ? "" : date.toFormat("HH:mm");
 }
 
-function appendMessages(files, elementId) {
+function appendMessages(audioFiles, docs, elementId) {
   const outlet = document.getElementById(elementId);
   const template = document.getElementById("msgTemplate");
-  files.forEach((file) => {
+  audioFiles.forEach((file) => {
     const meta = parseFile(file);
+    meta.doc = docs[meta.file.replace(/\.mp3$/, ".pdf")];
     if (!(meta.date.isValid && meta.title && meta.author)) {
       return;
     }
@@ -97,10 +100,22 @@ function appendMessages(files, elementId) {
     link.title = meta.title;
     link.href = file.webViewLink.substring(
       0,
-      file.webViewLink.indexOf("?")
+      file.webViewLink.indexOf("?"),
     );
     link.target = "_blank";
     node.querySelector(".msgTitle").appendChild(link);
+
+    if (meta.doc) {
+      const link = document.createElement("a");
+      link.appendChild(document.createTextNode("(text)"));
+      link.title = meta.doc.name;
+      link.href = meta.doc.webViewLink.substring(
+        0,
+        file.webViewLink.indexOf("?"),
+      );
+      link.target = "_blank";
+      node.querySelector(".msgDoc").appendChild(link);
+    }
 
     outlet.appendChild(node);
   });
@@ -136,28 +151,42 @@ ga.init()
     const regularEventsQuery = Object.assign(
       {
         timeMax: new Date(
-          now.getTime() + 200 * 24 * 60 * 60 * 1000
+          now.getTime() + 200 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       },
-      eventsBaseQuery
+      eventsBaseQuery,
     );
 
     ga.eventsOf("trinec.v@cb.cz", regularEventsQuery).then((googleEvents) => {
       const events = Events.dropRecurringNotImportant(
-        googleEvents.items.map((event) => Events.parse(event))
+        googleEvents.items.map((event) => Events.parse(event)),
       ).filter((event) => !(event.tags || []).includes("hide"));
       appendEvents(events, "regularEvents");
     });
 
-    const messagesQuery = {
+    const messagesAudioQuery = {
       orderBy: "name desc",
       pageSize: 7,
-      q: "trashed=false and 'trinec.v@cb.cz' in owners and mimeType contains 'audio'",
+      q: "trashed=false and 'trinec.v@cb.cz' in owners and mimeType contains 'audio' and parents in '1uGEf-9qQ5jEcfpiYOwnefewT4XGXEwa4'",
       fields: "files(id, name, webViewLink, webContentLink)",
     };
 
-    ga.files(messagesQuery).then((res) =>
-      appendMessages(res.files, "messages-list")
-    );
+    const messagesDocQuery = {
+      orderBy: "name desc",
+      pageSize: 7,
+      q: "trashed=false and 'trinec.v@cb.cz' in owners and mimeType = 'application/pdf' and parents in '1uGEf-9qQ5jEcfpiYOwnefewT4XGXEwa4'",
+      fields: "files(id, name, webViewLink, webContentLink)",
+    };
+
+    Promise.all([ga.files(messagesAudioQuery), ga.files(messagesDocQuery)])
+      .then(
+        ([resAudio, resDoc]) => {
+          const messageDocs = resDoc.files.reduce((docs, doc) => {
+            docs[doc.name] = doc;
+            return docs;
+          }, {});
+          appendMessages(resAudio.files, messageDocs, "messages-list");
+        },
+      );
   })
   .catch(console.error);
