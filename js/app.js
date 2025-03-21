@@ -55,25 +55,71 @@ function appendEvents(events, elementId) {
       }
       outlet.appendChild(node);
     });
-    const plannedEvents = events.filter((e) => e.tags.includes("plan"));
+    const plannedEvents = events.filter((e) =>
+      e.tags.includes("plan") && !e.tags.includes("hide")
+    );
     if (plannedEvents.length > 0) {
-      plannedEvents.forEach((planned) => {
-        console.log(planned.name, planned.description);
+      const outlet = document.getElementById("plannedEvents");
+      const template = document.getElementById("evtTemplate");
+      outlet.appendChild(document.createElement("hr"));
+      outlet.appendChild(document.createElement("br"));
+      plannedEvents.forEach((event) => {
+        console.log(event.name, event.description);
+        const node = document.importNode(template.content, true);
+        const start = DateTime.fromJSDate(event.start).setLocale("cs");
+        const date = dateOf(start).split(" ");
+        node.querySelector(".evtDate").textContent = date[0];
+        node.querySelector(".evtMonth").textContent = date[1];
+        node.querySelector(".evtTime").textContent = timeOrBlankOf(start);
+        node.querySelector(".evtWeekDay").textContent = weekDayOf(start);
+        node.querySelector(".evtTitle").textContent = event.name;
+        const eventDetail = node.querySelector(".evtDetail");
+        if (event.description) {
+          eventDetail.innerHTML = event.description;
+        } else {
+          eventDetail.parentNode.removeChild(eventDetail);
+        }
+        const eventLinks = node.querySelector(".evtLinks");
+        if (event.attachments && event.attachments.length > 0) {
+          event.attachments
+            .map((attachment) => linkOf(attachment.name, attachment.url))
+            .forEach((attachment, index) => {
+              if (index > 0) {
+                eventLinks.appendChild(document.createTextNode(" | "));
+              }
+              eventLinks.appendChild(attachment);
+            });
+        } else {
+          eventLinks.parentNode.removeChild(eventLinks);
+        }
+        if (event.tags.includes("JFYI")) {
+          node.querySelector(".calEvent").classList.add("text-gray-500");
+        }
+        outlet.appendChild(node);
       });
     }
   }
 }
 
 function appedOtherEvents(files, elementId) {
+  const eventPattern =
+    /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
   if (files.length > 0) {
     const outlet = document.getElementById(elementId);
     const template = document.getElementById("evtOtherTemplate");
     outlet.appendChild(document.createElement("hr"));
     outlet.appendChild(document.createElement("br"));
     files.forEach((file) => {
+      const [_, from, __, to, title, ext] = eventPattern.exec(file.name);
+      const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
       const node = document.importNode(template.content, true);
       const event = node.querySelector(".otherEvent");
-      event.appendChild(linkOf(file.name, file.webViewLink));
+      event.appendChild(
+        linkOf(
+          `${weekDayOf(start)} ${dateOf(start)} ${title}`,
+          file.webViewLink,
+        ),
+      );
       outlet.appendChild(node);
     });
   }
