@@ -55,6 +55,27 @@ function appendEvents(events, elementId) {
       }
       outlet.appendChild(node);
     });
+    const plannedEvents = events.filter((e) => e.tags.includes("plan"));
+    if (plannedEvents.length > 0) {
+      plannedEvents.forEach((planned) => {
+        console.log(planned.name, planned.description);
+      });
+    }
+  }
+}
+
+function appedOtherEvents(files, elementId) {
+  if (files.length > 0) {
+    const outlet = document.getElementById(elementId);
+    const template = document.getElementById("evtOtherTemplate");
+    outlet.appendChild(document.createElement("hr"));
+    outlet.appendChild(document.createElement("br"));
+    files.forEach((file) => {
+      const node = document.importNode(template.content, true);
+      const event = node.querySelector(".otherEvent");
+      event.appendChild(linkOf(file.name, file.webViewLink));
+      outlet.appendChild(node);
+    });
   }
 }
 
@@ -162,6 +183,17 @@ ga.init()
         googleEvents.items.map((event) => Events.parse(event)),
       ).filter((event) => !(event.tags || []).includes("hide"));
       appendEvents(events, "regularEvents");
+    });
+
+    const otherEventsQuery = {
+      orderBy: "name desc",
+      pageSize: 70,
+      q: "trashed=false and parents in '166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6' and mimeType != 'application/vnd.google-apps.folder'",
+      fields: "files(id, name, webViewLink, webContentLink, mimeType)",
+    };
+
+    ga.files(otherEventsQuery).then((otherEvents) => {
+      appedOtherEvents(otherEvents.files, "otherEvents");
     });
 
     const messagesAudioQuery = {
