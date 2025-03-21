@@ -61,8 +61,8 @@ function appendEvents(events, elementId) {
     if (plannedEvents.length > 0) {
       const outlet = document.getElementById("plannedEvents");
       const template = document.getElementById("evtTemplate");
-      outlet.appendChild(document.createElement("hr"));
-      outlet.appendChild(document.createElement("br"));
+      // outlet.appendChild(document.createElement("hr"));
+      // outlet.appendChild(document.createElement("br"));
       plannedEvents.forEach((event) => {
         console.log(event.name, event.description);
         const node = document.importNode(template.content, true);
@@ -95,7 +95,7 @@ function appendEvents(events, elementId) {
         if (event.tags.includes("JFYI")) {
           node.querySelector(".calEvent").classList.add("text-gray-500");
         }
-        outlet.appendChild(node);
+        // outlet.appendChild(node);
       });
     }
   }
@@ -107,20 +107,21 @@ function appedOtherEvents(files, elementId) {
   if (files.length > 0) {
     const outlet = document.getElementById(elementId);
     const template = document.getElementById("evtOtherTemplate");
-    outlet.appendChild(document.createElement("hr"));
-    outlet.appendChild(document.createElement("br"));
+    // outlet.appendChild(document.createElement("hr"));
+    // outlet.appendChild(document.createElement("br"));
     files.forEach((file) => {
       const [_, from, __, to, title, ext] = eventPattern.exec(file.name);
       const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
       const node = document.importNode(template.content, true);
       const event = node.querySelector(".otherEvent");
+      console.log(from, to, title, ext);
       event.appendChild(
         linkOf(
           `${weekDayOf(start)} ${dateOf(start)} ${title}`,
           file.webViewLink,
         ),
       );
-      outlet.appendChild(node);
+      // outlet.appendChild(node);
     });
   }
 }
