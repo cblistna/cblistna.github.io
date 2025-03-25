@@ -116,7 +116,7 @@
               Oznámení <small id="today-date"></small>
             </h2>
             <div id="regularEvents"></div>
-            <div id="irregularEvents"></div>
+            <div id="upcomingEvents"></div>
             <div id="plannedEvents"></div>
             <div id="otherEvents"></div>
           </div>
@@ -204,45 +204,6 @@
         </ul>
       </div>
     </div>
-
-    <template id="evtTemplate">
-      <div class="calEvent">
-        <div class="evtDateCol">
-          <p class="flex flex-row px-3 text-xl pb-2">
-            <span class="w-12 pr-12 font-thin evtWeekDay"></span>
-            <span class="w-6 text-right font-medium evtDate"></span>
-            <span class="w-12 pl-3 font-medium evtMonth"></span>
-            <span class="w-16 text-right font-thin evtTime"></span>
-            <span
-              class="flex-grow w-24 text-justify pl-8 font-semibold evtTitle"
-            ></span>
-          </p>
-          <div class="evtDescriptionCol text-blue-600">
-            <div class="evtTitleDetail">
-              <p class="flex flex-row flex-row items-center">
-                <span class="w-16 ml-1"></span>
-                <span class="w-16 ml-8"></span>
-                <span
-                  class="evtDetail font-weight-normal text-muted w-auto ml-16"
-                ></span>
-              </p>
-            </div>
-            <div class="font-weight-normal">
-              <p>
-                <span class="w-16 ml-1"></span>
-                <span class="w-16 ml-8"></span>
-                <span class="evtLinks w-auto ml-48"></span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <template id="evtOtherTemplate">
-      <div class="otherEvent">
-      </div>
-    </template>
 
     <template id="msgTemplate">
       <div class="msgRow flex flex-col md:flex-row flex-wrap px-3 text-xl pb-2">

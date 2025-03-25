@@ -3,126 +3,134 @@
 const DateTime = luxon.DateTime;
 const today = DateTime.local().setLocale("cs");
 
-function appendEvents(events, elementId) {
-  if (events.length > 0) {
-    const outlet = document.getElementById(elementId);
-    const template = document.getElementById("evtTemplate");
-    const nowPlus7Days = new Date(
-      new Date().getTime() + 8 * 24 * 60 * 60 * 1000,
-    );
-    let weekSeparatorRendered = false;
-    events.forEach((event) => {
-      if (
-        event.tags.includes("hide") || event.tags.includes("plan") ||
-        (event.eventId !== event.id && event.start > nowPlus7Days)
-      ) {
-        return;
-      }
-      if (!weekSeparatorRendered && event.start > nowPlus7Days) {
-        outlet.appendChild(document.createElement("hr"));
-        outlet.appendChild(document.createElement("br"));
-        weekSeparatorRendered = true;
-      }
-      const node = document.importNode(template.content, true);
-      const start = DateTime.fromJSDate(event.start).setLocale("cs");
-      const date = dateOf(start).split(" ");
-      node.querySelector(".evtDate").textContent = date[0];
-      node.querySelector(".evtMonth").textContent = date[1];
-      node.querySelector(".evtTime").textContent = timeOrBlankOf(start);
-      node.querySelector(".evtWeekDay").textContent = weekDayOf(start);
-      node.querySelector(".evtTitle").textContent = event.name;
-      const eventDetail = node.querySelector(".evtDetail");
-      if (event.description) {
-        eventDetail.innerHTML = event.description;
+function Event(event) {
+  const start = DateTime.fromJSDate(event.start).setLocale("cs");
+  const [day, month] = dateOf(start).split(" ");
+  return `
+    <div class="calEvent">
+      <div class="evtDateCol">
+        <p class="flex flex-row px-3 text-xl pb-2">
+          <span class="w-12 pr-12 font-thin">${weekDayOf(start)}</span>
+          <span class="w-6 text-right font-medium">${day}</span>
+          <span class="w-12 pl-3 font-medium">${month}</span>
+          <span class="w-16 text-right font-thin">${timeOrBlankOf(start)}</span>
+          <span class="flex-grow w-24 text-justify pl-8 font-semibold"
+          >${event.name}</span>
+        </p>
+        <div class="evtDescriptionCol text-blue-600">
+          ${event.description
+            ? `
+            <div class="evtTitleDetail">
+              <p class="flex flex-row flex-row items-center">
+                <span class="w-16 ml-1"></span>
+                <span class="w-16 ml-8"></span>
+                <span
+                  class="evtDetail font-weight-normal text-muted w-auto ml-16"
+                >${event.description}</span>
+              </p>
+            </div>`
+            : "" 
+          }
+          ${event.attachments && event.attachments.length > 0
+            ? `
+            <div class="font-weight-normal">
+              <p>
+                <span class="w-16 ml-1"></span>
+                <span class="w-16 ml-8"></span>
+                <span class="evtLinks w-auto ml-48">
+                ${event.attachments.map((attachment) =>
+                   `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
+                  ).join(" | ")
+                }
+                </span>
+              </p>
+            </div>
+              `
+            : ""
+          }
+        </div>
+      </div>
+    </div>
+`;
+}
+
+function appendEvents(events) {
+  const nowPlus7Days = new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000);
+  const { regular, upcoming, planned } = events.reduce((acc, event) => {
+      if (event.tags.includes("plan")) {
+        acc.planned.push(event);
+      } else if (event.start <= nowPlus7Days) {
+        acc.regular.push(event);
       } else {
-        eventDetail.parentNode.removeChild(eventDetail);
+        acc.upcoming.push(event);
       }
-      const eventLinks = node.querySelector(".evtLinks");
-      if (event.attachments && event.attachments.length > 0) {
-        event.attachments
-          .map((attachment) => linkOf(attachment.name, attachment.url))
-          .forEach((attachment, index) => {
-            if (index > 0) {
-              eventLinks.appendChild(document.createTextNode(" | "));
-            }
-            eventLinks.appendChild(attachment);
-          });
-      } else {
-        eventLinks.parentNode.removeChild(eventLinks);
-      }
-      if (event.tags.includes("JFYI")) {
-        node.querySelector(".calEvent").classList.add("text-gray-500");
-      }
-      outlet.appendChild(node);
-    });
-    const plannedEvents = events.filter((e) =>
-      e.tags.includes("plan") && !e.tags.includes("hide")
-    );
-    if (plannedEvents.length > 0) {
-      const outlet = document.getElementById("plannedEvents");
-      const template = document.getElementById("evtTemplate");
-      // outlet.appendChild(document.createElement("hr"));
-      // outlet.appendChild(document.createElement("br"));
-      plannedEvents.forEach((event) => {
-        console.log(event.name, event.description);
-        const node = document.importNode(template.content, true);
-        const start = DateTime.fromJSDate(event.start).setLocale("cs");
-        const date = dateOf(start).split(" ");
-        node.querySelector(".evtDate").textContent = date[0];
-        node.querySelector(".evtMonth").textContent = date[1];
-        node.querySelector(".evtTime").textContent = timeOrBlankOf(start);
-        node.querySelector(".evtWeekDay").textContent = weekDayOf(start);
-        node.querySelector(".evtTitle").textContent = event.name;
-        const eventDetail = node.querySelector(".evtDetail");
-        if (event.description) {
-          eventDetail.innerHTML = event.description;
-        } else {
-          eventDetail.parentNode.removeChild(eventDetail);
-        }
-        const eventLinks = node.querySelector(".evtLinks");
-        if (event.attachments && event.attachments.length > 0) {
-          event.attachments
-            .map((attachment) => linkOf(attachment.name, attachment.url))
-            .forEach((attachment, index) => {
-              if (index > 0) {
-                eventLinks.appendChild(document.createTextNode(" | "));
-              }
-              eventLinks.appendChild(attachment);
-            });
-        } else {
-          eventLinks.parentNode.removeChild(eventLinks);
-        }
-        if (event.tags.includes("JFYI")) {
-          node.querySelector(".calEvent").classList.add("text-gray-500");
-        }
-        // outlet.appendChild(node);
-      });
-    }
+      return acc;
+    },
+    { regular: [], upcoming: [], planned: [] }
+  );
+  if (regular.length > 0) {
+    document.getElementById("regularEvents").innerHTML = `
+      ${regular.map((event) => Event(event)).join("\n")}
+    `;
+  }
+  if (upcoming.length > 0) {
+    document.getElementById("upcomingEvents").innerHTML = `
+      <hr class="my-6" />
+      ${upcoming.map((event) => Event(event)).join("\n")}
+    `;
+  }
+  if (planned.length > 0 && false) {
+    document.getElementById("plannedEvents").innerHTML = `
+      <hr class="my-6" />
+      <div class="text-gray-600">
+        ${planned.map((event) => Event(event)).join("\n")}
+      </div>
+    `;
   }
 }
 
-function appedOtherEvents(files, elementId) {
-  const eventPattern =
-    /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
-  if (files.length > 0) {
-    const outlet = document.getElementById(elementId);
-    const template = document.getElementById("evtOtherTemplate");
-    // outlet.appendChild(document.createElement("hr"));
-    // outlet.appendChild(document.createElement("br"));
-    files.forEach((file) => {
-      const [_, from, __, to, title, ext] = eventPattern.exec(file.name);
-      const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
-      const node = document.importNode(template.content, true);
-      const event = node.querySelector(".otherEvent");
-      console.log(from, to, title, ext);
-      event.appendChild(
-        linkOf(
-          `${weekDayOf(start)} ${dateOf(start)} ${title}`,
-          file.webViewLink,
-        ),
-      );
-      // outlet.appendChild(node);
-    });
+const eventPattern =
+  /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
+
+function fileEventOf(file) {
+  const match = eventPattern.exec(file.name);
+  if (!match) return;
+  const [_, from, __, to, name, ext] = match;
+  const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
+  const end = to ? DateTime.fromJSDate(new Date(to)).setLocale("cs") : undefined;
+  return { start, end, name, ext, url: file.webViewLink };
+}
+
+function FileEvent(event) {
+  const [day, month] = dateOf(event.start).split(" ");
+  return `
+    <div class="calEvent">
+      <div class="evtDateCol">
+        <p class="flex flex-row px-3 text-xl pb-2">
+          <span class="w-12 pr-12 font-thin">${weekDayOf(event.start)}</span>
+          <span class="w-6 text-right font-medium">${day}</span>
+          <span class="w-12 pl-3 font-medium">${month}</span>
+          <span class="w-16 text-right font-thin"></span>
+          <span class="flex-grow w-24 text-justify pl-8 font-semibold text-blue-600"
+          ><a href="${event.url}" target="_blank">${event.name}</a></span>
+        </p>
+      </div>
+    </div>
+`;
+}
+
+function appedOtherEvents(files) {
+  if (files.length > 0 && false) {
+    const today = DateTime.fromJSDate(new Date()).setLocale("cs");
+    const outlet = document.getElementById("otherEvents").innerHTML = `
+      <hr class="my-6" />
+      ${files
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((file) => fileEventOf(file))
+        .filter((event) => !!event)
+        .filter((event) => today <= event.start)
+        .map((event) => FileEvent(event)).join("\n")}
+    `;
   }
 }
 
@@ -219,7 +227,7 @@ ga.init()
     const regularEventsQuery = Object.assign(
       {
         timeMax: new Date(
-          now.getTime() + 200 * 24 * 60 * 60 * 1000,
+          now.getTime() + 250 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       },
       eventsBaseQuery,
@@ -229,7 +237,7 @@ ga.init()
       const events = Events.dropRecurringNotImportant(
         googleEvents.items.map((event) => Events.parse(event)),
       ).filter((event) => !(event.tags || []).includes("hide"));
-      appendEvents(events, "regularEvents");
+      appendEvents(events);
     });
 
     const otherEventsQuery = {
@@ -240,7 +248,7 @@ ga.init()
     };
 
     ga.files(otherEventsQuery).then((otherEvents) => {
-      appedOtherEvents(otherEvents.files, "otherEvents");
+      appedOtherEvents(otherEvents.files);
     });
 
     const messagesAudioQuery = {
