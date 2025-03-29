@@ -44,6 +44,14 @@
         :event="event"
       ></event-highlight>
     </div>
+    <div id="other-events" class="slide pt-1">
+      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+        Jiné události
+      </p>
+      <div day="day" class="-mt-4">
+        <calendar-day-other v-for="day in calendar" :day="day"></calendar-day-ot>
+      </div>
+    </div>
     <div id="planned-events" class="slide pt-1">
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
         Plánované události
@@ -60,49 +68,63 @@
       Vue.component("calendar-day", {
         props: ["day"],
         template: `
-          <div class="mt-10">
-            <p class="text-4xl font-normal">
-              {{ day.date.toFormat('cccc') }}, {{ day.date.toFormat('d. MMMM') }}
-            </p>
-            <p v-for="event in day.events" class="mt-3">
-              <span class="inline-block w-10 font-normal text-4xl"
-                >{{ event.start.toFormat('Hm') === "00"  ? "" : event.start.toFormat('H') }}<span class="text-3xl font-normal"
-                  >{{ event.start.toFormat('Hm') === "00" ? "" : "." + event.start.toFormat('mm')}}</span></span>
-              <span class="ml-14 font-medium text-5xl">{{ event.name }}</span>
-              <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
-                <span v-html="event.description"></span>
-              </span>
-            </p>
-          </div>
-        `,
+            <div class="mt-10">
+              <p class="text-4xl font-normal">
+                {{ day.date.toFormat('cccc') }}, {{ day.date.toFormat('d. MMMM') }}
+              </p>
+              <p v-for="event in day.events" class="mt-3">
+                <span class="inline-block w-10 font-normal text-4xl"
+                  >{{ event.start.toFormat('Hm') === "00"  ? "" : event.start.toFormat('H') }}<span class="text-3xl font-normal"
+                    >{{ event.start.toFormat('Hm') === "00" ? "" : "." + event.start.toFormat('mm')}}</span></span>
+                <span class="ml-14 font-medium text-5xl">{{ event.name }}</span>
+                <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                  <span v-html="event.description"></span>
+                </span>
+              </p>
+            </div>
+          `,
+      });
+      Vue.component("calendar-day-other", {
+        props: ["day"],
+        template: `
+            <div class="mt-10">
+              <p class="text-4xl font-normal">
+                {{ day.date.toFormat('cccc') }}, {{ day.date.toFormat('d. MMMM') }}
+              </p>
+              <p v-for="event in day.events" class="mt-3">
+                <span class="font-medium text-5xl">
+                  <a :href="event.url" target="_blank">{{ event.name }}</a></span>
+              </p>
+            </div>
+          `,
       });
 
       Vue.component("event-highlight", {
         props: ["event"],
         template: `
-          <div class="slide pt-1">
-            <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
-              Nadcházející události
-            </p>
-            <div class="min-h-screen flex flex-col justify-center">
-              <div class="pb-64 px-24">
-                <p class="pb-8 text-6xl font-normal">
-                  {{ event.start.toFormat('cccc, d. MMMM')  }}
-                  {{ event.start.toFormat('Hm') === '00' ? "" : "v " + event.start.toFormat('H:mm')}}
-                </p>
-                <p class="text-2xl mb-2">
-                  <span class="font-semibold text-8xl">{{ event.name }}</span>
-                  <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
-                    <span v-html="event.description"></span>
-                  </span>
-                  <span v-for="attachment in event.attachments" class="text-blue-500">
-                    <br/>
-                    <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
-                </p>
+            <div class="slide pt-1">
+              <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+                Nadcházející události
+              </p>
+              <div class="min-h-screen flex flex-col justify-center">
+                <div class="pb-64 px-24">
+                  <p class="pb-8 text-6xl font-normal">
+                    {{ event.start.toFormat('cccc, d. MMMM')  }}
+                    {{ event.start.toFormat('Hm') === '00' ? "" : "v " + event.start.toFormat('H:mm')}}
+                  </p>
+                  <p class="text-2xl mb-2">
+                    <span class="font-semibold text-8xl">{{ event.name }}</span>
+                    <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                      <span v-html="event.description"></span>
+                    </span>
+                    <span v-for="attachment in event.attachments" class="text-blue-500">
+                      <br/>
+                      <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        `,
+          `,
       });
 
       function toDate(date) {
@@ -190,6 +212,54 @@
                 calendar: toCalendar(schedule.events.plan),
               },
             });
+          });
+
+          const eventPattern =
+            /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
+
+          const DateTime = luxon.DateTime;
+
+          const utcDateOf = (localDate) => {
+            const date = new Date(localDate);
+            date.setHours(0);
+            return date;
+          };
+          function fileEventOf(file) {
+            const match = eventPattern.exec(file.name);
+            if (!match) return;
+            const [_, from, __, to, name, ext] = match;
+            if (ext === "url") return;
+            const start = DateTime.fromJSDate(utcDateOf(from)).setLocale("cs");
+            const end = to
+              ? DateTime.fromJSDate(utcDateOf(to)).setLocale("cs")
+              : undefined;
+            return { start, end, name, ext, url: file.webViewLink };
+          }
+
+          const otherEventsQuery = {
+            orderBy: "name desc",
+            pageSize: 70,
+            q: "trashed=false and parents in '166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6' and mimeType != 'application/vnd.google-apps.folder'",
+            fields: "files(id, name, webViewLink, webContentLink, mimeType)",
+          };
+
+          ga.files(otherEventsQuery).then(({ files }) => {
+            if (files.length > 0) {
+              const today = DateTime.fromJSDate(new Date()).setLocale("cs");
+
+              const otherEvents = files
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((file) => fileEventOf(file))
+                .filter((event) => !!event)
+                .filter((event) => today <= event.start);
+
+              new Vue({
+                el: "#other-events",
+                data: {
+                  calendar: toCalendar(otherEvents),
+                },
+              });
+            }
           });
         })
         .catch(console.error);
