@@ -84,7 +84,7 @@ function appendEvents(events) {
       ${upcoming.map((event) => Event(event)).join("\n")}
     `;
   }
-  if (planned.length > 0 && false) {
+  if (planned.length > 0) {
     document.getElementById("plannedEvents").innerHTML = `
       <hr class="my-6" />
       <div class="text-gray-600">
@@ -101,6 +101,7 @@ function fileEventOf(file) {
   const match = eventPattern.exec(file.name);
   if (!match) return;
   const [_, from, __, to, name, ext] = match;
+  if (ext === "url") return;
   const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
   const end = to
     ? DateTime.fromJSDate(new Date(to)).setLocale("cs")
@@ -126,10 +127,10 @@ function FileEvent(event) {
 `;
 }
 
-function appedOtherEvents(files) {
-  if (files.length > 0 && false) {
+function appendOtherEvents(files) {
+  if (files.length > 0) {
     const today = DateTime.fromJSDate(new Date()).setLocale("cs");
-    const outlet = (document.getElementById("otherEvents").innerHTML = `
+    document.getElementById("otherEvents").innerHTML = `
       <hr class="my-6" />
       ${files
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -138,17 +139,8 @@ function appedOtherEvents(files) {
         .filter((event) => today <= event.start)
         .map((event) => FileEvent(event))
         .join("\n")}
-    `);
+    `;
   }
-}
-
-function linkOf(title, url) {
-  const a = document.createElement("a");
-  a.appendChild(document.createTextNode(title));
-  a.title = title;
-  a.href = url;
-  a.target = "_blank";
-  return a;
 }
 
 function weekDayOf(date) {
@@ -250,7 +242,7 @@ ga.init()
     };
 
     ga.files(otherEventsQuery).then((otherEvents) => {
-      appedOtherEvents(otherEvents.files);
+      appendOtherEvents(otherEvents.files);
     });
 
     const messagesAudioQuery = {
