@@ -172,7 +172,7 @@
         Promise.all([services, otherEvents]).then(
           ([{ events, week, calendarItems }, otherEvents]) => {
             const url = new URL(window.location.href);
-            const includePlan = url.searchParams.has("plan");
+            const includePlan = url.searchParams.has("plan") || true;
             const announcements = Events.schedule(
               upgradeDates(Events.parse(calendarItems)),
               week
