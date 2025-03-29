@@ -80,66 +80,163 @@
         }));
       }
 
+      const DateTime = luxon.DateTime;
+
       ga.init().then(() => {
-        ga.dataOf(
-          "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI",
-          "A1:K20"
-        ).then((data) => {
-          data.values.shift();
-          const today = luxon.DateTime.fromJSDate(new Date());
-          const events = data.values
-            .map((row) => ({
-              start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
-              host: row[2] || "-",
-              sermon: row[3] || "-",
-              title: row[4] || "",
-              notes: row[5] || "-",
-              worship: row[6] || "-",
-              kids: row[7] || "-",
-              beaming: row[8] || "-",
-              sound: row[9] || "-",
-              birthdays: (row[10] || "-").replaceAll(", ", "<br />"),
-            }))
-            .filter((event) => today.toISODate() <= event.start.toISODate())
-            .sort((a, b) => a.start.toMillis() - b.start.toMillis());
+        const services = ga
+          .dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:K20")
+          .then((data) => {
+            data.values.shift();
+            const today = luxon.DateTime.fromJSDate(new Date());
+            const events = data.values
+              .map((row) => ({
+                start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
+                host: row[2] || "-",
+                sermon: row[3] || "-",
+                title: row[4] || "",
+                notes: row[5] || "-",
+                worship: row[6] || "-",
+                kids: row[7] || "-",
+                beaming: row[8] || "-",
+                sound: row[9] || "-",
+                birthdays: (row[10] || "-").replaceAll(", ", "<br />"),
+              }))
+              .filter((event) => today.toISODate() <= event.start.toISODate())
+              .sort((a, b) => a.start.toMillis() - b.start.toMillis());
             const week = Events.weekOf(events[0].start.toJSDate());
-            ga.eventsOf("trinec.v@cb.cz", {
-              timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
-              timeMax: new Date(
-                week.sunday.getTime() + (365 * 24 * 60 * 60 * 1000)
-              ).toISOString(),
-              singleEvents: true,
-              orderBy: "startTime",
-              maxResults: 300,
-            }).then((googleEvents) => {
-              const url = new URL(window.location.href);
-              const includePlan = url.searchParams.has("plan");
-              const announcements = Events.schedule(upgradeDates(Events.parse(googleEvents.items)), week);
-              console.log(announcements.events);
-              events[0].announcements = [
-                  { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days:0})}, name: 'Pravidelné události příští týden'},
-                ...announcements.events.week,
-                  { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days:0})}, name: 'Nadcházející události'},
-                ...announcements.events.upcoming,
-                  { start: { toFormat: () => '' }, end: { toFormat: () => '', diff: () => ({days: 0})}, name: 'Plánované události', tags: ["plan"]},
-                ...announcements.events.plan 
-              ]
+            return ga
+              .eventsOf("trinec.v@cb.cz", {
+                timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
+                timeMax: new Date(
+                  week.sunday.getTime() + 365 * 24 * 60 * 60 * 1000
+                ).toISOString(),
+                singleEvents: true,
+                orderBy: "startTime",
+                maxResults: 300,
+              })
+              .then(({ items: calendarItems }) => ({
+                events,
+                week,
+                calendarItems,
+              }));
+          });
+
+        const otherEvents = ga
+          .files({
+            orderBy: "name desc",
+            pageSize: 70,
+            q: "trashed=false and parents in '166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6' and mimeType != 'application/vnd.google-apps.folder'",
+            fields: "files(id, name, webViewLink, webContentLink, mimeType)",
+          })
+          .then(({ files }) => {
+            const today = DateTime.fromJSDate(new Date()).setLocale("cs");
+
+            const eventPattern =
+              /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
+
+            const utcStartDateOf = (localDate) => {
+              const date = new Date(localDate);
+              date.setHours(0);
+              date.setMinutes(0);
+              return date;
+            };
+
+            const utcEndDateOf = (localDate) => {
+              const date = new Date(localDate);
+              date.setHours(23);
+              date.setMinutes(59);
+              return date;
+            };
+
+            function fileEventOf(file) {
+              const match = eventPattern.exec(file.name);
+              if (!match) return;
+              const [_, from, __, to, name, ext] = match;
+              if (ext === "url") return;
+              const start = DateTime.fromJSDate(utcStartDateOf(from)).setLocale(
+                "cs"
+              );
+              const end = to
+                ? DateTime.fromJSDate(utcEndDateOf(to)).setLocale("cs")
+                : start;
+              return { start, end, name, ext, url: file.webViewLink };
+            }
+
+            return files
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((file) => fileEventOf(file))
+              .filter((event) => !!event)
+              .filter((event) => today <= event.start);
+          });
+
+        Promise.all([services, otherEvents]).then(
+          ([{ events, week, calendarItems }, otherEvents]) => {
+            const url = new URL(window.location.href);
+            const includePlan = url.searchParams.has("plan");
+            const announcements = Events.schedule(
+              upgradeDates(Events.parse(calendarItems)),
+              week
+            );
+            events[0].announcements = [
+              {
+                start: { toFormat: () => "" },
+                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
+                name: "Pravidelné události příští týden",
+              },
+              ...announcements.events.week,
+              {
+                start: { toFormat: () => "" },
+                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
+                name: "Nadcházející události",
+              },
+              ...announcements.events.upcoming,
+              {
+                start: { toFormat: () => "" },
+                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
+                name: "Plánované události",
+                tags: ["plan"],
+              },
+              ...announcements.events.plan,
+              {
+                start: { toFormat: () => "" },
+                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
+                name: "Jiné události",
+                tags: ["other"],
+              },
+              ...otherEvents,
+            ]
               .filter((e) => includePlan || !(e.tags ?? []).includes("plan"))
-              .map((e) => ({...e, days: Math.floor(e.end.diff(e.start, ["days"]).days + 0.1) }))
-              .map((e) => `${
-                  e.start.toFormat('d.M. ccc H:mm').replace(' 0:00', '') 
-                  + (e.days ? e.end.toFormat(' - d.M. ccc H:mm').replace(' 23:59', '') + ` (${e.days}d)` : '')
-                }${e.start.toFormat('d') ? '<span class="ml-2">' : '<span class="font-semibold">'}${
-                  e.name}</span>${
-                  e.description ? ` (${e.description})` : ''
-                }`)
+              .map((e) => ({
+                ...e,
+                days: Math.floor(e.end.diff(e.start, ["days"]).days + 0.1),
+              }))
+              .map(
+                (e) =>
+                  `${
+                    e.start.toFormat("d.M. ccc H:mm").replace(" 0:00", "") +
+                    (e.days
+                      ? e.end
+                          .toFormat(" - d.M. ccc H:mm")
+                          .replace(" 23:59", "") + ` (${e.days}d)`
+                      : "")
+                  }${
+                    e.start.toFormat("d")
+                      ? '<span class="ml-2">'
+                      : '<span class="font-semibold">'
+                  }${
+                    e.url
+                      ? `<a href="${e.url}" target="_blank" class="text-blue-900">${e.name}</a>`
+                      : e.name
+                  }</span>${e.description ? ` (${e.description})` : ""}`
+              )
               .join("<br />");
-              new Vue({
-                el: "#app",
-                data: { events },
-              });
+
+            new Vue({
+              el: "#app",
+              data: { events },
             });
-        });
+          }
+        );
       });
     </script>
   </body>
