@@ -227,7 +227,16 @@
                     e.url
                       ? `<a href="${e.url}" target="_blank" class="text-blue-900">${e.name}</a>`
                       : e.name
-                  }</span>${e.description ? ` (${e.description})` : ""}`
+                  }</span>${e.description ? ` (${e.description})` : ""}${
+                    e.attachments?.length
+                      ? ` (${e.attachments
+                          .map(
+                            (a) =>
+                              `<a href="${a.url}" target="_blank" class="text-blue-900">${a.name}</a>`
+                          )
+                          .join(" | ")})`
+                      : ""
+                  }`
               )
               .join("<br />");
 
