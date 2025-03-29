@@ -39,7 +39,10 @@
       </div>
     </div>
     <div id="upcoming-events">
-      <event-highlight v-for="event in calendar" :event="event"></event-highlight>
+      <event-highlight
+        v-for="event in calendar"
+        :event="event"
+      ></event-highlight>
     </div>
     <div id="planned-events" class="slide pt-1">
       <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
@@ -50,11 +53,9 @@
       </div>
     </div>
     <div id="events-footer" class="flex slide">
-      <p id="title" class="text-5xl pt-2 font-medium m-auto">
-        cblistna.cz
-      </p>
+      <p id="title" class="text-5xl pt-2 font-medium m-auto">cblistna.cz</p>
     </div>
-    
+
     <script>
       Vue.component("calendar-day", {
         props: ["day"],
@@ -142,7 +143,9 @@
 
       let dayOfWeek = new luxon.DateTime(new Date());
       if (url.searchParams.has("w")) {
-        dayOfWeek = dayOfWeek.plus({ week: parseInt(url.searchParams.get("w")) || 0 });
+        dayOfWeek = dayOfWeek.plus({
+          week: parseInt(url.searchParams.get("w")) || 0,
+        });
       }
       const week = Events.weekOf(dayOfWeek.toJSDate());
 
@@ -181,17 +184,12 @@
               },
             });
 
-            if (includePlan) {
-              new Vue({
-                el: "#planned-events",
-                data: {
-                  calendar: toCalendar(schedule.events.plan),
-                },
-              });
-            } else {
-              const plan = document.getElementById("planned-events");
-              plan.parentElement.removeChild(plan);
-            }
+            new Vue({
+              el: "#planned-events",
+              data: {
+                calendar: toCalendar(schedule.events.plan),
+              },
+            });
           });
         })
         .catch(console.error);
