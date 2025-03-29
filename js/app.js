@@ -18,8 +18,9 @@ function Event(event) {
           >${event.name}</span>
         </p>
         <div class="evtDescriptionCol text-blue-600">
-          ${event.description
-            ? `
+          ${
+            event.description
+              ? `
             <div class="evtTitleDetail">
               <p class="flex flex-row flex-row items-center">
                 <span class="w-16 ml-1"></span>
@@ -29,24 +30,27 @@ function Event(event) {
                 >${event.description}</span>
               </p>
             </div>`
-            : "" 
+              : ""
           }
-          ${event.attachments && event.attachments.length > 0
-            ? `
+          ${
+            event.attachments && event.attachments.length > 0
+              ? `
             <div class="font-weight-normal">
               <p>
                 <span class="w-16 ml-1"></span>
                 <span class="w-16 ml-8"></span>
                 <span class="evtLinks w-auto ml-48">
-                ${event.attachments.map((attachment) =>
-                   `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
-                  ).join(" | ")
-                }
+                ${event.attachments
+                  .map(
+                    (attachment) =>
+                      `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
+                  )
+                  .join(" | ")}
                 </span>
               </p>
             </div>
               `
-            : ""
+              : ""
           }
         </div>
       </div>
@@ -56,7 +60,8 @@ function Event(event) {
 
 function appendEvents(events) {
   const nowPlus7Days = new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000);
-  const { regular, upcoming, planned } = events.reduce((acc, event) => {
+  const { regular, upcoming, planned } = events.reduce(
+    (acc, event) => {
       if (event.tags.includes("plan")) {
         acc.planned.push(event);
       } else if (event.start <= nowPlus7Days) {
@@ -97,7 +102,9 @@ function fileEventOf(file) {
   if (!match) return;
   const [_, from, __, to, name, ext] = match;
   const start = DateTime.fromJSDate(new Date(from)).setLocale("cs");
-  const end = to ? DateTime.fromJSDate(new Date(to)).setLocale("cs") : undefined;
+  const end = to
+    ? DateTime.fromJSDate(new Date(to)).setLocale("cs")
+    : undefined;
   return { start, end, name, ext, url: file.webViewLink };
 }
 
@@ -122,15 +129,16 @@ function FileEvent(event) {
 function appedOtherEvents(files) {
   if (files.length > 0 && false) {
     const today = DateTime.fromJSDate(new Date()).setLocale("cs");
-    const outlet = document.getElementById("otherEvents").innerHTML = `
+    const outlet = (document.getElementById("otherEvents").innerHTML = `
       <hr class="my-6" />
       ${files
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((file) => fileEventOf(file))
         .filter((event) => !!event)
         .filter((event) => today <= event.start)
-        .map((event) => FileEvent(event)).join("\n")}
-    `;
+        .map((event) => FileEvent(event))
+        .join("\n")}
+    `);
   }
 }
 
@@ -157,43 +165,37 @@ function timeOrBlankOf(date) {
   return date.hour === 0 && date.minute === 0 ? "" : date.toFormat("HH:mm");
 }
 
+function urlOf(file) {
+  return file.webViewLink.substring(0, file.webViewLink.indexOf("?"));
+}
+
 function appendMessages(audioFiles, docs, elementId) {
-  const outlet = document.getElementById(elementId);
-  const template = document.getElementById("msgTemplate");
   audioFiles.forEach((file) => {
     const meta = parseFile(file);
     meta.doc = docs[meta.file.replace(/\.mp3$/, ".pdf")];
     if (!(meta.date.isValid && meta.title && meta.author)) {
       return;
     }
-    const node = document.importNode(template.content, true);
-    node.querySelector(".msgDate").textContent = dateOf(meta.date);
-    // node.querySelector('.msgTitle').textContent = meta.title;
-    node.querySelector(".msgAuthor").textContent = meta.author;
 
-    const link = document.createElement("a");
-    link.appendChild(document.createTextNode(meta.title));
-    link.title = meta.title;
-    link.href = file.webViewLink.substring(
-      0,
-      file.webViewLink.indexOf("?"),
-    );
-    link.target = "_blank";
-    node.querySelector(".msgTitle").appendChild(link);
-
-    if (meta.doc) {
-      const link = document.createElement("a");
-      link.appendChild(document.createTextNode("(text)"));
-      link.title = meta.doc.name;
-      link.href = meta.doc.webViewLink.substring(
-        0,
-        file.webViewLink.indexOf("?"),
-      );
-      link.target = "_blank";
-      node.querySelector(".msgDoc").appendChild(link);
-    }
-
-    outlet.appendChild(node);
+    document.getElementById(elementId).innerHTML += `
+      <div class="msgRow flex flex-col md:flex-row flex-wrap px-3 text-xl pb-2">
+        <div class="w-32 mr-2 font-weight-normal">${dateOf(meta.date)}</div>
+        <div class="msgTitle mr-2 font-semibold">
+          <a href="${urlOf(file)}" title="${file.name}" target="_blank">
+            ${meta.title}</a></div>
+        <div
+          class="msgAuthor font-weight-normal text-muted mr-3 font-light"
+        >${meta.author}</div><span
+          class="msgDoc font-light"
+        >${
+          meta.doc
+            ? `<a href="${urlOf(meta.doc)}" title="${
+                meta.doc.name
+              }" target="_blank">(text)</a>`
+            : ""
+        }</span>
+      </div>
+    `;
   });
 }
 
@@ -227,15 +229,15 @@ ga.init()
     const regularEventsQuery = Object.assign(
       {
         timeMax: new Date(
-          now.getTime() + 250 * 24 * 60 * 60 * 1000,
+          now.getTime() + 250 * 24 * 60 * 60 * 1000
         ).toISOString(),
       },
-      eventsBaseQuery,
+      eventsBaseQuery
     );
 
     ga.eventsOf("trinec.v@cb.cz", regularEventsQuery).then((googleEvents) => {
       const events = Events.dropRecurringNotImportant(
-        googleEvents.items.map((event) => Events.parse(event)),
+        googleEvents.items.map((event) => Events.parse(event))
       ).filter((event) => !(event.tags || []).includes("hide"));
       appendEvents(events);
     });
@@ -265,15 +267,15 @@ ga.init()
       fields: "files(id, name, webViewLink, webContentLink)",
     };
 
-    Promise.all([ga.files(messagesAudioQuery), ga.files(messagesDocQuery)])
-      .then(
-        ([resAudio, resDoc]) => {
-          const messageDocs = resDoc.files.reduce((docs, doc) => {
-            docs[doc.name] = doc;
-            return docs;
-          }, {});
-          appendMessages(resAudio.files, messageDocs, "messages-list");
-        },
-      );
+    Promise.all([
+      ga.files(messagesAudioQuery),
+      ga.files(messagesDocQuery),
+    ]).then(([resAudio, resDoc]) => {
+      const messageDocs = resDoc.files.reduce((docs, doc) => {
+        docs[doc.name] = doc;
+        return docs;
+      }, {});
+      appendMessages(resAudio.files, messageDocs, "messages-list");
+    });
   })
   .catch(console.error);
