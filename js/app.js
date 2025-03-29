@@ -43,7 +43,7 @@ function Event(event) {
                 ${event.attachments
                   .map(
                     (attachment) =>
-                      `<a href="${attachment.url}" target="_blank">${attachment.name}</a>`
+                      `<a href="${attachment.url}" title="${attachment.name}" target="_blank">${attachment.name}</a>`
                   )
                   .join(" | ")}
                 </span>
