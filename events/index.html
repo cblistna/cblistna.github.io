@@ -268,5 +268,55 @@
         })
         .catch(console.error);
     </script>
+    <script>
+// Create visual indicator element
+const indicator = document.createElement('div');
+indicator.style.position = 'fixed';
+indicator.style.bottom = '20px';
+indicator.style.left = '20px';
+indicator.style.width = '20px';
+indicator.style.height = '20px';
+indicator.style.borderRadius = '50%';
+indicator.style.backgroundColor = '#ff0000';
+indicator.style.display = 'none';
+document.body.appendChild(indicator);
+
+let isScrolling = false;
+let scrollInterval;
+const magicKey = 's'; // Toggle key
+
+function autoScroll() {
+    const currentPosition = window.pageYOffset;
+    const maxPosition = document.documentElement.scrollHeight - window.innerHeight;
+    
+    if (currentPosition >= maxPosition) {
+        window.scrollTo(0, 0); // Return to top
+    } else {
+        window.scrollBy(0, window.innerHeight); // Scroll by one viewport height
+    }
+}
+
+function toggleScroll() {
+    if (isScrolling) {
+        clearInterval(scrollInterval);
+        indicator.style.display = 'none';
+    } else {
+        scrollInterval = setInterval(autoScroll, 1000); // Scroll every second
+        indicator.style.display = 'block';
+    }
+    isScrolling = !isScrolling;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === magicKey) {
+        e.preventDefault();
+        toggleScroll();
+    }
+});
+
+// Start scrolling automatically on page load
+toggleScroll();
+      
+    </script>
   </body>
 </html>
