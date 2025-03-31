@@ -268,55 +268,97 @@
         })
         .catch(console.error);
     </script>
+
     <script>
-// Create visual indicator element
-const indicator = document.createElement('div');
-indicator.style.position = 'fixed';
-indicator.style.bottom = '20px';
-indicator.style.left = '20px';
-indicator.style.width = '20px';
-indicator.style.height = '20px';
-indicator.style.borderRadius = '50%';
-indicator.style.backgroundColor = '#ff0000';
-indicator.style.display = 'none';
-document.body.appendChild(indicator);
+      const indicator = document.createElement('div');
+      indicator.style.position = 'fixed';
+      indicator.style.bottom = '20px';
+      indicator.style.left = '20px';
+      indicator.style.width = '20px';
+      indicator.style.height = '20px';
+      indicator.style.borderRadius = '50%';
+      indicator.style.backgroundColor = '#00dd00';
+      indicator.style.display = 'none';
+      document.body.appendChild(indicator);
 
-let isScrolling = false;
-let scrollInterval;
-const magicKey = 's'; // Toggle key
+      let isScrolling = false;
+      let scrollInterval;
+      let intervalSeconds = 5;
+      const minInterval = 1;
+      const maxInterval = 10;
+      const step = 1;
 
-function autoScroll() {
-    const currentPosition = window.pageYOffset;
-    const maxPosition = document.documentElement.scrollHeight - window.innerHeight;
-    
-    if (currentPosition >= maxPosition) {
-        window.scrollTo(0, 0); // Return to top
-    } else {
-        window.scrollBy(0, window.innerHeight); // Scroll by one viewport height
-    }
-}
+      const infoDisplay = document.createElement('div');
+      infoDisplay.style.position = 'fixed';
+      infoDisplay.style.bottom = '20px'; // Position at the bottom
+      infoDisplay.style.right = '20px'; // Position at the right
+      infoDisplay.style.padding = '10px';
+      infoDisplay.style.backgroundColor = '#f0f0f0';
+      infoDisplay.style.border = '1px solid #ccc';
+      infoDisplay.style.borderRadius = '5px';
+      infoDisplay.style.fontFamily = 'Arial, sans-serif';
+      infoDisplay.style.fontSize = '14px';
+      infoDisplay.innerHTML = `
+          <strong>Keyboard Shortcuts:</strong><br>
+          <ul style="margin: 5px 0; padding-left: 20px;">
+              <li><strong>Enter</strong>: Toggle scrolling</li>
+              <li><strong>+</strong>: Decrease speed (increase interval)</li>
+              <li><strong>-</strong>: Increase speed (decrease interval)</li>
+          </ul>
+          <div id="interval-display">Current Interval: ${intervalSeconds}s</div>
+      `;
+      document.body.appendChild(infoDisplay);
 
-function toggleScroll() {
-    if (isScrolling) {
-        clearInterval(scrollInterval);
-        indicator.style.display = 'none';
-    } else {
-        scrollInterval = setInterval(autoScroll, 1000); // Scroll every second
-        indicator.style.display = 'block';
-    }
-    isScrolling = !isScrolling;
-}
+      function autoScroll() {
+          const currentPosition = window.pageYOffset;
+          const maxPosition = document.documentElement.scrollHeight - window.innerHeight;
+          
+          if (currentPosition >= maxPosition) {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+              window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+          }
+      }
 
-document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === magicKey) {
-        e.preventDefault();
-        toggleScroll();
-    }
-});
+      function toggleScroll() {
+          if (isScrolling) {
+              clearInterval(scrollInterval);
+              indicator.style.display = 'none';
+          } else {
+              scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
+              indicator.style.display = 'block';
+          }
+          isScrolling = !isScrolling;
+      }
 
-// Start scrolling automatically on page load
-toggleScroll();
-      
+      function adjustInterval(direction) {
+          const newInterval = direction === '-' ? 
+              intervalSeconds - step : 
+              intervalSeconds + step;
+          
+          intervalSeconds = Math.min(Math.max(newInterval, minInterval), maxInterval);
+          
+          if (isScrolling) {
+              clearInterval(scrollInterval);
+              scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
+          }
+          
+          document.getElementById('interval-display').textContent =
+              `Current Interval: ${intervalSeconds}s`;
+      }
+
+      document.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              toggleScroll();
+          }
+          
+          if (['+', '-'].includes(e.key)) {
+              e.preventDefault();
+              adjustInterval(e.key);
+          }
+      });
+
     </script>
   </body>
 </html>
