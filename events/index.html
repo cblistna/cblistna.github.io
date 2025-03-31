@@ -80,6 +80,9 @@
                 <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
                   <span v-html="event.description"></span>
                 </span>
+                <span v-for="attachment in event.attachments" class="text-blue-500">
+                  <br/>
+                  <a :href="attachment.url" target="_blank" class="ml-24 pl-2">{{ attachment.name }}</a></span>
               </p>
             </div>
           `,
