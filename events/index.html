@@ -183,7 +183,8 @@
 
       ga.init()
         .then(() => {
-          ga.eventsOf("trinec.v@cb.cz", {
+
+          const calendarData = ga.eventsOf("trinec.v@cb.cz", {
             timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
             timeMax: new Date(
               week.sunday.getTime() + daysInMillis(365)
@@ -191,8 +192,41 @@
             singleEvents: true,
             orderBy: "startTime",
             maxResults: 300,
-          }).then((googleEvents) => {
-            const events = upgradeDates(Events.parse(googleEvents.items));
+          });
+          
+          const serviceData = ga
+            .dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:K20")
+            .then(({ values: rows }) =>
+              rows
+                .slice(1) // skip header
+                .filter((row) => !!row[1]) // skip services without date
+                .map((row) => ({ date: row[1], moderator: row[2], speaker: row[3] }))
+                .reduce((services, service) => {
+                  services[service.date] = service;
+                  return services;
+                }, {})
+            );
+
+            Promise.all([calendarData, serviceData]).then(([googleEvents, services]) => {
+              const events = upgradeDates(Events.parse(googleEvents.items))
+              .map((event) => {
+              if (event.tags.includes("svc")) {
+                const svcDate = event.start.toFormat( "yyyy-MM-dd");
+                if (
+                  services[svcDate] &&
+                  services[svcDate].moderator &&
+                  services[svcDate].speaker
+                ) {
+                  event.description = event.description
+                    ? event.description + "<br />"
+                    : "";
+                  event.description += `Vedení: ${services[svcDate].moderator}, Slovo: ${services[svcDate].speaker}`;
+                }
+                console.log(event)
+              }
+              return event;
+            });
+
             const schedule = Events.schedule(events, week);
 
             new Vue({
