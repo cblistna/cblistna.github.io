@@ -227,12 +227,49 @@ ga.init()
       eventsBaseQuery
     );
 
-    ga.eventsOf("trinec.v@cb.cz", regularEventsQuery).then((googleEvents) => {
-      const events = Events.dropRecurringNotImportant(
-        googleEvents.items.map((event) => Events.parse(event))
-      ).filter((event) => !(event.tags || []).includes("hide"));
-      appendEvents(events);
-    });
+    const calendarData = ga.eventsOf("trinec.v@cb.cz", regularEventsQuery);
+
+    const serviceData = ga
+      .dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:K20")
+      .then(({ values: rows }) =>
+        rows
+          .slice(1) // skip header
+          .filter((row) => !!row[1]) // skip services without date
+          .map((row) => ({ date: row[1], moderator: row[2], speaker: row[3] }))
+          .reduce((services, service) => {
+            services[service.date] = service;
+            return services;
+          }, {})
+      );
+
+    Promise.all([calendarData, serviceData]).then(
+      ([googleEvents, services]) => {
+        console.log(services);
+        const events = Events.dropRecurringNotImportant(
+          googleEvents.items.map((event) => Events.parse(event))
+        )
+          .filter((event) => !(event.tags || []).includes("hide"))
+          .map((event) => {
+            if (event.tags.includes("svc")) {
+              const svcDate = DateTime.fromJSDate(event.start).toFormat(
+                "yyyy-MM-dd"
+              );
+              if (
+                services[svcDate] &&
+                services[svcDate].moderator &&
+                services[svcDate].speaker
+              ) {
+                event.description = event.description
+                  ? event.description + "<br />"
+                  : "";
+                event.description += `Vedení: ${services[svcDate].moderator}, Slovo: ${services[svcDate].speaker}`;
+              }
+            }
+            return event;
+          });
+        appendEvents(events);
+      }
+    );
 
     const otherEventsQuery = {
       orderBy: "name desc",
