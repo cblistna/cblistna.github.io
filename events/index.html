@@ -116,12 +116,11 @@
                     {{ event.start.toFormat('Hm') === '00' ? "" : "v " + event.start.toFormat('H:mm')}}
                   </p>
                   <p class="text-2xl mb-2">
-                    <span class="font-semibold text-8xl">{{ event.name }}</span>
-                    <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                    <span class="block font-semibold text-8xl pb-2">{{ event.name }}</span>
+                    <span v-if="event.description" class="block pt-2 text-4xl text-gray-600 font-light">
                       <span v-html="event.description"></span>
                     </span>
-                    <span v-for="attachment in event.attachments" class="text-blue-500">
-                      <br/>
+                    <span v-for="attachment in event.attachments" class="block pt-2 text-blue-500">
                       <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
                   </p>
                 </div>
