@@ -270,44 +270,30 @@
     </script>
 
     <script>
+      // Create visual indicator element
       const indicator = document.createElement('div');
       indicator.style.position = 'fixed';
-      indicator.style.bottom = '20px';
-      indicator.style.left = '20px';
-      indicator.style.width = '20px';
-      indicator.style.height = '20px';
-      indicator.style.borderRadius = '50%';
-      indicator.style.backgroundColor = '#00dd00';
+      indicator.style.bottom = '20px'; // Bottom position
+      indicator.style.right = '20px'; // Right position
+      indicator.style.width = '50px'; // Adjust width for text
+      indicator.style.height = '50px'; // Adjust height for text
+      indicator.style.borderRadius = '5px'; // Square with rounded corners
+      indicator.style.backgroundColor = '#77dd77'; // Pastel green background
+      indicator.style.color = '#ffffff';
       indicator.style.display = 'none';
+      indicator.style.fontFamily = 'Arial, sans-serif';
+      indicator.style.fontSize = '14px';
+      indicator.style.textAlign = 'center';
+      indicator.style.lineHeight = '50px'; // Center text vertically
+      indicator.title = 'Auto-scroll active (Enter to toggle)';
       document.body.appendChild(indicator);
 
       let isScrolling = false;
       let scrollInterval;
-      let intervalSeconds = 5;
-      const minInterval = 1;
-      const maxInterval = 10;
-      const step = 1;
-
-      const infoDisplay = document.createElement('div');
-      infoDisplay.style.position = 'fixed';
-      infoDisplay.style.bottom = '20px'; // Position at the bottom
-      infoDisplay.style.right = '20px'; // Position at the right
-      infoDisplay.style.padding = '10px';
-      infoDisplay.style.backgroundColor = '#f0f0f0';
-      infoDisplay.style.border = '1px solid #ccc';
-      infoDisplay.style.borderRadius = '5px';
-      infoDisplay.style.fontFamily = 'Arial, sans-serif';
-      infoDisplay.style.fontSize = '14px';
-      infoDisplay.innerHTML = `
-          <strong>Keyboard Shortcuts:</strong><br>
-          <ul style="margin: 5px 0; padding-left: 20px;">
-              <li><strong>Enter</strong>: Toggle scrolling</li>
-              <li><strong>+</strong>: Decrease speed (increase interval)</li>
-              <li><strong>-</strong>: Increase speed (decrease interval)</li>
-          </ul>
-          <div id="interval-display">Current Interval: ${intervalSeconds}s</div>
-      `;
-      document.body.appendChild(infoDisplay);
+      let intervalSeconds = 7; // Initial interval in seconds (changed to 5s)
+      const minInterval = 1;   // Minimum interval (1 second)
+      const maxInterval = 10;  // Maximum interval (10 seconds)
+      const step = 1;          // Adjustment step in seconds
 
       function autoScroll() {
           const currentPosition = window.pageYOffset;
@@ -326,6 +312,7 @@
               indicator.style.display = 'none';
           } else {
               scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
+              indicator.textContent = `${intervalSeconds}s`; // Update indicator text
               indicator.style.display = 'block';
           }
           isScrolling = !isScrolling;
@@ -343,12 +330,12 @@
               scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
           }
           
-          document.getElementById('interval-display').textContent =
-              `Current Interval: ${intervalSeconds}s`;
+          // Update the displayed interval value in the indicator
+          indicator.textContent = `${intervalSeconds}s`;
       }
 
       document.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
+          if (e.key === 'Enter') { // Use Enter key for toggling
               e.preventDefault();
               toggleScroll();
           }
@@ -358,7 +345,6 @@
               adjustInterval(e.key);
           }
       });
-
     </script>
   </body>
 </html>
