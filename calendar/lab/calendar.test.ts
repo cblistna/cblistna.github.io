@@ -67,8 +67,8 @@ describe("parseGoogleCalendarEvents", () => {
     assertEquals(event.attachments[0].url, "https://example.com/file.pdf");
     assertEquals(event.attachments[0].ref, "https://example.com/icon.png");
     assertEquals(event.tags.plan, "2024-09-10");
-    assertEquals(event.tags.news, undefined);
-    assertEquals(event.tags.pin, undefined);
+    assertEquals(event.tags.news, true);
+    assertEquals(event.tags.pin, true);
   });
 
   it("parses all-day event as local midnight", () => {
@@ -138,7 +138,7 @@ describe("parseGoogleCalendarEvents", () => {
         {
           id: "merge1",
           summary: "Event #plan:2024-09-10 #pin:abc",
-          description: "Description #plan:shouldnotappear #pin:def #extra:yes",
+          description: "Description #plan:shouldnotappear #pin:def #extra",
           start: { dateTime: "2024-09-10T10:00:00+02:00" },
           end: { dateTime: "2024-09-10T12:00:00+02:00" },
         },
@@ -149,6 +149,26 @@ describe("parseGoogleCalendarEvents", () => {
     const event = events[0];
     assertEquals(event.tags.plan, "2024-09-10");
     assertEquals(event.tags.pin, "abc");
-    assertEquals(event.tags.extra, "yes");
+    assertEquals(event.tags.extra, true);
+  });
+
+  it("ignores tags with empty value", () => {
+    const response = {
+      items: [
+        {
+          id: "emptytag",
+          summary: "Event #empty: #foo:bar #bar",
+          start: { date: "2024-10-11" },
+          end: { date: "2024-10-12" },
+        },
+      ],
+    };
+    const events = parseGoogleCalendarEvents(response);
+    assertEquals(events.length, 1);
+    const event = events[0];
+    // #empty: should be boolean true, #foo:bar is string, #bar is boolean true
+    assertEquals(event.tags.empty, true);
+    assertEquals(event.tags.foo, "bar");
+    assertEquals(event.tags.bar, true);
   });
 });

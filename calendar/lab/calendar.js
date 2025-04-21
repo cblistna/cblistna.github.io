@@ -23,7 +23,7 @@
  * @property {string} subject
  * @property {string} body
  * @property {Attachment[]} attachments
- * @property {Record<string, string|undefined>} tags
+ * @property {Record<string, string|true>} tags
  */
 
 /**
@@ -57,17 +57,22 @@ function toLocalDate(dateStr, tz = calendarSettings.timeZone) {
 
 /**
  * Extract tags from text and return { tags, textWithoutTags }
+ * Tag value is string (min length 1) if present, or boolean true if no value.
  * @param {string} text
- * @returns {{tags: Record<string, string|undefined>, text: string}}
+ * @returns {{tags: Record<string, string|true>, text: string}}
  */
 function extractTags(text) {
   if (!text) return { tags: {}, text: "" };
-  const tagRegex = /#(\w+)(?::([\w\-,]+))?/g;
+  const tagRegex = /#(\w+)(?::([^\s#]+))?/g;
   const tags = {};
   let match;
   let cleanText = text;
   while ((match = tagRegex.exec(text))) {
-    tags[match[1]] = match[2];
+    if (match[2] && match[2].length >= 1) {
+      tags[match[1]] = match[2];
+    } else {
+      tags[match[1]] = true;
+    }
     cleanText = cleanText.replace(match[0], "");
   }
   cleanText = cleanText.replace(/\s{2,}/g, " ").trim();
@@ -105,12 +110,7 @@ export function parseGoogleCalendarEvents(response) {
       const tags = { ...descTags, ...summaryTags };
       /** @type {"meeting"|"news"} */
       let type = "meeting";
-      if (
-        Object.prototype.hasOwnProperty.call(tags, "news") &&
-        (tags.news === undefined ||
-          tags.news === "" ||
-          typeof tags.news === "string")
-      ) {
+      if (Object.prototype.hasOwnProperty.call(tags, "news")) {
         type = "news";
       }
       return {

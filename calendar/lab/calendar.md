@@ -20,6 +20,6 @@
     url: z.string().url(),
     ref: z.string().min(1),
   })),
-  tags: z.record(z.string(), z.string().optional())
-  // tags: "plan", "pin", "recur", "date", "hide", "svc", "news"
+  tags: z.record(z.string(), z.union([z.string().min(1), z.boolean()]))
+  // tags: "plan", "pin", "recur", "date", "hide", "svc", "news", ...
 ```
