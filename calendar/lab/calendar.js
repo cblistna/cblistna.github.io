@@ -58,6 +58,7 @@ function toLocalDate(dateStr, tz = calendarSettings.timeZone) {
 /**
  * Extract tags from text and return { tags, textWithoutTags }
  * Tag value is string (min length 1) if present, or boolean true if no value.
+ * Only parses tags from summary, not from description/body.
  * @param {string} text
  * @returns {{tags: Record<string, string|true>, text: string}}
  */
@@ -99,15 +100,8 @@ export function parseGoogleCalendarEvents(response) {
         days: Math.floor(durationMs / (1000 * 60 * 60 * 24)),
         hours: Math.floor((durationMs / (1000 * 60 * 60)) % 24),
       };
-      // Extract tags from summary and description, remove them from both
-      const { tags: summaryTags, text: cleanSummary } = extractTags(
-        e.summary || ""
-      );
-      const { tags: descTags, text: cleanDesc } = extractTags(
-        e.description || ""
-      );
-      // Merge tags (summary tags take precedence)
-      const tags = { ...descTags, ...summaryTags };
+      // Extract tags only from summary, remove them from summary
+      const { tags, text: cleanSummary } = extractTags(e.summary || "");
       /** @type {"meeting"|"news"} */
       let type = "meeting";
       if (Object.prototype.hasOwnProperty.call(tags, "news")) {
@@ -120,7 +114,7 @@ export function parseGoogleCalendarEvents(response) {
         end: endDate,
         duration,
         subject: cleanSummary,
-        body: cleanDesc || "",
+        body: e.description || "",
         attachments: Array.isArray(e.attachments)
           ? e.attachments.map((a) => ({
               fileId: a.fileId || "",

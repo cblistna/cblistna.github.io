@@ -20,7 +20,7 @@ describe("parseGoogleCalendarEvents", () => {
     assertEquals(parseGoogleCalendarEvents({ items: null }), []);
   });
 
-  it("parses a single event with local timezone and removes tags from subject/body", () => {
+  it("parses a single event with local timezone and removes tags from subject only", () => {
     const response = {
       items: [
         {
@@ -59,7 +59,7 @@ describe("parseGoogleCalendarEvents", () => {
     assertEquals(event.duration.days, 0);
     assertEquals(event.duration.hours, 2);
     assertEquals(event.subject, "Test Event");
-    assertEquals(event.body, "This is a test event.");
+    assertEquals(event.body, "This is a test event. #pin");
     assertEquals(event.attachments.length, 1);
     assertEquals(event.attachments[0].fileId, "file1");
     assertEquals(event.attachments[0].name, "Agenda");
@@ -68,7 +68,7 @@ describe("parseGoogleCalendarEvents", () => {
     assertEquals(event.attachments[0].ref, "https://example.com/icon.png");
     assertEquals(event.tags.plan, "2024-09-10");
     assertEquals(event.tags.news, true);
-    assertEquals(event.tags.pin, true);
+    assertEquals(event.tags.pin, undefined);
   });
 
   it("parses all-day event as local midnight", () => {
@@ -132,7 +132,7 @@ describe("parseGoogleCalendarEvents", () => {
     assertEquals(event.start.getHours(), 0);
   });
 
-  it("merges tags from summary and description, summary tags take precedence", () => {
+  it("parses tags only from summary, not from description", () => {
     const response = {
       items: [
         {
@@ -149,7 +149,11 @@ describe("parseGoogleCalendarEvents", () => {
     const event = events[0];
     assertEquals(event.tags.plan, "2024-09-10");
     assertEquals(event.tags.pin, "abc");
-    assertEquals(event.tags.extra, true);
+    assertEquals(event.tags.extra, undefined);
+    assertEquals(
+      event.body,
+      "Description #plan:shouldnotappear #pin:def #extra"
+    );
   });
 
   it("ignores tags with empty value", () => {
