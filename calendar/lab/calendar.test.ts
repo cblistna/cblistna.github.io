@@ -1,12 +1,5 @@
-import {
-  assertEquals,
-  assert,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-  describe,
-  it,
-  beforeEach,
-} from "https://deno.land/std@0.224.0/testing/bdd.ts";
+import { describe, it, beforeEach } from "jsr:@std/testing/bdd";
+import { expect } from "jsr:@std/expect";
 import { parseGoogleCalendarEvents, setCalendarSettings } from "./calendar.js";
 
 describe("parseGoogleCalendarEvents", () => {
@@ -15,9 +8,9 @@ describe("parseGoogleCalendarEvents", () => {
   });
 
   it("returns empty array for invalid input", () => {
-    assertEquals(parseGoogleCalendarEvents(null as any), []);
-    assertEquals(parseGoogleCalendarEvents({}), []);
-    assertEquals(parseGoogleCalendarEvents({ items: null }), []);
+    expect(parseGoogleCalendarEvents(null as any)).toEqual([]);
+    expect(parseGoogleCalendarEvents({})).toEqual([]);
+    expect(parseGoogleCalendarEvents({ items: null })).toEqual([]);
   });
 
   it("parses a single event with local timezone and removes tags from subject only", () => {
@@ -48,27 +41,27 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
+    expect(events.length).toBe(1);
     const event = events[0];
-    assertEquals(event.eventId, "abc123");
-    assertEquals(event.type, "news");
-    assert(event.start instanceof Date);
-    assert(event.end instanceof Date);
-    assertEquals(event.start.getHours(), 10);
-    assertEquals(event.end.getHours(), 12);
-    assertEquals(event.duration.days, 0);
-    assertEquals(event.duration.hours, 2);
-    assertEquals(event.subject, "Test Event");
-    assertEquals(event.body, "This is a test event. #pin");
-    assertEquals(event.attachments.length, 1);
-    assertEquals(event.attachments[0].fileId, "file1");
-    assertEquals(event.attachments[0].name, "Agenda");
-    assertEquals(event.attachments[0].mime, "application/pdf");
-    assertEquals(event.attachments[0].url, "https://example.com/file.pdf");
-    assertEquals(event.attachments[0].ref, "https://example.com/icon.png");
-    assertEquals(event.tags.plan, "2024-09-10");
-    assertEquals(event.tags.news, true);
-    assertEquals(event.tags.pin, undefined);
+    expect(event.eventId).toBe("abc123");
+    expect(event.type).toBe("news");
+    expect(event.start instanceof Date).toBe(true);
+    expect(event.end instanceof Date).toBe(true);
+    expect(event.start.getHours()).toBe(10);
+    expect(event.end.getHours()).toBe(12);
+    expect(event.duration.days).toBe(0);
+    expect(event.duration.hours).toBe(2);
+    expect(event.subject).toBe("Test Event");
+    expect(event.body).toBe("This is a test event. #pin");
+    expect(event.attachments.length).toBe(1);
+    expect(event.attachments[0].fileId).toBe("file1");
+    expect(event.attachments[0].name).toBe("Agenda");
+    expect(event.attachments[0].mime).toBe("application/pdf");
+    expect(event.attachments[0].url).toBe("https://example.com/file.pdf");
+    expect(event.attachments[0].ref).toBe("https://example.com/icon.png");
+    expect(event.tags.plan).toBe("2024-09-10");
+    expect(event.tags.news).toBe(true);
+    expect(event.tags.pin).toBeUndefined();
   });
 
   it("parses all-day event as local midnight", () => {
@@ -83,15 +76,15 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
+    expect(events.length).toBe(1);
     const event = events[0];
-    assert(event.start instanceof Date);
-    assert(event.end instanceof Date);
-    assertEquals(event.start.getHours(), 0);
-    assertEquals(event.start.getMinutes(), 0);
-    assertEquals(event.end.getHours(), 0);
-    assertEquals(event.end.getMinutes(), 0);
-    assertEquals(event.duration.days, 1);
+    expect(event.start instanceof Date).toBe(true);
+    expect(event.end instanceof Date).toBe(true);
+    expect(event.start.getHours()).toBe(0);
+    expect(event.start.getMinutes()).toBe(0);
+    expect(event.end.getHours()).toBe(0);
+    expect(event.end.getMinutes()).toBe(0);
+    expect(event.duration.days).toBe(1);
   });
 
   it("skips events without id or summary", () => {
@@ -109,8 +102,8 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
-    assertEquals(events[0].eventId, "a");
+    expect(events.length).toBe(1);
+    expect(events[0].eventId).toBe("a");
   });
 
   it("respects global timezone setting for all-day events", () => {
@@ -126,10 +119,10 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
+    expect(events.length).toBe(1);
     const event = events[0];
-    assert(event.start instanceof Date);
-    assertEquals(event.start.getHours(), 0);
+    expect(event.start instanceof Date).toBe(true);
+    expect(event.start.getHours()).toBe(0);
   });
 
   it("parses tags only from summary, not from description", () => {
@@ -145,13 +138,12 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
+    expect(events.length).toBe(1);
     const event = events[0];
-    assertEquals(event.tags.plan, "2024-09-10");
-    assertEquals(event.tags.pin, "abc");
-    assertEquals(event.tags.extra, undefined);
-    assertEquals(
-      event.body,
+    expect(event.tags.plan).toBe("2024-09-10");
+    expect(event.tags.pin).toBe("abc");
+    expect(event.tags.extra).toBeUndefined();
+    expect(event.body).toBe(
       "Description #plan:shouldnotappear #pin:def #extra"
     );
   });
@@ -168,11 +160,10 @@ describe("parseGoogleCalendarEvents", () => {
       ],
     };
     const events = parseGoogleCalendarEvents(response);
-    assertEquals(events.length, 1);
+    expect(events.length).toBe(1);
     const event = events[0];
-    // #empty: should be boolean true, #foo:bar is string, #bar is boolean true
-    assertEquals(event.tags.empty, true);
-    assertEquals(event.tags.foo, "bar");
-    assertEquals(event.tags.bar, true);
+    expect(event.tags.empty).toBe(true);
+    expect(event.tags.foo).toBe("bar");
+    expect(event.tags.bar).toBe(true);
   });
 });
