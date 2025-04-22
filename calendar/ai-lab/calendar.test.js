@@ -1,4 +1,4 @@
-import { parseGoogleCalendarEvent } from './calendar.js';
+import { parseGoogleCalendarEvent, now, today } from './calendar.js';
 
 function assertEqual(actual, expected, message) {
   const actStr = JSON.stringify(actual);
@@ -12,8 +12,8 @@ function assertEqual(actual, expected, message) {
 (function testBasicEvent() {
   const raw = {
     id: 'abcdefg_123',
-    summary: 'Team Meeting #plan:yes #pin',
-    description: 'Discuss project status.',
+    summary: ' Team Meeting #plan:yes #pin',
+    description: 'Discuss project status. ',
     start: { dateTime: '2024-04-22T09:00:00+02:00' },
     end: { dateTime: '2024-04-22T10:30:00+02:00' },
     attachments: [
@@ -89,16 +89,12 @@ function assertEqual(actual, expected, message) {
   assertEqual(event.duration.days === 3, true, 'duration days');
 })();
 
-(function testOnRawCalendarData() {
-  const rawEvents = JSON.parse(Deno.readTextFileSync("events.json")).items;
-  rawEvents
-    .map(re => parseGoogleCalendarEvent(re))
-    .filter(e => !e.recurring && Object.keys(e.tags).length > 0)
-    .forEach(e => {
-      console.log(e)
-    });
+(function testNow() {
+  assertEqual(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(now()), true, "now()");
+})();
 
-
-}());
+(function testToday() {
+  assertEqual(/\d{4}-\d{2}-\d{2}/.test(today()), true, "today()");
+})();
 
 console.log('All tests passed!');
