@@ -12,6 +12,7 @@
  * @property {number} days
  * @property {number} hours
  * @property {number} minutes
+ * @property {number} spanDays
  */
 
 /**
@@ -29,22 +30,23 @@
 
 export const TZ = "Europe/Prague";
 const LOCAL_DATE_TIME_FORMAT = new Intl.DateTimeFormat("cs-CZ", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour24: true,
-    TZ
-})
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour24: true,
+  TZ,
+});
 
 function toLocalDateTime(date) {
-  const parts = LOCAL_DATE_TIME_FORMAT
-    .formatToParts(date)
-    .reduce((acc, part) => {
+  const parts = LOCAL_DATE_TIME_FORMAT.formatToParts(date).reduce(
+    (acc, part) => {
       acc[part.type] = part.value;
       return acc;
-    }, {});
+    },
+    {}
+  );
 
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
@@ -128,7 +130,7 @@ export function parseGoogleCalendarEvent(rawEvent) {
     const hours = Math.floor(diffMs / (60 * 60 * 1000));
     diffMs -= hours * 60 * 60 * 1000;
     const minutes = Math.floor(diffMs / (60 * 1000));
-    const spanDays = (hours > 0 || minutes > 0) ? days +1 : days;
+    const spanDays = hours > 0 || minutes > 0 ? days + 1 : days;
     return { days, hours, minutes, spanDays };
   }
 
@@ -166,9 +168,7 @@ export function parseGoogleCalendarEvent(rawEvent) {
   const endObj = parseDateTime(rawEvent.end);
 
   const start = startObj.value;
-  const end = endObj.isDateOnly
-    ? minusDays(endObj.value, 1)
-    : endObj.value;
+  const end = endObj.isDateOnly ? minusDays(endObj.value, 1) : endObj.value;
 
   // Subject/body
   const summary = (rawEvent.summary || "").trim();
