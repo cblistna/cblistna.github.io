@@ -7,8 +7,8 @@
   </head>
   <body style="background-color: lightgray; padding: 1rem 1rem">
     <h1>Calendar</h1>
-    <h2>Adverts</h2>
-    <div id="adverts"></div>
+    <h2>Promo</h2>
+    <div id="promo"></div>
     <h2>Services</h2>
     <div id="services"></div>
     <h2>Events</h2>
@@ -19,20 +19,17 @@
     import {
       now,
       today,
-      fetchUpcomingEvents,
-      fetchUpcomingServices,
-      fetchUpcomingAdverts,
+      fetchEvents,
+      fetchServices,
+      fetchPromo,
     } from "./calendar.js";
 
     const CALENDAR_ID = "trinec.v@cb.cz";
     const SERVICES_SHEET = "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI";
     const SERVICES_RANGE = "A1:K20";
-    const ADVERTS_FOLDER_ID = "166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6";
+    const PROMO_FOLDER_ID = "166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6";
 
-    const services = await fetchUpcomingServices(
-      SERVICES_SHEET,
-      SERVICES_RANGE
-    );
+    const services = await fetchServices(SERVICES_SHEET, SERVICES_RANGE);
     document.getElementById("services").innerHTML = `
       ${services
         .map(
@@ -55,7 +52,7 @@
         )
         .join("\n")}`;
 
-    const events = await fetchUpcomingEvents(CALENDAR_ID);
+    const events = await fetchEvents(CALENDAR_ID);
     document.getElementById("events").innerHTML = `
       ${events
         .map(
@@ -70,15 +67,16 @@
               ? "R"
               : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
             JSON.stringify(event.duration),
+            JSON.stringify(event.attachments.map((a) => a.name)),
           ].join(" | ")}
         </p>
       `
         )
         .join("\n")}`;
 
-    const adverts = await fetchUpcomingAdverts(ADVERTS_FOLDER_ID);
-    document.getElementById("adverts").innerHTML = `
-      ${adverts
+    const promotions = await fetchPromo(PROMO_FOLDER_ID);
+    document.getElementById("promo").innerHTML = `
+      ${promotions
         .map(
           (event) => `
         <p style="font-family: Consolas">
@@ -91,6 +89,7 @@
               ? "R"
               : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
             JSON.stringify(event.duration),
+            JSON.stringify(event.attachments.map((a) => a.name)),
           ].join(" | ")}
         </p>
       `

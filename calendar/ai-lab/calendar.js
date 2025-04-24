@@ -190,7 +190,7 @@ function parseGoogleCalendarEvent(rawEvent) {
   };
 }
 
-export async function fetchUpcomingEvents(calendarId) {
+export async function fetchEvents(calendarId) {
   const todayPlus = (offsetMs = 0) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
@@ -226,7 +226,7 @@ export async function fetchUpcomingEvents(calendarId) {
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 
-export async function fetchUpcomingServices(sheetId, range) {
+export async function fetchServices(sheetId, range) {
   const { values } = await GOOGLE.dataOf(sheetId, range);
   const todaysDate = today();
   return values
@@ -336,6 +336,7 @@ function groupFilesToEvents(files) {
       eventMap.set(key, {
         start,
         ...(end ? { end } : {}),
+        recurring: false,
         subject: parsed.subject,
         tags: parsed.tags,
         ...(parsed.body ? { body: parsed.body } : {}),
@@ -363,15 +364,16 @@ function groupFilesToEvents(files) {
   return Array.from(eventMap.values());
 }
 
-export async function fetchUpcomingAdverts(folderId) {
+export async function fetchPromo(folderId) {
   const { files } = await GOOGLE.filesOf({
     orderBy: "name desc",
     pageSize: 70,
     q: `trashed=false and parents in '${folderId}' and mimeType != 'application/vnd.google-apps.folder'`,
     fields: "files(id, name, webViewLink, webContentLink, mimeType)",
   });
-  console.log("files", files);
   const events = groupFilesToEvents(files);
-  console.log("events", events);
-  return events.sort((a, b) => a.start.localeCompare(b.start));
+  const todaysDate = today();
+  return events
+    .filter((event) => event.start >= todaysDate)
+    .sort((a, b) => a.start.localeCompare(b.start));
 }
