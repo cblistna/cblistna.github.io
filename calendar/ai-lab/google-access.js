@@ -26,7 +26,7 @@ export class GoogleAccess {
     );
   }
 
-  async files(query) {
+  async filesOf(query) {
     await this.#ensureFreshAccessToken();
     return await this.#getJson(
       "https://www.googleapis.com/drive/v3/files",

@@ -5,66 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calendar</title>
   </head>
-  <body style="background-color: lightgray; padding: 2rem 5rem">
+  <body style="background-color: lightgray; padding: 1rem 1rem">
     <h1>Calendar</h1>
+    <h2>Adverts</h2>
+    <div id="adverts"></div>
+    <h2>Services</h2>
+    <div id="services"></div>
+    <h2>Events</h2>
     <div id="events"></div>
   </body>
 
   <script type="module">
-    import { GOOGLE } from "./google-access.js";
-    import { parseGoogleCalendarEvent, now, today } from "./calendar.js";
+    import {
+      now,
+      today,
+      fetchUpcomingEvents,
+      fetchUpcomingServices,
+      fetchUpcomingAdverts,
+    } from "./calendar.js";
+
     const CALENDAR_ID = "trinec.v@cb.cz";
     const SERVICES_SHEET = "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI";
     const SERVICES_RANGE = "A1:K20";
+    const ADVERTS_FOLDER_ID = "166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6";
 
-    const nowPlus = (ms = 0) =>
-      new Date(new Date().getTime() + ms).toISOString();
-    const days = (d) => d * 24 * 3600_000;
-    const minutes = (m) => m * 60_000;
-
-    const allEvents = await GOOGLE.eventsOf(CALENDAR_ID, {
-      timeMin: nowPlus(minutes(30)),
-      timeMax: nowPlus(days(200)),
-      singleEvents: true,
-      orderBy: "startTime",
-      maxResults: 200,
-    }).then(({ items }) =>
-      items
-        .map((i) => parseGoogleCalendarEvent(i))
-        .reduce((acc, event) => {
-          if (!acc.has(event.eventId)) {
-            acc.set(event.eventId, [event]);
-          } else {
-            acc.get(event.eventId).push(event);
-          }
-          return acc;
-        }, new Map())
+    const services = await fetchUpcomingServices(
+      SERVICES_SHEET,
+      SERVICES_RANGE
     );
-    const events = [...allEvents.entries()]
-      // .map(([_, events]) => events.filter((e) => !e.tags.hide))
-      .map(([_, events]) => events)
-      .map((events) => [
-        events[0],
-        ...events.slice(1).filter((e) => e.tags.important),
-      ])
-      .flatMap((events) => events)
-      .filter((e) => e?.start)
-      .sort((a, b) => a.start.localeCompare(b.start));
+    document.getElementById("services").innerHTML = `
+      ${services
+        .map(
+          (service) => `
+        <p style="font-family: Consolas">
+          ${[
+            service.date,
+            service.moderator,
+            service.teacher,
+            service.subject,
+            service.body,
+            service.worshipLeader,
+            service.childrenProgram,
+            service.projector,
+            service.soundMaster,
+            service.birthdays,
+          ].join(" | ")}
+        </p>
+      `
+        )
+        .join("\n")}`;
 
-    console.log(events);
-
+    const events = await fetchUpcomingEvents(CALENDAR_ID);
     document.getElementById("events").innerHTML = `
       ${events
         .map(
           (event) => `
         <p style="font-family: Consolas">
-          ${event.start}
-          ${event.end}
-          ${event.subject}
-          ${event.recurring ? "R" : ""}[${Object.entries(event.tags).map(
-            ([t, v]) => t
-          )}]
-          ${JSON.stringify(event.duration)}
+          ${[
+            event.start,
+            event.end,
+            event.subject,
+            event.body,
+            event.recurring
+              ? "R"
+              : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
+            JSON.stringify(event.duration),
+          ].join(" | ")}
+        </p>
+      `
+        )
+        .join("\n")}`;
+
+    const adverts = await fetchUpcomingAdverts(ADVERTS_FOLDER_ID);
+    document.getElementById("adverts").innerHTML = `
+      ${adverts
+        .map(
+          (event) => `
+        <p style="font-family: Consolas">
+          ${[
+            event.start,
+            event.end,
+            event.subject,
+            event.body,
+            event.recurring
+              ? "R"
+              : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
+            JSON.stringify(event.duration),
+          ].join(" | ")}
         </p>
       `
         )
