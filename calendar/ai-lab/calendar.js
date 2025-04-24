@@ -336,13 +336,16 @@ function groupFilesToEvents(files) {
       eventMap.set(key, {
         start,
         ...(end ? { end } : {}),
-        recurring: false,
         subject: parsed.subject,
-        tags: parsed.tags,
+        tags: { ...parsed.tags },
         ...(parsed.body ? { body: parsed.body } : {}),
         attachments: [],
         duration: calculateDuration(start, end),
       });
+    } else {
+      // Merge tags from multiple files
+      const event = eventMap.get(key);
+      event.tags = { ...event.tags, ...parsed.tags };
     }
     // Always add as attachment if attachmentName exists, otherwise use subject
     const attachmentLabel = parsed.attachmentName || parsed.subject;
