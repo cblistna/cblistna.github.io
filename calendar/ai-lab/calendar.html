@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Calendar Presentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Reveal.js CSS from CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/white.css"
+    />
+    <style>
+      .reveal section {
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides" id="slides"></div>
+    </div>
+    <script type="module">
+      import {
+        fetchEvents,
+        fetchServices,
+        mergeServicesToEvents,
+      } from "./calendar.js";
+
+      // Dynamically load Reveal.js
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js";
+      document.head.appendChild(script);
+
+      script.onload = async () => {
+        const [events, services] = await Promise.all([
+          fetchEvents(),
+          fetchServices(),
+        ]);
+        mergeServicesToEvents(events, services);
+
+        // Build slides HTML
+        const slidesHtml = events
+          .map(
+            (event) => `
+          <section>
+            <h2>${event.subject}</h2>
+            <p><strong>${event.start}${
+              event.end ? " – " + event.end : ""
+            }</strong></p>
+            <p>${event.body || ""}</p>
+            <p>
+              <small>
+                ${Object.entries(event.tags)
+                  .map(([k, v]) => (v === true ? k : `${k}:${v}`))
+                  .join(", ")}
+              </small>
+            </p>
+          </section>
+        `
+          )
+          .join("\n");
+
+        document.getElementById("slides").innerHTML = slidesHtml;
+
+        // Initialize Reveal.js
+        // global Reveal is available after script loads
+        // eslint-disable-next-line no-undef
+        Reveal.initialize({
+          hash: true,
+          controls: true,
+          progress: true,
+          slideNumber: true,
+          center: false,
+          autoplay: true,
+          autoSlide: 5000,
+        });
+      };
+    </script>
+  </body>
+</html>
