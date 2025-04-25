@@ -193,6 +193,10 @@ export async function fetchPromo(folderId = PROMO_FOLDER_ID) {
   const events = groupFilesToEvents(files);
   const todaysDate = today();
   return events
+    .map((event) => {
+      event.tags.promo = true;
+      return event;
+    })
     .filter((event) => event.start >= todaysDate)
     .sort((eventA, eventB) => eventA.start.localeCompare(eventB.start));
 }
