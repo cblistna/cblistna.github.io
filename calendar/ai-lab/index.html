@@ -25,14 +25,17 @@
       fetchServices,
       fetchPromo,
       fetchMessages,
+      mergeServicesToEvents,
     } from "./calendar.js";
 
-    const services = await fetchServices();
-    document.getElementById("services").innerHTML = `
+    Promise.all([fetchEvents(), fetchServices()]).then(([events, services]) => {
+      mergeServicesToEvents(events, services);
+
+      document.getElementById("services").innerHTML = `
       ${services
         .map(
           (service) => `
-        <p style="font-family: Consolas">
+        <p style="font-family: Consolas; font-size: 0.8rem">
           ${[
             service.date,
             service.moderator,
@@ -50,20 +53,20 @@
         )
         .join("\n")}`;
 
-    const events = await fetchEvents();
-    document.getElementById("events").innerHTML = `
+      document.getElementById("events").innerHTML = `
       ${events
         .map(
           (event) => `
-        <p style="font-family: Consolas">
+        <p style="font-family: Consolas; font-size: 0.8rem">
           ${[
             event.start,
             event.end,
             event.subject,
             event.body,
-            event.recurring
-              ? "R"
-              : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
+            (event.recurring ? "R" : "") +
+              `[${Object.entries(event.tags)
+                .map(([t, v]) => `${v.length ? `${t}:${v}` : t}`)
+                .join(", ")}]`,
             JSON.stringify(event.duration),
             JSON.stringify(event.attachments.map((a) => a.name)),
           ].join(" | ")}
@@ -71,13 +74,14 @@
       `
         )
         .join("\n")}`;
+    });
 
     const promotions = await fetchPromo();
     document.getElementById("promo").innerHTML = `
       ${promotions
         .map(
           (event) => `
-        <p style="font-family: Consolas">
+        <p style="font-family: Consolas; font-size: 0.8rem">
           ${[
             event.start,
             event.end,
@@ -99,7 +103,7 @@
       ${messages
         .map(
           (event) => `
-        <p style="font-family: Consolas">
+        <p style="font-family: Consolas; font-size: 0.8rem">
           ${[
             event.date,
             event.speaker,
