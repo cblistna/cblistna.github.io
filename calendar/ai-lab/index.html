@@ -7,6 +7,8 @@
   </head>
   <body style="background-color: lightgray; padding: 1rem 1rem">
     <h1>Calendar</h1>
+    <h2>Messages</h2>
+    <div id="messages"></div>
     <h2>Promo</h2>
     <div id="promo"></div>
     <h2>Services</h2>
@@ -22,14 +24,10 @@
       fetchEvents,
       fetchServices,
       fetchPromo,
+      fetchMessages,
     } from "./calendar.js";
 
-    const CALENDAR_ID = "trinec.v@cb.cz";
-    const SERVICES_SHEET = "1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI";
-    const SERVICES_RANGE = "A1:K20";
-    const PROMO_FOLDER_ID = "166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6";
-
-    const services = await fetchServices(SERVICES_SHEET, SERVICES_RANGE);
+    const services = await fetchServices();
     document.getElementById("services").innerHTML = `
       ${services
         .map(
@@ -52,7 +50,7 @@
         )
         .join("\n")}`;
 
-    const events = await fetchEvents(CALENDAR_ID);
+    const events = await fetchEvents();
     document.getElementById("events").innerHTML = `
       ${events
         .map(
@@ -74,7 +72,7 @@
         )
         .join("\n")}`;
 
-    const promotions = await fetchPromo(PROMO_FOLDER_ID);
+    const promotions = await fetchPromo();
     document.getElementById("promo").innerHTML = `
       ${promotions
         .map(
@@ -90,6 +88,25 @@
               : "" + `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
             JSON.stringify(event.duration),
             JSON.stringify(event.attachments.map((a) => a.name)),
+          ].join(" | ")}
+        </p>
+      `
+        )
+        .join("\n")}`;
+
+    const messages = await fetchMessages();
+    document.getElementById("messages").innerHTML = `
+      ${messages
+        .map(
+          (event) => `
+        <p style="font-family: Consolas">
+          ${[
+            event.date,
+            event.speaker,
+            event.title,
+            event.audio?.name,
+            event.text?.name,
+            `[${Object.entries(event.tags).map(([t, v]) => t)}]`,
           ].join(" | ")}
         </p>
       `

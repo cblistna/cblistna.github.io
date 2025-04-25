@@ -1,4 +1,11 @@
-import { GOOGLE } from "./google-access.js";
+import {
+  GOOGLE,
+  TZ,
+  CALENDAR_ID,
+  PROMO_FOLDER_ID,
+  SERVICES_SHEET,
+  MESSAGES_PARENT_FOLDER_ID,
+} from "./config.js";
 
 /**
  * @typedef {Object} Attachment
@@ -30,7 +37,6 @@ import { GOOGLE } from "./google-access.js";
  * @property {Record<string, string|true>} tags
  */
 
-const TZ = "Europe/Prague";
 const LOCAL_DATE_TIME_FORMAT = new Intl.DateTimeFormat("cs-CZ", {
   year: "numeric",
   month: "2-digit",
@@ -190,7 +196,12 @@ function parseGoogleCalendarEvent(rawEvent) {
   };
 }
 
-export async function fetchEvents(calendarId) {
+/**
+ * Fetches events from a Google Calendar and normalizes them.
+ * @param {string} calendarId
+ * @returns {Promise<CalendarEvent[]>}
+ */
+export async function fetchEvents(calendarId = CALENDAR_ID) {
   const todayPlus = (offsetMs = 0) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
@@ -226,8 +237,13 @@ export async function fetchEvents(calendarId) {
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 
-export async function fetchServices(sheetId, range) {
-  const { values } = await GOOGLE.dataOf(sheetId, range);
+/**
+ * Fetches service data from a Google Sheet.
+ * @param {string} sheetId
+ * @returns {Promise<Array<{date: string, moderator: string, teacher: string, subject: string, body: string, worshipLeader: string, childrenProgram: string, projector: string, soundMaster: string, birthdays: string}>>}
+ */
+export async function fetchServices(sheetId = SERVICES_SHEET) {
+  const { values } = await GOOGLE.dataOf(sheetId, "A1:K20");
   const todaysDate = today();
   return values
     .slice(1)
@@ -250,7 +266,7 @@ export async function fetchServices(sheetId, range) {
 /**
  * Parses Google Drive API file data into calendar event objects, grouping attachments.
  * @param {Array<{name: string, id: string, mimeType: string, webViewLink: string, webContentLink: string}>} files
- * @returns {Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, mimeType: string, webViewLink: string, webContentLink: string}>}>}
+ * @returns {Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>}
  */
 function groupFilesToEvents(files) {
   /**
@@ -367,7 +383,12 @@ function groupFilesToEvents(files) {
   return Array.from(eventMap.values());
 }
 
-export async function fetchPromo(folderId) {
+/**
+ * Fetches promo events from a Google Drive folder and groups them as calendar events.
+ * @param {string} folderId
+ * @returns {Promise<Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>>}
+ */
+export async function fetchPromo(folderId = PROMO_FOLDER_ID) {
   const { files } = await GOOGLE.filesOf({
     orderBy: "name desc",
     pageSize: 70,
@@ -379,4 +400,64 @@ export async function fetchPromo(folderId) {
   return events
     .filter((event) => event.start >= todaysDate)
     .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+/**
+ * Fetches message events from Google Drive subfolders, grouping audio and PDF files as event attachments.
+ * Each event contains date, speaker, title, audio, text, and tags.
+ * @param {string} [parentFolderId=MESSAGES_PARENT_FOLDER_ID] - Google Drive folder ID containing message folders.
+ * @returns {Promise<Array<{
+ *   date: string,
+ *   speaker: string,
+ *   title: string,
+ *   audio?: {
+ *     id: string,
+ *     name: string,
+ *     label: string,
+ *     mimeType: string,
+ *     webViewLink: string,
+ *     webContentLink: string
+ *   },
+ *   text?: {
+ *     id: string,
+ *     name: string,
+ *     label: string,
+ *     mimeType: string,
+ *     webViewLink: string,
+ *     webContentLink: string
+ *   },
+ *   tags: Record<string, string|boolean>
+ * }>>}
+ */
+export async function fetchMessages(
+  parentFolderId = MESSAGES_PARENT_FOLDER_ID
+) {
+  const { files: folders } = await GOOGLE.filesOf({
+    orderBy: "name desc",
+    pageSize: 2,
+    q: `trashed=false
+          and 'trinec.v@cb.cz' in owners
+          and parents in '${parentFolderId}'
+          and mimeType = 'application/vnd.google-apps.folder'`,
+    fields: "files(id, name)",
+  });
+  const { files } = await GOOGLE.filesOf({
+    orderBy: "name desc",
+    pageSize: 20,
+    q: `trashed=false
+          and 'trinec.v@cb.cz' in owners
+          and (${folders.map((f) => `parents in '${f.id}'`).join(" or ")})
+          and (mimeType contains 'audio' or mimeType = 'application/pdf')`,
+    fields: "files(id, name, mimeType, webViewLink, webContentLink)",
+  });
+  return groupFilesToEvents(files)
+    .map((event) => ({
+      date: event.start,
+      speaker: event.subject,
+      title: event.body,
+      audio: event.attachments.find((a) => a.mimeType.startsWith("audio/")),
+      text: event.attachments.find((a) => a.mimeType === "application/pdf"),
+      tags: event.tags,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date));
 }

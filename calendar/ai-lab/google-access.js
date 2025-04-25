@@ -98,10 +98,3 @@ export class GoogleAccess {
     return await res.json();
   }
 }
-
-export const GOOGLE = new GoogleAccess(
-  "cblistna",
-  "1043527471308-e4sb65ute0jda6dh6bjtflru1tkn21ht.apps.googleusercontent.com",
-  "olF2_9TK9Bbx-lXfySvqVIAR",
-  "1//09VRcQIU93WIsCgYIARAAGAkSNwF-L9IrOIRxB2ADgzYpau_iv5T9kpKQLJLj8gTN_ozkQ9WL34sahThAUZmGCSrrp0MXLZPKfyo"
-);
