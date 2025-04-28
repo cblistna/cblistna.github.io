@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar</title>
+</head>
+
+<body style="background-color: lightgray; padding: 1rem 1rem">
+  <h1>Calendar</h1>
+  <h2>Events</h2>
+  <div id="events"></div>
+</body>
+<script type="module">
+  import {
+    now,
+    today,
+    fetchEvents,
+    fetchServices,
+    fetchPromo,
+    fetchMessages,
+    mergeServicesToEvents,
+  } from "./calendar.js";
+
+  export function localDateTimeOf(isoDateTime) {
+    const czDays = [
+      "neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"
+    ];
+    const d = new Date(isoDateTime);
+    const now = new Date();
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    const weekday = czDays[d.getDay()];
+    const isCurrentYear = year === now.getFullYear();
+    const date = isCurrentYear
+      ? `${day}.${month}.`
+      : `${day}.${month}.${year}`;
+    const time = isoDateTime.length > 10 ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}` : "";
+    return { date, weekday, time };
+  }
+
+  Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(([events, services, promo]) => {
+    mergeServicesToEvents(events, services);
+    const combined = events.concat(promo).sort((a, b) => a.start.localeCompare(b.start));
+
+    document.getElementById("events").innerHTML = `
+      ${combined
+        .map(
+          (event) => `
+        <p style="font-family: Consolas; font-size: 0.8rem">
+          ${[
+              event.start,
+              localDateTimeOf(event.start).date,
+              localDateTimeOf(event.start).weekday,
+              localDateTimeOf(event.start).time,
+              event.end,
+              localDateTimeOf(event.end).date,
+              localDateTimeOf(event.end).weekday,
+              localDateTimeOf(event.end).time,
+              event.duration.spanDays,
+              event.subject,
+              event.body,
+              (event.recurring ? "R" : "") +
+              `[${Object.entries(event.tags)
+                .map(([t, v]) => `${v.length ? `${t}:${v}` : t}`)
+                .join(", ")}]`,
+              JSON.stringify(event.attachments.map((a) => a.name)),
+            ].join(" | ")}
+        </p>
+      `
+        )
+        .join("\n")}`;
+  });
+
+</script>
+
+</html>
