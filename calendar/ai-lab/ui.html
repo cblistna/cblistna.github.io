@@ -1,79 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calendar</title>
-</head>
+  <body style="background-color: lightgray; padding: 1rem 1rem">
+    <h1 style="font-family: Consolas; font-size: 3rem">Kalendář</h1>
+    <div id="events"></div>
+  </body>
+  <script type="module">
+    import {
+      now,
+      today,
+      fetchEvents,
+      fetchServices,
+      fetchPromo,
+      fetchMessages,
+      mergeServicesToEvents,
+    } from "./calendar.js";
 
-<body style="background-color: lightgray; padding: 1rem 1rem">
-  <h1>Calendar</h1>
-  <h2>Events</h2>
-  <div id="events"></div>
-</body>
-<script type="module">
-  import {
-    now,
-    today,
-    fetchEvents,
-    fetchServices,
-    fetchPromo,
-    fetchMessages,
-    mergeServicesToEvents,
-  } from "./calendar.js";
+    export function localDateTimeOf(isoDateTime) {
+      const czDays = [
+        "neděle",
+        "pondělí",
+        "úterý",
+        "středa",
+        "čtvrtek",
+        "pátek",
+        "sobota",
+      ];
+      const d = new Date(isoDateTime);
+      const now = new Date();
+      const day = d.getDate();
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const weekday = czDays[d.getDay()];
+      const isCurrentYear = year === now.getFullYear();
+      const date = isCurrentYear
+        ? `${day}.${month}.`
+        : `${day}.${month}.${year}`;
+      const time =
+        isoDateTime.length > 10
+          ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}`
+          : "";
+      return { date, weekday, time, year, month, day };
+    }
 
-  export function localDateTimeOf(isoDateTime) {
-    const czDays = [
-      "neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"
-    ];
-    const d = new Date(isoDateTime);
-    const now = new Date();
-    const day = d.getDate();
-    const month = d.getMonth() + 1;
-    const year = d.getFullYear();
-    const weekday = czDays[d.getDay()];
-    const isCurrentYear = year === now.getFullYear();
-    const date = isCurrentYear
-      ? `${day}.${month}.`
-      : `${day}.${month}.${year}`;
-    const time = isoDateTime.length > 10 ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}` : "";
-    return { date, weekday, time };
-  }
+    Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(
+      ([events, services, promo]) => {
+        mergeServicesToEvents(events, services);
+        const combined = events
+          .concat(promo)
+          .sort((a, b) => a.start.localeCompare(b.start));
 
-  Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(([events, services, promo]) => {
-    mergeServicesToEvents(events, services);
-    const combined = events.concat(promo).sort((a, b) => a.start.localeCompare(b.start));
-
-    document.getElementById("events").innerHTML = `
+        console.log("combined", combined);
+        document.getElementById("events").innerHTML = `
       ${combined
+        .map((event) => ({
+          ...event,
+          startDateTime: localDateTimeOf(event.start),
+          endDateTime: localDateTimeOf(event.end),
+        }))
         .map(
-          (event) => `
-        <p style="font-family: Consolas; font-size: 0.8rem">
-          ${[
-              event.start,
-              localDateTimeOf(event.start).date,
-              localDateTimeOf(event.start).weekday,
-              localDateTimeOf(event.start).time,
-              event.end,
-              localDateTimeOf(event.end).date,
-              localDateTimeOf(event.end).weekday,
-              localDateTimeOf(event.end).time,
-              event.duration.spanDays,
-              event.subject,
-              event.body,
-              (event.recurring ? "R" : "") +
-              `[${Object.entries(event.tags)
-                .map(([t, v]) => `${v.length ? `${t}:${v}` : t}`)
-                .join(", ")}]`,
-              JSON.stringify(event.attachments.map((a) => a.name)),
-            ].join(" | ")}
+          ({
+            startDateTime: { date, weekday, time },
+            endDateTime: { date: endDate, time: endTime, weekday: endWeekday },
+            subject,
+            body,
+            tags: { svc, promo, important, hide, moderator, teacher },
+            duration: { spanDays },
+            recurring,
+            attachments,
+          }) =>
+            `
+        <p style="font-family: Consolas; font-size: 1rem; white-space: pre;">` +
+            `${weekday.padStart(7, " ")} ${date.padEnd(6, " ")} ${time.padStart(
+              5,
+              " "
+            )}   <span style="font-size: 1.3rem;" >${subject}</span> ${[
+              recurring ? "#recurring" : "",
+              svc ? "#svc" : "",
+              promo ? "#promo" : "",
+              important ? "#important" : "",
+              hide ? "#hide" : "",
+            ]
+              .join(" ")
+              .replace(/\s+/g, " ")
+              .trim()}${spanDays > 1 ? ` (${spanDays}d)` : ""}${
+              spanDays > 1
+                ? `\n${endWeekday.padStart(7, " ")} ${endDate.padEnd(6, " ")} ${
+                    endTime ? endTime.padStart(5, " ") : "        "
+                  }`
+                : "\n                       "
+            }${
+              moderator && teacher
+                ? `Vedení: ${moderator}, Slovo: ${teacher}`
+                : ""
+            }${body ? `${body}\n` : "\n"}${
+              attachments.length > 0
+                ? `${attachments
+                    .map(
+                      (a) =>
+                        `                       <a href="${
+                          a.webViewLink
+                        }" target="_blank">${a.label ?? a.name}</a>`
+                    )
+                    .join("\n")}`
+                : ""
+            }`
+              .split("\n")
+              .filter((line) => line.trim())
+              .join("\n") +
+            `
         </p>
       `
         )
         .join("\n")}`;
-  });
-
-</script>
-
+      }
+    );
+  </script>
 </html>
