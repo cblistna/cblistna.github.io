@@ -289,6 +289,78 @@ export function mergeServicesToEvents(events, services) {
   });
 }
 
+/**
+ * Fetches and combines calendar events, services, and promo events into a single sorted array.
+ * Merges service data into events where applicable.
+ *
+ * @returns {Promise<CalendarEvent[]>} Promise resolving to a sorted array of combined calendar events.
+ */
+export async function fetchCombinedEvents() {
+  return Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(
+    ([events, services, promo]) => {
+      mergeServicesToEvents(events, services);
+      return events
+        .concat(promo)
+        .sort((a, b) => a.start.localeCompare(b.start));
+    }
+  );
+}
+
+const czDays = [
+  "Neděle",
+  "Pondělí",
+  "Úterý",
+  "Středa",
+  "Čtvrtek",
+  "Pátek",
+  "Sobota",
+];
+
+const czMonths = [
+  "Leden",
+  "Únor",
+  "Březen",
+  "Duben",
+  "Květen",
+  "Červen",
+  "Červenec",
+  "Srpen",
+  "Září",
+  "Říjen",
+  "Listopad",
+  "Prosinec",
+];
+/**
+ * Converts an ISO date/time string to Czech date, weekday, and time representation.
+ *
+ * @param {string} isoDateTime - ISO 8601 date/time string (e.g., "2024-05-14T10:30:00Z").
+ * @returns {{
+ *   date: string,           // Formatted date in Czech style (e.g., "14.5." or "14.5.2024")
+ *   weekday: string,        // Czech weekday name (e.g., "Úterý")
+ *   time: string,           // Time in "H:mm" format or empty string if not present
+ *   year: number,           // Year (e.g., 2024)
+ *   month: number,          // Month number (1-12)
+ *   monthName: string,      // Czech month name (e.g., "Květen")
+ *   day: number             // Day of the month (1-31)
+ * }}
+ */
+export function czDateTimeOf(isoDateTime) {
+  const d = new Date(isoDateTime);
+  const now = new Date();
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const monthName = czMonths[d.getMonth()];
+  const year = d.getFullYear();
+  const weekday = czDays[d.getDay()];
+  const isCurrentYear = year === now.getFullYear();
+  const date = isCurrentYear ? `${day}.${month}.` : `${day}.${month}.${year}`;
+  const time =
+    isoDateTime.length > 10
+      ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}`
+      : "";
+  return { date, weekday, time, year, month, monthName, day };
+}
+
 function toLocalDateTime(date) {
   const parts = LOCAL_DATE_TIME_FORMAT.formatToParts(date).reduce(
     (acc, part) => {

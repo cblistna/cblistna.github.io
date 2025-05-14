@@ -12,60 +12,23 @@
   </body>
   <script type="module">
     import {
-      now,
-      today,
-      fetchEvents,
-      fetchServices,
-      fetchPromo,
       fetchMessages,
-      mergeServicesToEvents,
+      fetchCombinedEvents,
+      czDateTimeOf,
     } from "./calendar.js";
 
-    export function localDateTimeOf(isoDateTime) {
-      const czDays = [
-        "neděle",
-        "pondělí",
-        "úterý",
-        "středa",
-        "čtvrtek",
-        "pátek",
-        "sobota",
-      ];
-      const d = new Date(isoDateTime);
-      const now = new Date();
-      const day = d.getDate();
-      const month = d.getMonth() + 1;
-      const year = d.getFullYear();
-      const weekday = czDays[d.getDay()];
-      const isCurrentYear = year === now.getFullYear();
-      const date = isCurrentYear
-        ? `${day}.${month}.`
-        : `${day}.${month}.${year}`;
-      const time =
-        isoDateTime.length > 10
-          ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}`
-          : "";
-      return { date, weekday, time, year, month, day };
-    }
-
-    Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(
-      ([events, services, promo]) => {
-        mergeServicesToEvents(events, services);
-        const combined = events
-          .concat(promo)
-          .sort((a, b) => a.start.localeCompare(b.start));
-
-        console.log("combined", combined);
-        document.getElementById("events").innerHTML = `
+    const combined = await fetchCombinedEvents();
+    console.log("combined", combined);
+    document.getElementById("events").innerHTML = `
       ${combined
         .map((event) => ({
           ...event,
-          startDateTime: localDateTimeOf(event.start),
-          endDateTime: localDateTimeOf(event.end),
+          startDateTime: czDateTimeOf(event.start),
+          endDateTime: czDateTimeOf(event.end),
         }))
         .map(
           ({
-            startDateTime: { date, weekday, time },
+            startDateTime: { date, weekday, time, monthName },
             endDateTime: { date: endDate, time: endTime, weekday: endWeekday },
             subject,
             body,
@@ -76,7 +39,10 @@
           }) =>
             `
         <p style="font-family: Consolas; font-size: 1rem; white-space: pre;">` +
-            `${weekday.padStart(7, " ")} ${date.padEnd(6, " ")} ${time.padStart(
+            `${weekday.padStart(7, " ").toLowerCase()} ${date.padEnd(
+              6,
+              " "
+            )} ${time.padStart(
               5,
               " "
             )}   <span style="font-size: 1.3rem;" >${subject}</span> ${[
@@ -88,7 +54,9 @@
             ]
               .join(" ")
               .replace(/\s+/g, " ")
-              .trim()}${spanDays > 1 ? ` (${spanDays}d)` : ""}${
+              .trim()}${
+              spanDays > 1 ? ` (${spanDays}d)` : ""
+            } (${monthName.toLowerCase()})${
               spanDays > 1
                 ? `\n${endWeekday.padStart(7, " ")} ${endDate.padEnd(6, " ")} ${
                     endTime ? endTime.padStart(5, " ") : "        "
@@ -118,7 +86,5 @@
       `
         )
         .join("\n")}`;
-      }
-    );
   </script>
 </html>
