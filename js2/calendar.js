@@ -113,20 +113,35 @@ export function today() {
 
 /**
  * Fetches events from a Google Calendar and normalizes them.
- * @param {string} calendarId
+ * @param {Object} [params={}] - Parameters for fetching events
+ * @param {string} [params.calendarId=CALENDAR_ID] - The calendar ID to fetch events from
+ * @param {string} [params.since] - Local ISO date time to fetch events since (default: today)
  * @returns {Promise<CalendarEvent[]>}
+ * @example
+ * // Fetch events from default calendar since today
+ * const events = await fetchEvents();
+ *
+ * // Fetch events from specific calendar since a specific date
+ * const events = await fetchEvents({
+ *   calendarId: 'custom@calendar.com',
+ *   since: '2025-06-01 00:00'
+ * });
  */
-export async function fetchEvents(calendarId = CALENDAR_ID) {
-  const todayPlus = (offsetMs = 0) => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return new Date(date.getTime() + offsetMs).toISOString();
-  };
-  const days = (d) => d * 24 * 3600_000;
+export async function fetchEvents(params = {}) {
+  const { calendarId = CALENDAR_ID, since = today() + " 00:00" } = params;
+
+  // Convert local ISO date time to UTC ISO string for Google Calendar API
+  const sinceDate = new Date(since);
+  const timeMin = sinceDate.toISOString();
+
+  // Set timeMax to one year from the since date
+  const maxDate = new Date(sinceDate);
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
+  const timeMax = maxDate.toISOString();
 
   const { items } = await GOOGLE.eventsOf(calendarId, {
-    timeMin: todayPlus(),
-    timeMax: todayPlus(days(365)),
+    timeMin,
+    timeMax,
     singleEvents: true,
     orderBy: "startTime",
     maxResults: 365,
@@ -180,10 +195,23 @@ export async function fetchServices(sheetId = SERVICES_SHEET) {
 
 /**
  * Fetches promo events from a Google Drive folder and groups them as calendar events.
- * @param {string} folderId
+ * @param {Object} [params={}] - Parameters for fetching promo events
+ * @param {string} [params.folderId=PROMO_FOLDER_ID] - The Google Drive folder ID to fetch promo files from
+ * @param {string} [params.since] - Local ISO date time to fetch events since (default: today)
  * @returns {Promise<Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>>}
+ * @example
+ * // Fetch promo events from default folder since today
+ * const promoEvents = await fetchPromo();
+ *
+ * // Fetch promo events from specific folder since a specific date
+ * const promoEvents = await fetchPromo({
+ *   folderId: 'custom-folder-id',
+ *   since: '2025-06-01 00:00'
+ * });
  */
-export async function fetchPromo(folderId = PROMO_FOLDER_ID) {
+export async function fetchPromo(params = {}) {
+  const { folderId = PROMO_FOLDER_ID, since = today() + " 00:00" } = params;
+
   const { files } = await GOOGLE.filesOf({
     orderBy: "name desc",
     pageSize: 70,
@@ -191,13 +219,16 @@ export async function fetchPromo(folderId = PROMO_FOLDER_ID) {
     fields: "files(id, name, webViewLink, webContentLink, mimeType)",
   });
   const events = groupFilesToEvents(files);
-  const todaysDate = today();
+
+  // Convert since parameter to date for comparison
+  const sinceDate = since.substring(0, 10); // Extract date part (YYYY-MM-DD)
+
   return events
     .map((event) => {
       event.tags.promo = true;
       return event;
     })
-    .filter((event) => event.start >= todaysDate)
+    .filter((event) => event.start >= sinceDate)
     .sort((eventA, eventB) => eventA.start.localeCompare(eventB.start));
 }
 
