@@ -6,70 +6,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Rozpis shromáždění</title>
-    <script src="../js/google-access.js"></script>
-    <script src="../js/events.js"></script>
-    <script src="../js/lib/luxon.min.js"></script>
     <link rel="stylesheet" href="../css/tailwind2.min.css" />
   </head>
   <body class="m-4 bg-gray-100">
     <h1 class="text-3xl">Rozpis shromáždění</h1>
     <div id="app"></div>
-    <script>
+    <script type="module">
+      import {
+        fetchServices,
+        fetchEvents,
+        fetchPromo,
+        mergeServicesToEvents,
+        czDateTimeOf,
+      } from "../js2/calendar.js";
       /**
-       * Renders a service meeting event as HTML
-       * @param {Object} event - The event object containing meeting details
+       * Renders a service meeting event as HTML using modern template literals
+       * @param {Object} service - The service object containing meeting details
        * @returns {string} HTML string for the service meeting
        */
-      function renderServiceMeeting(event) {
+      function renderServiceMeeting(service) {
+        const dateInfo = czDateTimeOf(service.date);
+
         return `
           <div class="mt-8">
-            <p>${event.start.toFormat("cccc")} <b>${event.start.toFormat(
-          "d. LLLL"
-        )}</b> ${event.start.toFormat("yyyy")}</p>
+            <p>${dateInfo.weekday} <b>${
+          dateInfo.day
+        }. ${dateInfo.monthName.toLowerCase()}</b> ${dateInfo.year}</p>
             <table>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Vedení</td>
-                <td class="align-text-top"><b>${event.host}</b></td>
+                <td class="align-text-top"><b>${
+                  service.moderator || "-"
+                }</b></td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
-                <td class="align-text-top"><b>${event.sermon}</b> ${
-          event.title
+                <td class="align-text-top"><b>${service.teacher || "-"}</b> ${
+          service.subject || ""
         }</td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Poznámky</td>
-                <td class="align-text-top">${event.notes}</td>
+                <td class="align-text-top">${service.body || "-"}</td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Chvály</td>
-                <td class="align-text-top">${event.worship}</td>
+                <td class="align-text-top">${service.worshipLeader || "-"}</td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Promítání</td>
-                <td class="align-text-top">${event.beaming}</td>
+                <td class="align-text-top">${service.projector || "-"}</td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Zvukaři</td>
-                <td class="align-text-top">${event.sound}</td>
+                <td class="align-text-top">${service.soundMaster || "-"}</td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Děti</td>
-                <td class="align-text-top">${event.kids}</td>
+                <td class="align-text-top">${
+                  service.childrenProgram || "-"
+                }</td>
               </tr>
               ${
-                event.announcements
+                service.announcements
                   ? `
                 <tr>
                   <td class="text-sm text-right pr-2 align-text-top">Oznámení</td>
-                  <td class="align-text-top">${event.announcements}</td>
+                  <td class="align-text-top">${service.announcements}</td>
                 </tr>
               `
                   : ""
               }
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top"><b>Narozeniny</b></td>
-                <td class="align-text-top">${event.birthdays}</td>
+                <td class="align-text-top">${(
+                  service.birthdays || "-"
+                ).replaceAll(", ", "<br />")}</td>
               </tr>
             </table>
           </div>
@@ -78,201 +90,97 @@
 
       /**
        * Renders all service meetings as HTML
-       * @param {Array} events - Array of event objects
-       * @returns {string} Complete HTML string for all events
+       * @param {Array} services - Array of service objects
+       * @returns {string} Complete HTML string for all services
        */
-      function renderServiceMeetings(events) {
-        return events.map((event) => renderServiceMeeting(event)).join("");
+      function renderServiceMeetings(services) {
+        return services
+          .map((service) => renderServiceMeeting(service))
+          .join("");
       }
 
       /**
-       * Converts a JavaScript Date to Luxon DateTime with Czech locale
-       * @param {Date} date - JavaScript Date object
-       * @returns {DateTime} Luxon DateTime object
+       * Formats announcements from events and promo items
+       * @param {Array} events - Calendar events
+       * @param {Array} promoEvents - Promo events
+       * @returns {string} Formatted announcements HTML
        */
-      function toDate(date) {
-        return luxon.DateTime.fromJSDate(date).setLocale("cs");
-      }
+      function formatAnnouncements(events, promoEvents) {
+        const allEvents = [...events, ...promoEvents]
+          .filter((event) => event.start)
+          .sort((a, b) => a.start.localeCompare(b.start));
 
-      /**
-       * Upgrades date properties in events array to Luxon DateTime objects
-       * @param {Array} events - Array of event objects
-       * @returns {Array} Events with upgraded date properties
-       */
-      function upgradeDates(events) {
-        return events.map((event) => ({
-          ...event,
-          start: toDate(event.start),
-          end: toDate(event.end),
-        }));
-      }
+        if (allEvents.length === 0) return "";
 
-      const DateTime = luxon.DateTime;
+        return allEvents
+          .map((event) => {
+            console.log("Processing event:", event);
+            const dateInfo = czDateTimeOf(event.start);
+            const endInfo = event.end ? czDateTimeOf(event.end) : null;
+            const timeStr = dateInfo.time ? ` ${dateInfo.time}` : "";
+            const endStr =
+              endInfo && event.end !== event.start
+                ? ` - ${endInfo.date}${endInfo.time ? ` ${endInfo.time}` : ""}`
+                : "";
 
-      ga.init().then(() => {
-        const services = ga
-          .dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:K20")
-          .then((data) => {
-            data.values.shift();
-            const today = luxon.DateTime.fromJSDate(new Date());
-            const events = data.values
-              .map((row) => ({
-                start: luxon.DateTime.fromISO(row[1]).setLocale("cs"),
-                host: row[2] || "-",
-                sermon: row[3] || "-",
-                title: row[4] || "",
-                notes: row[5] || "-",
-                worship: row[6] || "-",
-                kids: row[7] || "-",
-                beaming: row[8] || "-",
-                sound: row[9] || "-",
-                birthdays: (row[10] || "-").replaceAll(", ", "<br />"),
-              }))
-              .filter((event) => today.toISODate() <= event.start.toISODate())
-              .sort((a, b) => a.start.toMillis() - b.start.toMillis());
-            const week = Events.weekOf(events[0].start.toJSDate());
-            return ga
-              .eventsOf("trinec.v@cb.cz", {
-                timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
-                timeMax: new Date(
-                  week.sunday.getTime() + 365 * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                singleEvents: true,
-                orderBy: "startTime",
-                maxResults: 300,
-              })
-              .then(({ items: calendarItems }) => ({
-                events,
-                week,
-                calendarItems,
-              }));
-          });
-
-        const otherEvents = ga
-          .files({
-            orderBy: "name desc",
-            pageSize: 70,
-            q: "trashed=false and parents in '166V_D3l4DwwOjrLeEhM12m69ZOvbcTc6' and mimeType != 'application/vnd.google-apps.folder'",
-            fields: "files(id, name, webViewLink, webContentLink, mimeType)",
+            return `${
+              dateInfo.date
+            }${timeStr}${endStr} <span class="ml-2 font-semibold">${
+              event.subject || event.name || "Událost"
+            }</span>${event.body ? ` - ${event.body}` : ""}`;
           })
-          .then(({ files }) => {
-            const today = DateTime.fromJSDate(new Date()).setLocale("cs");
+          .join("<br />");
+      }
 
-            const eventPattern =
-              /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
+      /**
+       * Main application initialization
+       */
+      async function initializeApp() {
+        try {
+          // Show loading state
+          const appElement = document.getElementById("app");
+          appElement.innerHTML = '<div class="mt-8">Načítání...</div>';
 
-            const utcStartDateOf = (localDate) => {
-              const date = new Date(localDate);
-              date.setHours(0);
-              date.setMinutes(0);
-              return date;
-            };
+          // Fetch all data concurrently
+          const [services, events, promoEvents] = await Promise.all([
+            fetchServices(),
+            fetchEvents(),
+            fetchPromo(),
+          ]);
 
-            const utcEndDateOf = (localDate) => {
-              const date = new Date(localDate);
-              date.setHours(23);
-              date.setMinutes(59);
-              return date;
-            };
+          // Merge service data into events
+          mergeServicesToEvents(events, services);
 
-            function fileEventOf(file) {
-              const match = eventPattern.exec(file.name);
-              if (!match) return;
-              const [_, from, __, to, name, ext] = match;
-              if (ext === "url") return;
-              const start = DateTime.fromJSDate(utcStartDateOf(from)).setLocale(
-                "cs"
-              );
-              const end = to
-                ? DateTime.fromJSDate(utcEndDateOf(to)).setLocale("cs")
-                : start;
-              return { start, end, name, ext, url: file.webViewLink };
-            }
-
-            return files
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((file) => fileEventOf(file))
-              .filter((event) => !!event)
-              .filter((event) => today <= event.start);
-          });
-
-        Promise.all([services, otherEvents]).then(
-          ([{ events, week, calendarItems }, otherEvents]) => {
-            const url = new URL(window.location.href);
-            const includePlan = url.searchParams.has("plan") || true;
-            const announcements = Events.schedule(
-              upgradeDates(Events.parse(calendarItems)),
-              week
+          // Add announcements to the first service if there are upcoming events
+          if (services.length > 0) {
+            const upcomingEvents = events.filter(
+              (event) =>
+                event.start > services[0].date &&
+                (!event.tags.svc || event.tags.important)
             );
-            events[0].announcements = [
-              {
-                start: { toFormat: () => "" },
-                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
-                name: "Pravidelné události příští týden",
-              },
-              ...announcements.events.week,
-              {
-                start: { toFormat: () => "" },
-                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
-                name: "Nadcházející události",
-              },
-              ...announcements.events.upcoming,
-              {
-                start: { toFormat: () => "" },
-                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
-                name: "Plánované události",
-                tags: ["plan"],
-              },
-              ...announcements.events.plan,
-              {
-                start: { toFormat: () => "" },
-                end: { toFormat: () => "", diff: () => ({ days: 0 }) },
-                name: "Jiné události",
-                tags: ["other"],
-              },
-              ...otherEvents,
-            ]
-              .filter((e) => includePlan || !(e.tags ?? []).includes("plan"))
-              .map((e) => ({
-                ...e,
-                days: Math.floor(e.end.diff(e.start, ["days"]).days + 0.1),
-              }))
-              .map(
-                (e) =>
-                  `${
-                    e.start.toFormat("d.M. ccc H:mm").replace(" 0:00", "") +
-                    (e.days
-                      ? e.end
-                          .toFormat(" - d.M. ccc H:mm")
-                          .replace(" 23:59", "") + ` (${e.days}d)`
-                      : "")
-                  }${
-                    e.start.toFormat("d")
-                      ? '<span class="ml-2">'
-                      : '<span class="font-semibold">'
-                  }${
-                    e.url
-                      ? `<a href="${e.url}" target="_blank" class="text-blue-900">${e.name}</a>`
-                      : e.name
-                  }</span>${e.description ? ` (${e.description})` : ""}${
-                    e.attachments?.length
-                      ? ` (${e.attachments
-                          .map(
-                            (a) =>
-                              `<a href="${a.url}" target="_blank" class="text-blue-900">${a.name}</a>`
-                          )
-                          .join(" | ")})`
-                      : ""
-                  }`
-              )
-              .join("<br />");
 
-            // Render the events to the DOM
-            const appElement = document.getElementById("app");
-            appElement.innerHTML = renderServiceMeetings(events);
+            if (upcomingEvents.length > 0 || promoEvents.length > 0) {
+              services[0].announcements = formatAnnouncements(
+                upcomingEvents,
+                promoEvents
+              );
+            }
           }
-        );
-      });
+
+          // Render the services to the DOM
+          appElement.innerHTML = renderServiceMeetings(services);
+        } catch (error) {
+          console.error("Error initializing application:", error);
+          document.getElementById("app").innerHTML = `
+            <div class="mt-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              <strong>Chyba při načítání dat:</strong> ${error.message}
+            </div>
+          `;
+        }
+      }
+
+      // Initialize the application when the page loads
+      initializeApp();
     </script>
   </body>
 </html>
