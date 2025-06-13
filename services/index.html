@@ -72,7 +72,7 @@
                   ? `
                 <tr>
                   <td class="text-sm text-right pr-2 align-text-top">Oznámení</td>
-                  <td class="align-text-top">${service.announcements}</td>
+                  <td id="announcements" class="align-text-top">${service.announcements}</td>
                 </tr>
               `
                   : ""
@@ -318,6 +318,14 @@
 
           // Render the services to the DOM
           appElement.innerHTML = renderServiceMeetings(services);
+          document.querySelectorAll("#announcements a").forEach((link) => {
+            link.classList.add(
+              "text-blue-600",
+              "hover:text-blue-800",
+              "underline"
+            );
+            link.setAttribute("target", "_blank");
+          });
         } catch (error) {
           console.error("Error initializing application:", error);
           document.getElementById("app").innerHTML = `
