@@ -203,11 +203,32 @@
           const grayClass = isPromoEvent ? ' class="text-gray-500"' : "";
           const fontWeight = isPromoEvent ? "font-medium" : "font-semibold";
 
+          // Format attachments as clickable links
+          let attachmentsStr = "";
+          if (event.attachments && event.attachments.length > 0) {
+            const attachmentLinks = event.attachments
+              .map((attachment) => {
+                const url = attachment.webViewLink || attachment.url;
+                const name = attachment.label || attachment.name || "Příloha";
+                return url
+                  ? `<a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${name}</a>`
+                  : name;
+              })
+              .filter((link) => link)
+              .join(" | ");
+
+            if (attachmentLinks) {
+              attachmentsStr = `<br /><span class="text-sm ml-4">${attachmentLinks}</span>`;
+            }
+          }
+
           return `<span${grayClass}>${startWeekday} ${
             dateInfo.date
           }${timeStr}${endStr}${durationStr} <span class="ml-2 ${fontWeight}">${
             event.subject || event.name || "Událost"
-          }</span>${event.body ? ` - ${event.body}` : ""}</span>`;
+          }</span>${
+            event.body ? ` - ${event.body}` : ""
+          }${attachmentsStr}</span>`;
         }
 
         let result = [];
