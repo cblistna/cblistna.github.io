@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Rozpis shromáždění</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     <script src="../js/google-access.js"></script>
     <script src="../js/events.js"></script>
     <script src="../js/lib/luxon.min.js"></script>
@@ -14,64 +13,92 @@
   </head>
   <body class="m-4 bg-gray-100">
     <h1 class="text-3xl">Rozpis shromáždění</h1>
-    <ul id="app">
-      <li v-for="event in events">
-        <service-meeting :event="event"></service-meeting>
-      </li>
-    </ul>
-    <script type="text/x-template" id="service-meeting-template">
-      <div class="mt-8">
-        <p>{{ event.start.toFormat('cccc') }} <b>{{ event.start.toFormat('d. LLLL')}}</b> {{ event.start.toFormat('yyyy')}}</p>
-        <table>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Vedení</td>
-            <td class="align-text-top"><b>{{ event.host }}</b></td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
-            <td class="align-text-top"><b>{{ event.sermon }}</b> {{ event.title }}</td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Poznámky</td>
-            <td class="align-text-top">{{ event.notes }}</td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Chvály</td>
-            <td class="align-text-top">{{ event.worship }}</td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Promítání</td>
-            <td class="align-text-top">{{ event.beaming }}</td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Zvukaři</td>
-            <td class="align-text-top">{{ event.sound }}</td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top">Děti</td>
-            <td class="align-text-top">{{ event.kids }}</td>
-          </tr>
-          <tr v-if="event.announcements">
-            <td class="text-sm text-right pr-2 align-text-top">Oznámení</td>
-            <td class="align-text-top" v-html="event.announcements"></td>
-          </tr>
-          <tr>
-            <td class="text-sm text-right pr-2 align-text-top"><b>Narozeniny</b></td>
-            <td class="align-text-top" v-html="event.birthdays"></td>
-          </tr>
-        </table>
-      </div>
-    </script>
+    <div id="app"></div>
     <script>
-      Vue.component("service-meeting", {
-        props: ["event"],
-        template: "#service-meeting-template",
-      });
+      /**
+       * Renders a service meeting event as HTML
+       * @param {Object} event - The event object containing meeting details
+       * @returns {string} HTML string for the service meeting
+       */
+      function renderServiceMeeting(event) {
+        return `
+          <div class="mt-8">
+            <p>${event.start.toFormat("cccc")} <b>${event.start.toFormat(
+          "d. LLLL"
+        )}</b> ${event.start.toFormat("yyyy")}</p>
+            <table>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Vedení</td>
+                <td class="align-text-top"><b>${event.host}</b></td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
+                <td class="align-text-top"><b>${event.sermon}</b> ${
+          event.title
+        }</td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Poznámky</td>
+                <td class="align-text-top">${event.notes}</td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Chvály</td>
+                <td class="align-text-top">${event.worship}</td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Promítání</td>
+                <td class="align-text-top">${event.beaming}</td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Zvukaři</td>
+                <td class="align-text-top">${event.sound}</td>
+              </tr>
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top">Děti</td>
+                <td class="align-text-top">${event.kids}</td>
+              </tr>
+              ${
+                event.announcements
+                  ? `
+                <tr>
+                  <td class="text-sm text-right pr-2 align-text-top">Oznámení</td>
+                  <td class="align-text-top">${event.announcements}</td>
+                </tr>
+              `
+                  : ""
+              }
+              <tr>
+                <td class="text-sm text-right pr-2 align-text-top"><b>Narozeniny</b></td>
+                <td class="align-text-top">${event.birthdays}</td>
+              </tr>
+            </table>
+          </div>
+        `;
+      }
 
+      /**
+       * Renders all service meetings as HTML
+       * @param {Array} events - Array of event objects
+       * @returns {string} Complete HTML string for all events
+       */
+      function renderServiceMeetings(events) {
+        return events.map((event) => renderServiceMeeting(event)).join("");
+      }
+
+      /**
+       * Converts a JavaScript Date to Luxon DateTime with Czech locale
+       * @param {Date} date - JavaScript Date object
+       * @returns {DateTime} Luxon DateTime object
+       */
       function toDate(date) {
         return luxon.DateTime.fromJSDate(date).setLocale("cs");
       }
 
+      /**
+       * Upgrades date properties in events array to Luxon DateTime objects
+       * @param {Array} events - Array of event objects
+       * @returns {Array} Events with upgraded date properties
+       */
       function upgradeDates(events) {
         return events.map((event) => ({
           ...event,
@@ -240,10 +267,9 @@
               )
               .join("<br />");
 
-            new Vue({
-              el: "#app",
-              data: { events },
-            });
+            // Render the events to the DOM
+            const appElement = document.getElementById("app");
+            appElement.innerHTML = renderServiceMeetings(events);
           }
         );
       });
