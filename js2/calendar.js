@@ -351,6 +351,7 @@ const czMonthsShort = [
  * @param {string} isoDateTime - ISO 8601 date/time string (e.g., "2024-05-14T10:30:00Z").
  * @returns {{
  *   date: string,           // Formatted date in Czech style (e.g., "14.5." or "14.5.2024")
+ *   dateIso: string,        // ISO date format (e.g., "2024-05-14")
  *   weekday: string,        // Czech weekday name (e.g., "Úterý")
  *   time: string,           // Time in "H:mm" format or empty string if not present
  *   year: number,           // Year (e.g., 2024)
@@ -370,11 +371,24 @@ export function czDateTimeOf(isoDateTime) {
   const weekday = czDays[d.getDay()];
   const isCurrentYear = year === now.getFullYear();
   const date = isCurrentYear ? `${day}.${month}.` : `${day}.${month}.${year}`;
+  const dateIso = `${year}-${month.toString().padStart(2, "0")}-${day
+    .toString()
+    .padStart(2, "0")}`;
   const time =
     isoDateTime.length > 10
       ? `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}`
       : "";
-  return { date, weekday, time, year, month, monthName, monthShortName, day };
+  return {
+    date,
+    dateIso,
+    weekday,
+    time,
+    year,
+    month,
+    monthName,
+    monthShortName,
+    day,
+  };
 }
 
 export function toLocalDateTime(date) {

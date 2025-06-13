@@ -100,10 +100,10 @@
       }
 
       /**
-       * Formats announcements from events and promo items
+       * Formats announcements from events and promo items with grouped headers
        * @param {Array} events - Calendar events
        * @param {Array} promoEvents - Promo events
-       * @returns {string} Formatted announcements HTML
+       * @returns {string} Formatted announcements HTML with grouped headers
        */
       function formatAnnouncements(events, promoEvents) {
         const allEvents = [...events, ...promoEvents]
@@ -112,24 +112,149 @@
 
         if (allEvents.length === 0) return "";
 
-        return allEvents
-          .map((event) => {
-            console.log("Processing event:", event);
-            const dateInfo = czDateTimeOf(event.start);
-            const endInfo = event.end ? czDateTimeOf(event.end) : null;
-            const timeStr = dateInfo.time ? ` ${dateInfo.time}` : "";
-            const endStr =
-              endInfo && event.end !== event.start
-                ? ` - ${endInfo.date}${endInfo.time ? ` ${endInfo.time}` : ""}`
-                : "";
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
 
-            return `${
-              dateInfo.date
-            }${timeStr}${endStr} <span class="ml-2 font-semibold">${
-              event.subject || event.name || "Událost"
-            }</span>${event.body ? ` - ${event.body}` : ""}`;
-          })
-          .join("<br />");
+        // Calculate next week's date range
+        const today = new Date();
+        const nextWeekStart = new Date(today);
+        nextWeekStart.setDate(today.getDate() + 7 - today.getDay()); // Start of next week (Sunday)
+        const nextWeekEnd = new Date(nextWeekStart);
+        nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // End of next week (Saturday)
+
+        // Calculate end of current month
+        const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
+
+        // Group events by categories
+        const groups = {
+          nextWeek: [],
+          laterThisMonth: [],
+          byMonth: new Map(),
+        };
+
+        allEvents.forEach((event) => {
+          const eventDate = new Date(event.start);
+          const eventYear = eventDate.getFullYear();
+          const eventMonth = eventDate.getMonth();
+
+          // Check if event is next week
+          if (eventDate >= nextWeekStart && eventDate <= nextWeekEnd) {
+            groups.nextWeek.push(event);
+          }
+          // Check if event is later this month (after next week)
+          else if (
+            eventYear === currentYear &&
+            eventMonth === currentMonth &&
+            eventDate > nextWeekEnd
+          ) {
+            groups.laterThisMonth.push(event);
+          }
+          // Group by month for other events
+          else {
+            const monthKey = `${eventYear}-${eventMonth}`;
+            if (!groups.byMonth.has(monthKey)) {
+              groups.byMonth.set(monthKey, []);
+            }
+            groups.byMonth.get(monthKey).push(event);
+          }
+        });
+
+        /**
+         * Formats a single event as HTML
+         * @param {Object} event - Event object
+         * @returns {string} HTML string for the event
+         */
+        function formatEvent(event) {
+          const dateInfo = czDateTimeOf(event.start);
+          const endInfo = event.end ? czDateTimeOf(event.end) : null;
+
+          // Get weekday abbreviations (first two letters in lowercase)
+          const startWeekday = dateInfo.weekday.substring(0, 2).toLowerCase();
+          const endWeekday = endInfo
+            ? endInfo.weekday.substring(0, 2).toLowerCase()
+            : "";
+
+          const timeStr = dateInfo.time ? ` ${dateInfo.time}` : "";
+
+          // Compare dates only (not full date/time strings) to avoid showing end date for same-day events
+          const startDateOnly = dateInfo.dateIso;
+          const endDateOnly = endInfo ? endInfo.dateIso : null;
+          const endStr =
+            endInfo && endDateOnly !== startDateOnly
+              ? ` - ${endWeekday} ${endInfo.date}`
+              : "";
+
+          // Calculate duration in days if event spans multiple days
+          let durationStr = "";
+          if (endInfo && endDateOnly !== startDateOnly) {
+            // Use spanDays from event duration if available, otherwise calculate manually
+            let diffDays;
+            if (event.duration && typeof event.duration.spanDays === "number") {
+              diffDays = event.duration.spanDays;
+            }
+            if (diffDays > 1) {
+              durationStr = ` (${diffDays}d)`;
+            }
+          }
+
+          // Check if this is a promo event and apply gray styling
+          const isPromoEvent = event.tags && event.tags.promo;
+          const grayClass = isPromoEvent ? ' class="text-gray-500"' : "";
+          const fontWeight = isPromoEvent ? "font-medium" : "font-semibold";
+
+          return `<span${grayClass}>${startWeekday} ${
+            dateInfo.date
+          }${timeStr}${endStr}${durationStr} <span class="ml-2 ${fontWeight}">${
+            event.subject || event.name || "Událost"
+          }</span>${event.body ? ` - ${event.body}` : ""}</span>`;
+        }
+
+        let result = [];
+
+        // Add "Next Week" section
+        if (groups.nextWeek.length > 0) {
+          result.push('<strong class="text-gray-600">Příští týden</strong>');
+          result.push(...groups.nextWeek.map(formatEvent));
+        }
+
+        // Add "Later This Month" section
+        if (groups.laterThisMonth.length > 0) {
+          result.push(
+            '<strong class="text-gray-600">Později tento měsíc</strong>'
+          );
+          result.push(...groups.laterThisMonth.map(formatEvent));
+        }
+
+        // Add monthly sections
+        const sortedMonths = [...groups.byMonth.keys()].sort((a, b) => {
+          const [yearA, monthA] = a.split("-").map(Number);
+          const [yearB, monthB] = b.split("-").map(Number);
+
+          // First sort by year, then by month
+          if (yearA !== yearB) {
+            return yearA - yearB;
+          }
+          return monthA - monthB;
+        });
+        sortedMonths.forEach((monthKey) => {
+          const monthEvents = groups.byMonth.get(monthKey);
+          if (monthEvents.length > 0) {
+            const [year, month] = monthKey.split("-").map(Number);
+            const monthName = czDateTimeOf(
+              `${year}-${(month + 1).toString().padStart(2, "0")}-01`
+            ).monthName;
+            const monthHeader =
+              year === currentYear ? monthName : `${monthName} ${year}`;
+
+            result.push(
+              `<strong class="text-gray-600">${monthHeader}</strong>`
+            );
+            result.push(...monthEvents.map(formatEvent));
+          }
+        });
+
+        return result.join("<br />");
       }
 
       /**
@@ -148,6 +273,9 @@
             fetchPromo(),
           ]);
 
+          [...events, ...promoEvents].forEach(({ start, subject }) => {
+            console.log(`Processing event: ${start} ${subject}`);
+          });
           // Merge service data into events
           mergeServicesToEvents(events, services);
 
@@ -155,8 +283,8 @@
           if (services.length > 0) {
             const upcomingEvents = events.filter(
               (event) =>
-                event.start > services[0].date &&
-                (!event.tags.svc || event.tags.important)
+                czDateTimeOf(event.start).dateIso > services[0].date &&
+                !event.tags.hide
             );
 
             if (upcomingEvents.length > 0 || promoEvents.length > 0) {
