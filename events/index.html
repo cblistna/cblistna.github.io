@@ -31,7 +31,9 @@
       </p>
     </div>
     <div id="next-week-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p
+        class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
+      >
         Pravidelná setkání v příštím týdnu
       </p>
       <div day="day" class="-mt-4">
@@ -45,15 +47,22 @@
       ></event-highlight>
     </div>
     <div id="other-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p
+        class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
+      >
         Jiné události
       </p>
       <div day="day" class="-mt-4">
-        <calendar-day-other v-for="day in calendar" :day="day"></calendar-day-ot>
+        <calendar-day-other
+          v-for="day in calendar"
+          :day="day"
+        ></calendar-day-other>
       </div>
     </div>
     <div id="planned-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p
+        class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
+      >
         Plánované události
       </p>
       <div day="day" class="-mt-4">
@@ -182,7 +191,6 @@
 
       ga.init()
         .then(() => {
-
           const calendarData = ga.eventsOf("trinec.v@cb.cz", {
             timeMin: new Date(week.sundayBefore.getTime()).toISOString(),
             timeMax: new Date(
@@ -192,66 +200,75 @@
             orderBy: "startTime",
             maxResults: 300,
           });
-          
+
           const serviceData = ga
             .dataOf("1kgTaxURvNYcos2UyGNkaxdqjtJMuqU7Rcftn-bFJ4pI", "A1:K20")
             .then(({ values: rows }) =>
               rows
                 .slice(1) // skip header
                 .filter((row) => !!row[1]) // skip services without date
-                .map((row) => ({ date: row[1], moderator: row[2], speaker: row[3] }))
+                .map((row) => ({
+                  date: row[1],
+                  moderator: row[2],
+                  speaker: row[3],
+                }))
                 .reduce((services, service) => {
                   services[service.date] = service;
                   return services;
                 }, {})
             );
 
-            Promise.all([calendarData, serviceData]).then(([googleEvents, services]) => {
-              const events = upgradeDates(Events.parse(googleEvents.items))
-              .map((event) => {
-              if (event.tags.includes("svc")) {
-                const svcDate = event.start.toFormat( "yyyy-MM-dd");
-                if (
-                  services[svcDate] &&
-                  services[svcDate].moderator &&
-                  services[svcDate].speaker
-                ) {
-                  event.description = event.description
-                    ? event.description + "<br />"
-                    : "";
-                  event.description += `Vedení: ${services[svcDate].moderator}, Slovo: ${services[svcDate].speaker}`;
+          Promise.all([calendarData, serviceData]).then(
+            ([googleEvents, services]) => {
+              const events = upgradeDates(Events.parse(googleEvents.items)).map(
+                (event) => {
+                  if (event.tags.includes("svc")) {
+                    const svcDate = event.start.toFormat("yyyy-MM-dd");
+                    if (
+                      services[svcDate] &&
+                      services[svcDate].moderator &&
+                      services[svcDate].speaker
+                    ) {
+                      event.description = event.description
+                        ? event.description + "<br />"
+                        : "";
+                      event.description += `Vedení: ${services[svcDate].moderator}, Slovo: ${services[svcDate].speaker}`;
+                    }
+                  }
+                  return event;
                 }
-              }
-              return event;
-            });
+              );
 
-            const schedule = Events.schedule(events, week);
+              const schedule = Events.schedule(events, week);
 
-            new Vue({
-              el: "#next-week-events",
-              data: {
-                calendar: toCalendar(schedule.events.week),
-              },
-            });
-
-            // drop repeated events
-            const upcomingEvents = schedule.events.upcoming.filter((event) => event.id === event.eventId);
-            if (upcomingEvents.length > 0) {
               new Vue({
-                el: "#upcoming-events",
+                el: "#next-week-events",
                 data: {
-                  calendar: upcomingEvents
+                  calendar: toCalendar(schedule.events.week),
+                },
+              });
+
+              // drop repeated events
+              const upcomingEvents = schedule.events.upcoming.filter(
+                (event) => event.id === event.eventId
+              );
+              if (upcomingEvents.length > 0) {
+                new Vue({
+                  el: "#upcoming-events",
+                  data: {
+                    calendar: upcomingEvents,
+                  },
+                });
+              }
+
+              new Vue({
+                el: "#planned-events",
+                data: {
+                  calendar: toCalendar(schedule.events.plan),
                 },
               });
             }
-
-            new Vue({
-              el: "#planned-events",
-              data: {
-                calendar: toCalendar(schedule.events.plan),
-              },
-            });
-          });
+          );
 
           const eventPattern =
             /(\d\d\d\d-\d\d-\d\d)( ?(\d\d\d\d-\d\d-\d\d))?_(.*)\.([a-zA-Z0-9]{2,4})$/;
@@ -314,79 +331,83 @@
 
     <script>
       // Create visual indicator element
-      const indicator = document.createElement('div');
-      indicator.style.position = 'fixed';
-      indicator.style.bottom = '20px'; // Bottom position
-      indicator.style.right = '20px'; // Right position
-      indicator.style.width = '50px'; // Adjust width for text
-      indicator.style.height = '50px'; // Adjust height for text
-      indicator.style.borderRadius = '5px'; // Square with rounded corners
-      indicator.style.backgroundColor = '#4ade80'; // Green-400 for dark mode
-      indicator.style.color = '#000000'; // Black text for better contrast
-      indicator.style.display = 'none';
-      indicator.style.fontFamily = 'Arial, sans-serif';
-      indicator.style.fontSize = '14px';
-      indicator.style.textAlign = 'center';
-      indicator.style.lineHeight = '50px'; // Center text vertically
-      indicator.title = 'Auto-scroll active (Enter to toggle)';
+      const indicator = document.createElement("div");
+      indicator.style.position = "fixed";
+      indicator.style.bottom = "20px"; // Bottom position
+      indicator.style.right = "20px"; // Right position
+      indicator.style.width = "50px"; // Adjust width for text
+      indicator.style.height = "50px"; // Adjust height for text
+      indicator.style.borderRadius = "5px"; // Square with rounded corners
+      indicator.style.backgroundColor = "#4ade80"; // Green-400 for dark mode
+      indicator.style.color = "#000000"; // Black text for better contrast
+      indicator.style.display = "none";
+      indicator.style.fontFamily = "Arial, sans-serif";
+      indicator.style.fontSize = "14px";
+      indicator.style.textAlign = "center";
+      indicator.style.lineHeight = "50px"; // Center text vertically
+      indicator.title = "Auto-scroll active (Enter to toggle)";
       document.body.appendChild(indicator);
 
       let isScrolling = false;
       let scrollInterval;
       let intervalSeconds = 5; // Initial interval in seconds
-      const minInterval = 1;   // Minimum interval (1 second)
-      const maxInterval = 10;  // Maximum interval (10 seconds)
-      const step = 1;          // Adjustment step in seconds
+      const minInterval = 1; // Minimum interval (1 second)
+      const maxInterval = 10; // Maximum interval (10 seconds)
+      const step = 1; // Adjustment step in seconds
 
       function autoScroll() {
-          const currentPosition = window.pageYOffset + 1; // Add 1 to ensure looping
-          const maxPosition = document.documentElement.scrollHeight - window.innerHeight;
+        const currentPosition = window.pageYOffset + 1; // Add 1 to ensure looping
+        const maxPosition =
+          document.documentElement.scrollHeight - window.innerHeight;
 
-          if (currentPosition >= maxPosition) {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-              window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
-          }
+        if (currentPosition >= maxPosition) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+        }
       }
 
       function toggleScroll() {
-          if (isScrolling) {
-              clearInterval(scrollInterval);
-              indicator.style.display = 'none';
-          } else {
-              scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
-              indicator.textContent = `${intervalSeconds}s`; // Update indicator text
-              indicator.style.display = 'block';
-          }
-          isScrolling = !isScrolling;
+        if (isScrolling) {
+          clearInterval(scrollInterval);
+          indicator.style.display = "none";
+        } else {
+          scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
+          indicator.textContent = `${intervalSeconds}s`; // Update indicator text
+          indicator.style.display = "block";
+        }
+        isScrolling = !isScrolling;
       }
 
       function adjustInterval(direction) {
-          const newInterval = direction === '-' ? 
-              intervalSeconds - step : 
-              intervalSeconds + step;
-          
-          intervalSeconds = Math.min(Math.max(newInterval, minInterval), maxInterval);
-          
-          if (isScrolling) {
-              clearInterval(scrollInterval);
-              scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
-          }
-          
-          // Update the displayed interval value in the indicator
-          indicator.textContent = `${intervalSeconds}s`;
+        const newInterval =
+          direction === "-" ? intervalSeconds - step : intervalSeconds + step;
+
+        intervalSeconds = Math.min(
+          Math.max(newInterval, minInterval),
+          maxInterval
+        );
+
+        if (isScrolling) {
+          clearInterval(scrollInterval);
+          scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
+        }
+
+        // Update the displayed interval value in the indicator
+        indicator.textContent = `${intervalSeconds}s`;
       }
 
-      document.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { // Use Enter key for toggling
-              e.preventDefault();
-              toggleScroll();
-          }
-          
-          if (['+', '-'].includes(e.key)) {
-              e.preventDefault();
-              adjustInterval(e.key);
-          }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          // Use Enter key for toggling
+          e.preventDefault();
+          toggleScroll();
+        }
+
+        if (["+", "-"].includes(e.key)) {
+          e.preventDefault();
+          adjustInterval(e.key);
+        }
       });
     </script>
   </body>
