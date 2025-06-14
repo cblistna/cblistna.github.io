@@ -19,6 +19,7 @@
         mergeServicesToEvents,
         czDateTimeOf,
         today,
+        toLocalDateTime,
       } from "../js2/calendar.js";
       /**
        * Renders a service meeting event as HTML using modern template literals
@@ -114,15 +115,18 @@
         const currentMonth = sinceDate.getMonth();
 
         // Calculate next week's date range from the since date (Monday-based week)
-        const nextWeekStart = new Date(sinceDate);
+        const nextWeekStartDate = new Date(sinceDate);
         const dayOfWeek = sinceDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
         const daysUntilNextMonday = dayOfWeek === 0 ? 8 : 8 - dayOfWeek; // If Sunday, add 8 days; otherwise 8 - dayOfWeek
-        nextWeekStart.setDate(sinceDate.getDate() + daysUntilNextMonday);
-        const nextWeekEnd = new Date(nextWeekStart);
-        nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // End of next week (Sunday)
+        nextWeekStartDate.setDate(sinceDate.getDate() + daysUntilNextMonday);
+        nextWeekStartDate.setHours(0, 0, 0, 0);
 
-        // Calculate end of current month based on since date
-        const endOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
+        const nextMonthStartDate = new Date(sinceDate);
+        nextMonthStartDate.setMonth(sinceDate.getMonth() + 1, 1);
+        nextMonthStartDate.setHours(0, 0, 0, 0);
+
+        const nextWeekStart = toLocalDateTime(nextWeekStartDate);
+        const nextMonthStart = toLocalDateTime(nextMonthStartDate);
 
         // Group events by categories
         const groups = {
@@ -132,31 +136,25 @@
         };
 
         events.forEach((event) => {
-          console.log("Processing event:", event.start, event.subject);
-          const eventDate = new Date(event.start);
-          const eventYear = eventDate.getFullYear();
-          const eventMonth = eventDate.getMonth();
-
-          // Check if event is next week
-          if (eventDate >= nextWeekStart && eventDate <= nextWeekEnd) {
+          if (event.start < nextWeekStart) {
             groups.nextWeek.push(event);
+            return;
           }
-          // Check if event is later this month (after next week)
-          else if (
-            eventYear === currentYear &&
-            eventMonth === currentMonth &&
-            eventDate > nextWeekEnd
-          ) {
+
+          if (event.start < nextMonthStart) {
             groups.laterThisMonth.push(event);
+            return;
           }
-          // Group by month for other events
-          else {
-            const monthKey = `${eventYear}-${eventMonth}`;
-            if (!groups.byMonth.has(monthKey)) {
-              groups.byMonth.set(monthKey, []);
-            }
-            groups.byMonth.get(monthKey).push(event);
+
+          if (event.recurring) {
+            return;
           }
+
+          const monthKey = event.start.slice(0, 7); // YYYY-MM format
+          if (!groups.byMonth.has(monthKey)) {
+            groups.byMonth.set(monthKey, []);
+          }
+          groups.byMonth.get(monthKey).push(event);
         });
 
         /**
@@ -199,8 +197,13 @@
 
           // Check if this is a promo event and apply gray styling
           const isPromoEvent = event.tags && event.tags.promo;
-          const grayClass = isPromoEvent ? ' class="text-gray-500"' : "";
-          const fontWeight = isPromoEvent ? "font-medium" : "font-semibold";
+          const isLaterEvent = new Date(event.start) >= nextWeekStartDate;
+          const isLowPriorityEvent =
+            isPromoEvent || (event.recurring && isLaterEvent);
+          const grayClass = isLowPriorityEvent ? ' class="text-gray-500"' : "";
+          const fontWeight = isLowPriorityEvent
+            ? "font-medium"
+            : "font-semibold";
 
           // Format attachments as clickable links
           let attachmentsStr = "";
@@ -247,23 +250,12 @@
         }
 
         // Add monthly sections
-        const sortedMonths = [...groups.byMonth.keys()].sort((a, b) => {
-          const [yearA, monthA] = a.split("-").map(Number);
-          const [yearB, monthB] = b.split("-").map(Number);
-
-          // First sort by year, then by month
-          if (yearA !== yearB) {
-            return yearA - yearB;
-          }
-          return monthA - monthB;
-        });
+        const sortedMonths = [...groups.byMonth.keys()].sort();
         sortedMonths.forEach((monthKey) => {
           const monthEvents = groups.byMonth.get(monthKey);
           if (monthEvents.length > 0) {
-            const [year, month] = monthKey.split("-").map(Number);
-            const monthName = czDateTimeOf(
-              `${year}-${(month + 1).toString().padStart(2, "0")}-01`
-            ).monthName;
+            const monthName = czDateTimeOf(`${monthKey}-01`).monthName;
+            const year = monthKey.slice(0, 4);
             const monthHeader =
               year === currentYear ? monthName : `${monthName} ${year}`;
 
