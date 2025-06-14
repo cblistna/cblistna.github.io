@@ -21,7 +21,7 @@
       }
     </style>
   </head>
-  <body class="mx-4 bg-gray-100">
+  <body class="mx-4 bg-gray-900 text-white">
     <div id="events-title" class="flex slide">
       <p id="title" class="text-5xl pt-2 font-medium m-auto">
         Oznámení
@@ -31,7 +31,7 @@
       </p>
     </div>
     <div id="next-week-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
         Pravidelná setkání v příštím týdnu
       </p>
       <div day="day" class="-mt-4">
@@ -45,7 +45,7 @@
       ></event-highlight>
     </div>
     <div id="other-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
         Jiné události
       </p>
       <div day="day" class="-mt-4">
@@ -53,7 +53,7 @@
       </div>
     </div>
     <div id="planned-events" class="slide pt-1">
-      <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+      <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
         Plánované události
       </p>
       <div day="day" class="-mt-4">
@@ -77,10 +77,10 @@
                   >{{ event.start.toFormat('Hm') === "00"  ? "" : event.start.toFormat('H') }}<span class="text-3xl font-normal"
                     >{{ event.start.toFormat('Hm') === "00" ? "" : "." + event.start.toFormat('mm')}}</span></span>
                 <span class="ml-14 font-medium text-5xl">{{ event.name }}</span>
-                <span v-if="event.description" class="text-4xl ml-5 text-gray-600 font-light">
+                <span v-if="event.description" class="text-4xl ml-5 text-gray-300 font-light">
                   <span v-html="event.description"></span>
                 </span>
-                <span v-for="attachment in event.attachments" class="text-blue-500">
+                <span v-for="attachment in event.attachments" class="text-blue-400">
                   <br/>
                   <a :href="attachment.url" target="_blank" class="ml-24 pl-2">{{ attachment.name }}</a></span>
               </p>
@@ -106,7 +106,7 @@
         props: ["event"],
         template: `
             <div class="slide pt-1">
-              <p class="text-2xl text-right bg-gray-300 -mx-2 pr-4 pb-1 mt-4 mb-4">
+              <p class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4">
                 Nadcházející události
               </p>
               <div class="min-h-screen flex flex-col justify-center">
@@ -117,10 +117,10 @@
                   </p>
                   <p class="text-2xl mb-2">
                     <span class="block font-semibold text-8xl pb-2">{{ event.name }}</span>
-                    <span v-if="event.description" class="block pt-2 text-4xl text-gray-600 font-light">
+                    <span v-if="event.description" class="block pt-2 text-4xl text-gray-300 font-light">
                       <span v-html="event.description"></span>
                     </span>
-                    <span v-for="attachment in event.attachments" class="block pt-2 text-blue-500">
+                    <span v-for="attachment in event.attachments" class="block pt-2 text-blue-400">
                       <a :href="attachment.url" target="_blank">{{ attachment.name }}</a></span>
                   </p>
                 </div>
@@ -321,8 +321,8 @@
       indicator.style.width = '50px'; // Adjust width for text
       indicator.style.height = '50px'; // Adjust height for text
       indicator.style.borderRadius = '5px'; // Square with rounded corners
-      indicator.style.backgroundColor = '#77dd77'; // Pastel green background
-      indicator.style.color = '#ffffff';
+      indicator.style.backgroundColor = '#4ade80'; // Green-400 for dark mode
+      indicator.style.color = '#000000'; // Black text for better contrast
       indicator.style.display = 'none';
       indicator.style.fontFamily = 'Arial, sans-serif';
       indicator.style.fontSize = '14px';
