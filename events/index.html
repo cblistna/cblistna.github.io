@@ -333,15 +333,15 @@
 
       let isScrolling = false;
       let scrollInterval;
-      let intervalSeconds = 7; // Initial interval in seconds (changed to 5s)
+      let intervalSeconds = 5; // Initial interval in seconds
       const minInterval = 1;   // Minimum interval (1 second)
       const maxInterval = 10;  // Maximum interval (10 seconds)
       const step = 1;          // Adjustment step in seconds
 
       function autoScroll() {
-          const currentPosition = window.pageYOffset;
+          const currentPosition = window.pageYOffset + 1; // Add 1 to ensure looping
           const maxPosition = document.documentElement.scrollHeight - window.innerHeight;
-          
+
           if (currentPosition >= maxPosition) {
               window.scrollTo({ top: 0, behavior: 'smooth' });
           } else {
