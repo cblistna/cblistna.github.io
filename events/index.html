@@ -221,7 +221,6 @@
                     : "";
                   event.description += `Vedení: ${services[svcDate].moderator}, Slovo: ${services[svcDate].speaker}`;
                 }
-                console.log(event)
               }
               return event;
             });
@@ -238,7 +237,8 @@
             new Vue({
               el: "#upcoming-events",
               data: {
-                calendar: schedule.events.upcoming,
+                // drop repeated events
+                calendar: schedule.events.upcoming.filter((event) => event.id === event.eventId),
               },
             });
 
