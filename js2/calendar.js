@@ -324,17 +324,24 @@ export function mergeServicesToEvents(events, services) {
  * Fetches and combines calendar events, services, and promo events into a single sorted array.
  * Merges service data into events where applicable.
  *
+ * @param {string} [since] - Local ISO date time to fetch events since (default: today)
  * @returns {Promise<CalendarEvent[]>} Promise resolving to a sorted array of combined calendar events.
+ * @example
+ * // Fetch combined events since today
+ * const events = await fetchCombinedEvents();
+ *
+ * // Fetch combined events since a specific date
+ * const events = await fetchCombinedEvents('2025-06-01 00:00');
  */
-export async function fetchCombinedEvents() {
-  return Promise.all([fetchEvents(), fetchServices(), fetchPromo()]).then(
-    ([events, services, promo]) => {
-      mergeServicesToEvents(events, services);
-      return events
-        .concat(promo)
-        .sort((a, b) => a.start.localeCompare(b.start));
-    }
-  );
+export async function fetchCombinedEvents(since = today() + " 00:00") {
+  return Promise.all([
+    fetchEvents({ since }),
+    fetchServices(),
+    fetchPromo({ since }),
+  ]).then(([events, services, promo]) => {
+    mergeServicesToEvents(events, services);
+    return events.concat(promo).sort((a, b) => a.start.localeCompare(b.start));
+  });
 }
 
 const czDays = [
