@@ -234,13 +234,16 @@
               },
             });
 
-            new Vue({
-              el: "#upcoming-events",
-              data: {
-                // drop repeated events
-                calendar: schedule.events.upcoming.filter((event) => event.id === event.eventId),
-              },
-            });
+            // drop repeated events
+            const upcomingEvents = schedule.events.upcoming.filter((event) => event.id === event.eventId);
+            if (upcomingEvents.length > 0) {
+              new Vue({
+                el: "#upcoming-events",
+                data: {
+                  calendar: upcomingEvents
+                },
+              });
+            }
 
             new Vue({
               el: "#planned-events",
@@ -290,12 +293,19 @@
                 .filter((event) => !!event)
                 .filter((event) => today <= event.start);
 
+              if (otherEvents.length === 0) {
+                document.getElementById("other-events").remove();
+                return;
+              }
+
               new Vue({
                 el: "#other-events",
                 data: {
                   calendar: toCalendar(otherEvents),
                 },
               });
+            } else {
+              document.getElementById("other-events").remove();
             }
           });
         })
