@@ -292,8 +292,8 @@
           // Determine the since date - use first service date or today if no services
           const sinceDate =
             services.length > 0
-              ? services[0].date + " 00:00"
-              : today() + " 00:00";
+              ? services[0].date + " 10:00"
+              : today() + " 10:00";
 
           // Fetch events and promo events from the first service date
           const [events, promoEvents] = await Promise.all([

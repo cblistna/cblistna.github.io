@@ -148,6 +148,7 @@ export async function fetchEvents(params = {}) {
   });
   const eventGroups = items
     .map(parseGoogleCalendarEvent)
+    .filter((event) => event.start >= since)
     .reduce((eventMap, event) => {
       if (!eventMap.has(event.eventId)) {
         eventMap.set(event.eventId, [event]);
