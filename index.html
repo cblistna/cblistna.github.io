@@ -1,235 +1,177 @@
 <!DOCTYPE html>
 <html lang="cz" dir="ltr">
-  <head>
-    <title>CB Třinec Dolní Líštná</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <link href="css/tailwind.min.css" rel="stylesheet" />
-    <style>
-      .modal {
-        transition: opacity 0.25s ease;
-      }
-      body.modal-active {
-        overflow-x: hidden;
-        overflow-y: visible !important;
-      }
-    </style>
-  </head>
-  <body class="bg-yellow-500 font-sans leading-normal tracking-normal">
-    <header>
-      <nav class="bg-yellow-900 p-2 mt-0 w-full">
-        <!-- Add this to make the nav fixed: "fixed z-10 pin-t" -->
-        <div class="container mx-auto flex flex-wrap items-center">
-          <div
-            class="flex w-full md:w-1/2 justify-center md:justify-start text-white font-extrabold"
-          >
-            <a class="text-white no-underline" href="#">
-              <span class="text-2xl pl-2">CB Třinec Dolní Líštná</span>
-            </a>
-          </div>
-          <div
-            class="flex w-full pt-2 content-center justify-between md:w-1/2 md:justify-end"
-          >
-            <ul
-              class="md:flex list-reset text-center md:flex-none justify-between flex-1"
-            >
-              <li class="mr-3">
-                <a
-                  class="inline-block py-2 px-4 text-white no-underline"
-                  href="#calendar"
-                  >Oznámení</a
-                >
-              </li>
-              <li class="mr-3 border-t md:border-0">
-                <a
-                  class="inline-block py-2 px-4 text-white no-underline"
-                  href="#messages"
-                  >Kázání</a
-                >
-              </li>
-              <li class="mr-3 border-t md:border-0">
-                <a
-                  class="inline-block py-2 px-4 text-white no-underline"
-                  href="#contact"
-                  >Kontakt</a
-                >
-              </li>
-            </ul>
-          </div>
+
+<head>
+  <title>CB Třinec Dolní Líštná</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link href="css/tailwind.min.css" rel="stylesheet" />
+  <style>
+    .modal {
+      transition: opacity 0.25s ease;
+    }
+
+    body.modal-active {
+      overflow-x: hidden;
+      overflow-y: visible !important;
+    }
+  </style>
+</head>
+
+<body class="bg-yellow-500 font-sans leading-normal tracking-normal">
+  <header>
+    <nav class="bg-yellow-900 p-2 mt-0 w-full">
+      <!-- Add this to make the nav fixed: "fixed z-10 pin-t" -->
+      <div class="container mx-auto flex flex-wrap items-center">
+        <div class="flex w-full md:w-1/2 justify-center md:justify-start text-white font-extrabold">
+          <a class="text-white no-underline" href="#">
+            <span class="text-2xl pl-2">CB Třinec Dolní Líštná</span>
+          </a>
         </div>
-      </nav>
-    </header>
-
-    <div
-      class="container mx-auto flex flex-col md:flex-row items-center my-6 md:my-24"
-    >
-      <div
-        class="flex flex-col w-full lg:w-1/2 justify-center items-start pt-12 pb-24 px-6"
-      >
-        <p class="uppercase tracking-loose">Rádi tě uvidíme mezi námi</p>
-        <h1 class="mt-4">Církev bratrská</h1>
-        <h2 class="mb-4">Třinec Dolní Lištná</h2>
-        <p class="leading-normal mb-4">
-          Církev bratrská v Lištné je komunitou lidí, kteří chtějí svou víru žít
-          nejen v neděli. Naším kompasem je Bible a centrem našeho života je
-          Ježíš Kristus. Chceme se líbit Bohu, přebývat v Jeho přítomnosti, žít
-          podle Jeho vůle a především žít podle Jeho největšího přikázání –
-          milovat Boha a lidi kolem sebe.
-        </p>
-        <p class="leading-normal font-medium text-xl">
-          Scházíme se každou neděli<br />
-          9:30–11:30<br />
-          Dolní Lištná 9
-        </p>
-
-        <p class="font-bold mt-10 text-xl">Související stránky</p>
-        <p class="font-bold text-xl text-blue-600">
-          <a href="https://dorostlistna.cz" target="_blank">Dorost</a>
-        </p>
-        <p class="font-bold text-xl text-blue-600">
-          <a
-            href="https://www.facebook.com/Awana-T%C5%99inec-110147474496894/"
-            target="_blank"
-            >Awana</a
-          >
-        </p>
+        <div class="flex w-full pt-2 content-center justify-between md:w-1/2 md:justify-end">
+          <ul class="md:flex list-reset text-center md:flex-none justify-between flex-1">
+            <li class="mr-3">
+              <a class="inline-block py-2 px-4 text-white no-underline" href="#calendar">Oznámení</a>
+            </li>
+            <li class="mr-3 border-t md:border-0">
+              <a class="inline-block py-2 px-4 text-white no-underline" href="#messages">Kázání</a>
+            </li>
+            <li class="mr-3 border-t md:border-0">
+              <a class="inline-block py-2 px-4 text-white no-underline" href="#contact">Kontakt</a>
+            </li>
+          </ul>
+        </div>
       </div>
-
-      <div class="w-full lg:w-1/2 lg:py-6 text-center">
-        <img
-          class="fill-current w-3/5 rounded-full"
-          src="./img/hero.jpg"
-          alt="CB Třinec Lištná"
-        />
-      </div>
+    </nav>
+  </header>
+  <div class="container mx-auto flex flex-col md:flex-row items-center my-6 md:my-24">
+    <div class="flex flex-col w-full lg:w-1/2 justify-center items-start pt-12 pb-24 px-6">
+      <p class="uppercase tracking-loose">Rádi tě uvidíme mezi námi</p>
+      <h1 class="mt-4">Církev bratrská</h1>
+      <h2 class="mb-4">Třinec Dolní Lištná</h2>
+      <p class="leading-normal mb-4">
+        Církev bratrská v Lištné je komunitou lidí, kteří chtějí svou víru žít
+        nejen v neděli. Naším kompasem je Bible a centrem našeho života je
+        Ježíš Kristus. Chceme se líbit Bohu, přebývat v Jeho přítomnosti, žít
+        podle Jeho vůle a především žít podle Jeho největšího přikázání –
+        milovat Boha a lidi kolem sebe.
+      </p>
+      <p class="leading-normal font-medium text-xl">
+        Scházíme se každou neděli<br />
+        9:30–11:30<br />
+        Dolní Lištná 9
+      </p>
+      <p class="font-bold mt-10 text-xl">Související stránky</p>
+      <p class="font-bold text-xl text-blue-600">
+        <a href="https://dorostlistna.cz" target="_blank">Dorost</a>
+      </p>
+      <p class="font-bold text-xl text-blue-600">
+        <a href="https://www.facebook.com/Awana-T%C5%99inec-110147474496894/" target="_blank">Awana</a>
+      </p>
     </div>
-
-    <div class="bg-white">
-      <div class="container mx-auto px-0 pt-16 sm:pt-0 md:px-12 lg:px-6">
-        <section class="pt-8">
-          <div class="container">
-            <h2
-              id="calendar"
-              class="font-bold text-4xl px-3 mb-6 section-heading"
-            >
-              Oznámení <small id="today-date"></small>
-            </h2>
-            <div id="regularEvents"></div>
-            <div id="upcomingEvents"></div>
-            <div id="plannedEvents" class="text-gray-600"></div>
-            <div id="promoEvents"></div>
-          </div>
-        </section>
-
-        <section class="pt-8">
-          <div class="container">
-            <div class="clearfix"></div>
-            <h2
-              id="messages"
-              class="font-bold text-4xl px-3 mb-6 section-heading"
-            >
-              Kázání
-              <span>
-                <a
-                  href="https://www.facebook.com/groups/363964298060218/permalink/660992425024069"
-                  class="text-lg ml-8 text-blue-600"
-                  target="_blank"
-                >
-                  Online shromáždění</a
-                >
-                <a href="archive.html" class="text-lg ml-8 text-blue-600">
-                  Archív kazání</a
-                >
-              </span>
-            </h2>
-            <div id="messages-list"></div>
-          </div>
-        </section>
-
-        <section class="pt-8">
-          <div class="container">
-            <h2 id="contact" class="font-bold text-4xl px-3 mb-6">Kontakt</h2>
-            <p class="px-3 pb-4">
-              Sbor Církve bratrské Třinec, Dolní Lištná<br />
-              Dolní Lištná č.p. 9<br />
-              739 61 Třinec
-            </p>
-
-            <p class="px-3 pb-4">
-              IČO 265 20 354<br />
-              č.ú. 3207092399/0800 Česká spořitelna
-            </p>
-
-            <p class="px-3 pb-4">
-              Kazatel a správce sboru: Mirko Tichý<br />
-              603 279 329<br />
-              <a href="mailto:mirko.tichy@cb.cz" class="text-blue-600"
-                >mirko.tichy@cb.cz</a
-              >
-            </p>
-            <p class="px-3 pb-12">
-              Úřední hodiny<br />
-              středa 14.00 - 16.00<br />
-              čtvrtek 9.00 - 11.00
-            </p>
-          </div>
-        </section>
-      </div>
+    <div class="w-full lg:w-1/2 lg:py-6 text-center">
+      <img class="fill-current w-3/5 rounded-full" src="./img/hero.jpg" alt="CB Třinec Lištná" />
     </div>
-
-    <div class="container mx-auto py-5 px-6">
-      <div class="flex w-full pt-2 content-center justify-center">
-        <ul
-          class="list-reset flex justify-between flex-1 md:flex-none items-center"
-        >
-          <li class="mr-3">
-            <a class="inline-block py-2 px-3 no-underline" href="#">Domů</a>
-          </li>
-          <li class="mr-3">
-            <a class="inline-block py-2 px-3 no-underline" href="#calendar"
-              >Oznámení</a
-            >
-          </li>
-          <li class="mr-3">
-            <a class="inline-block py-2 px-3 no-underline" href="#messages"
-              >Kázání</a
-            >
-          </li>
-          <li>
-            <a class="inline-block py-2 px-3 no-underline" href="#contact"
-              >Kontakt</a
-            >
-          </li>
-        </ul>
-      </div>
+  </div>
+  <div class="bg-white">
+    <div class="container mx-auto px-0 pt-16 sm:pt-0 md:px-12 lg:px-6">
+      <section class="pt-8">
+        <div class="container">
+          <h2 id="calendar" class="font-bold text-4xl px-3 mb-6 section-heading">
+            Oznámení <small id="today-date"></small>
+          </h2>
+          <div id="regularEvents"></div>
+          <div id="upcomingEvents"></div>
+          <div id="plannedEvents" class="text-gray-600"></div>
+          <div id="promoEvents"></div>
+        </div>
+      </section>
+      <section class="pt-8">
+        <div class="container">
+          <div class="clearfix"></div>
+          <h2 id="messages" class="font-bold text-4xl px-3 mb-6 section-heading">
+            Kázání
+            <span>
+              <a href="https://www.facebook.com/groups/363964298060218/permalink/660992425024069"
+                class="text-lg ml-8 text-blue-600" target="_blank">
+                Online shromáždění</a>
+              <a href="kazani" class="text-lg ml-8 text-blue-600" target="_blank">
+                Archív kazání</a>
+            </span>
+          </h2>
+          <div id="messages-list"></div>
+        </div>
+      </section>
+      <section class="pt-8">
+        <div class="container">
+          <h2 id="contact" class="font-bold text-4xl px-3 mb-6">Kontakt</h2>
+          <p class="px-3 pb-4">
+            Sbor Církve bratrské Třinec, Dolní Lištná<br />
+            Dolní Lištná č.p. 9<br />
+            739 61 Třinec
+          </p>
+          <p class="px-3 pb-4">
+            IČO 265 20 354<br />
+            č.ú. 3207092399/0800 Česká spořitelna
+          </p>
+          <p class="px-3 pb-4">
+            Kazatel a správce sboru: Mirko Tichý<br />
+            603 279 329<br />
+            <a href="mailto:mirko.tichy@cb.cz" class="text-blue-600">mirko.tichy@cb.cz</a>
+          </p>
+          <p class="px-3 pb-12">
+            Úřední hodiny<br />
+            středa 14.00 - 16.00<br />
+            čtvrtek 9.00 - 11.00
+          </p>
+        </div>
+      </section>
     </div>
+  </div>
+  <div class="container mx-auto py-5 px-6">
+    <div class="flex w-full pt-2 content-center justify-center">
+      <ul class="list-reset flex justify-between flex-1 md:flex-none items-center">
+        <li class="mr-3">
+          <a class="inline-block py-2 px-3 no-underline" href="#">Domů</a>
+        </li>
+        <li class="mr-3">
+          <a class="inline-block py-2 px-3 no-underline" href="#calendar">Oznámení</a>
+        </li>
+        <li class="mr-3">
+          <a class="inline-block py-2 px-3 no-underline" href="#messages">Kázání</a>
+        </li>
+        <li>
+          <a class="inline-block py-2 px-3 no-underline" href="#contact">Kontakt</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script type="module">
+    import {
+      fetchMessages,
+      fetchCombinedEvents,
+      czDateTimeOf,
+      toLocalDate,
+    } from "./js2/calendar.js";
 
-    <script type="module">
-      import {
-        fetchMessages,
-        fetchCombinedEvents,
-        czDateTimeOf,
-        toLocalDate,
-      } from "./js2/calendar.js";
-
-      function Event({
-        s,
-        e,
-        subject,
-        body,
-        tags: { svc, promo, important, hide, moderator, teacher },
-        duration: { spanDays },
-        recurring,
-        attachments,
-      }) {
-        return `
+    function Event({
+      s,
+      e,
+      subject,
+      body,
+      tags: { svc, promo, important, hide, moderator, teacher },
+      duration: { spanDays },
+      recurring,
+      attachments,
+    }) {
+      return `
       <div class="calEvent">
         <div class="evtDateCol">
           <p class="flex flex-row px-3 text-xl pb-2">
             <span class="w-12 pr-12 font-thin">${s.weekday
-              .substring(0, 2)
-              .toLowerCase()}</span>
+          .substring(0, 2)
+          .toLowerCase()}</span>
             <span class="w-6 text-right font-medium">${s.day}.</span>
             <span class="w-12 pl-3 font-medium">${s.monthShortName.toLowerCase()}</span>
             <span class="w-16 text-right font-thin">${s.time}</span>
@@ -237,139 +179,132 @@
             >${subject}</span>
           </p>
           <div class="evtDescriptionCol text-blue-600">
-            ${
-              body || (moderator && teacher)
-                ? `
+            ${body || (moderator && teacher)
+          ? `
               <div class="evtTitleDetail">
                 <p class="flex flex-row flex-row items-center">
                   <span class="w-16 ml-1"></span>
                   <span class="w-16 ml-8"></span>
                   <span
                     class="evtDetail font-weight-normal text-muted w-auto ml-16"
-                  >${
-                    moderator && teacher
-                      ? `Vedení: ${moderator}, Slovo: ${teacher}<br/>`
-                      : ""
-                  }${body}</span>
+                  >${moderator && teacher
+            ? `Vedení: ${moderator}, Slovo: ${teacher}<br/>`
+            : ""
+          }${body}</span>
                 </p>
               </div>`
-                : ""
-            }
-            ${
-              attachments.length
-                ? `
+          : ""
+        }
+            ${attachments.length
+          ? `
               <div class="font-weight-normal">
                 <p>
                   <span class="w-16 ml-1"></span>
                   <span class="w-16 ml-8"></span>
                   <span class="evtLinks w-auto ml-48">
                   ${attachments
-                    .map(
-                      (attachment) =>
-                        `<a href="${
-                          attachment.url ?? attachment.webViewLink
-                        }" title="${attachment.name}" target="_blank">${
-                          attachment.label ?? attachment.name
-                        }</a>`
-                    )
-                    .join(" | ")}
+            .map(
+              (attachment) =>
+                `<a href="${attachment.url ?? attachment.webViewLink
+                }" title="${attachment.name}" target="_blank">${attachment.label ?? attachment.name
+                }</a>`
+            )
+            .join(" | ")}
                   </span>
                 </p>
               </div>
                 `
-                : ""
-            }
+          : ""
+        }
           </div>
         </div>
       </div>
       `;
-      }
+    }
 
-      function Message({ date, audio, speaker, title, text, doc }) {
-        return `
+    function Message({ date, audio, speaker, title, text, doc }) {
+      return `
           <div class="msgRow flex flex-col md:flex-row flex-wrap px-3 text-xl pb-2">
-            <div class="w-32 mr-2 font-weight-normal">${
-              date.day
-            }. ${date.monthShortName.toLowerCase()}</div>
+            <div class="w-32 mr-2 font-weight-normal">${date.day
+        }. ${date.monthShortName.toLowerCase()}</div>
             <div class="msgTitle mr-2 font-semibold">
-              <a href="${audio.webViewLink}" title="${
-          audio.name
+              <a href="${audio.webViewLink}" title="${audio.name
         }" target="_blank">
                 ${title}</a></div>
             <div
               class="msgAuthor font-weight-normal text-muted mr-3 font-light"
             >${speaker}</div><span
               class="msgDoc font-light"
-            >${
-              text
-                ? `<a href="${text.webViewLink}" title="${text.name}" target="_blank">(text)</a>`
-                : ""
-            }</span>
+            >${text
+          ? `<a href="${text.webViewLink}" title="${text.name}" target="_blank">(text)</a>`
+          : ""
+        }</span>
           </div>
         `;
-      }
+    }
 
-      function appendTo(eid, events, { separator } = { separator: false }) {
-        if (events.length) {
-          document.getElementById(eid).innerHTML = `
+    function appendTo(eid, events, { separator } = { separator: false }) {
+      if (events.length) {
+        document.getElementById(eid).innerHTML = `
             ${separator ? '<hr class="my-6" />' : ""}
             ${events.map(Event).join("\n")}
           `;
-          document
-            .getElementById(eid)
-            .querySelectorAll("a")
-            .forEach((a) => {
-              a.setAttribute("target", "_blank");
-            });
-        }
+        document
+          .getElementById(eid)
+          .querySelectorAll("a")
+          .forEach((a) => {
+            a.setAttribute("target", "_blank");
+          });
       }
+    }
 
-      const todayPlus7 = toLocalDate(
-        new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000)
-      );
+    const todayPlus7 = toLocalDate(
+      new Date(new Date().getTime() + 8 * 24 * 60 * 60 * 1000)
+    );
 
-      const eventsPromise = fetchCombinedEvents().then((events) =>
-        events
-          .map((event) => ({
-            ...event,
-            s: czDateTimeOf(event.start),
-            e: czDateTimeOf(event.end),
-          }))
-          .reduce(
-            (acc, event) => {
-              if (event.tags.promo) {
-                acc.promo.push(event);
-              } else if (event.tags.plan) {
-                acc.plan.push(event);
-              } else if (event.start <= todayPlus7) {
-                acc.regular.push(event);
-              } else {
-                acc.upcoming.push(event);
-              }
-              return acc;
-            },
-            { regular: [], upcoming: [], promo: [], plan: [] }
-          )
-      );
-
-      const messagesPromise = await fetchMessages().then((messages) =>
-        messages.map((message) => ({
-          ...message,
-          date: czDateTimeOf(message.date),
+    const eventsPromise = fetchCombinedEvents().then((events) =>
+      events
+        .map((event) => ({
+          ...event,
+          s: czDateTimeOf(event.start),
+          e: czDateTimeOf(event.end),
         }))
-      );
+        .reduce(
+          (acc, event) => {
+            if (event.tags.promo) {
+              acc.promo.push(event);
+            } else if (event.tags.plan) {
+              acc.plan.push(event);
+            } else if (event.start <= todayPlus7) {
+              acc.regular.push(event);
+            } else {
+              acc.upcoming.push(event);
+            }
+            return acc;
+          },
+          { regular: [], upcoming: [], promo: [], plan: [] }
+        )
+    );
 
-      const events = await eventsPromise;
-      appendTo("regularEvents", events.regular);
-      appendTo("upcomingEvents", events.upcoming, { separator: true });
-      appendTo("promoEvents", events.promo, { separator: true });
-      appendTo("plannedEvents", events.plan, { separator: true });
+    const messagesPromise = await fetchMessages().then((messages) =>
+      messages.map((message) => ({
+        ...message,
+        date: czDateTimeOf(message.date),
+      }))
+    );
 
-      const messages = await messagesPromise;
-      document.getElementById("messages-list").innerHTML = messages
-        .slice(0, 7)
-        .map(Message)
-        .join("\n");
-    </script>
-  </body>
+    const events = await eventsPromise;
+    appendTo("regularEvents", events.regular);
+    appendTo("upcomingEvents", events.upcoming, { separator: true });
+    appendTo("promoEvents", events.promo, { separator: true });
+    appendTo("plannedEvents", events.plan, { separator: true });
+
+    const messages = await messagesPromise;
+    document.getElementById("messages-list").innerHTML = messages
+      .slice(0, 7)
+      .map(Message)
+      .join("\n");
+  </script>
+</body>
+
 </html>
