@@ -371,9 +371,7 @@
           const week = getWeekBoundaries(referenceDate);
 
           // Set current date in title
-          const currentDate = czDateTimeOf(
-            week.sundayBefore.toISOString().substring(0, 10) + " 00:00"
-          );
+          const currentDate = czDateTimeOf(toLocalDate(week.sundayBefore));
           document.getElementById("current-date").textContent = `${
             currentDate.day
           }. ${currentDate.monthName.toLowerCase()} ${currentDate.year}`;
