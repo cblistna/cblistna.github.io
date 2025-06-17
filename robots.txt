@@ -1,8 +1,7 @@
 User-agent: *
 Disallow: /chvaly
-Disallow: /elders
+Disallow: /drop
 Disallow: /events
-Disallow: /notify
+Disallow: /kazani
+Disallow: /rozpis
 Disallow: /services
-Disallow: /skolka
-Disallow: /test

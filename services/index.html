@@ -1,50 +1,49 @@
 <!DOCTYPE html>
 <html lang="cz">
-  <head>
-    <meta name="robots" content="noindex" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Rozpis shromáždění</title>
-    <link rel="stylesheet" href="../css/tailwind2.min.css" />
-  </head>
-  <body class="m-4 bg-gray-100">
-    <h1 class="text-3xl">Rozpis shromáždění</h1>
-    <div id="app"></div>
-    <script type="module">
-      import {
-        fetchServices,
-        fetchEvents,
-        fetchPromo,
-        mergeServicesToEvents,
-        czDateTimeOf,
-        today,
-        toLocalDateTime,
-      } from "../js2/calendar.js";
-      /**
-       * Renders a service meeting event as HTML using modern template literals
-       * @param {Object} service - The service object containing meeting details
-       * @returns {string} HTML string for the service meeting
-       */
-      function renderServiceMeeting(service) {
-        const dateInfo = czDateTimeOf(service.date);
 
-        return `
+<head>
+  <meta name="robots" content="noindex" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Rozpis shromáždění</title>
+  <link rel="stylesheet" href="../css/tailwind2.min.css" />
+</head>
+
+<body class="m-4 bg-gray-100">
+  <h1 class="text-3xl">Rozpis shromáždění</h1>
+  <div id="app"></div>
+  <script type="module">
+    import {
+      fetchServices,
+      fetchEvents,
+      fetchPromo,
+      mergeServicesToEvents,
+      czDateTimeOf,
+      today,
+      toLocalDateTime,
+    } from "../js/calendar.js";
+    /**
+     * Renders a service meeting event as HTML using modern template literals
+     * @param {Object} service - The service object containing meeting details
+     * @returns {string} HTML string for the service meeting
+     */
+    function renderServiceMeeting(service) {
+      const dateInfo = czDateTimeOf(service.date);
+
+      return `
           <div class="mt-8">
-            <p>${dateInfo.weekday} <b>${
-          dateInfo.day
+            <p>${dateInfo.weekday} <b>${dateInfo.day
         }. ${dateInfo.monthName.toLowerCase()}</b> ${dateInfo.year}</p>
             <table>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Vedení</td>
-                <td class="align-text-top"><b>${
-                  service.moderator || "-"
-                }</b></td>
+                <td class="align-text-top"><b>${service.moderator || "-"
+        }</b></td>
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Slovo</td>
-                <td class="align-text-top"><b>${service.teacher || "-"}</b> ${
-          service.subject || ""
+                <td class="align-text-top"><b>${service.teacher || "-"}</b> ${service.subject || ""
         }</td>
               </tr>
               <tr>
@@ -65,272 +64,268 @@
               </tr>
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top">Děti</td>
-                <td class="align-text-top">${
-                  service.childrenProgram || "-"
-                }</td>
+                <td class="align-text-top">${service.childrenProgram || "-"
+        }</td>
               </tr>
-              ${
-                service.announcements
-                  ? `
+              ${service.announcements
+          ? `
                 <tr>
                   <td class="text-sm text-right pr-2 align-text-top"><b>Oznámení</b></td>
                   <td id="announcements" class="align-text-top">${service.announcements}</td>
                 </tr>
               `
-                  : ""
-              }
+          : ""
+        }
               <tr>
                 <td class="text-sm text-right pr-2 align-text-top"><b>Narozeniny</b></td>
                 <td class="align-text-top">${(
-                  service.birthdays || "-"
-                ).replaceAll(", ", "<br />")}</td>
+          service.birthdays || "-"
+        ).replaceAll(", ", "<br />")}</td>
               </tr>
             </table>
           </div>
         `;
-      }
+    }
+
+    /**
+     * Renders all service meetings as HTML
+     * @param {Array} services - Array of service objects
+     * @returns {string} Complete HTML string for all services
+     */
+    function renderServiceMeetings(services) {
+      return services
+        .map((service) => renderServiceMeeting(service))
+        .join("");
+    }
+
+    /**
+     * Formats announcements from events with grouped headers
+     * @param {Array} events - Calendar events (already concatenated and sorted by start)
+     * @param {string} since - Reference date string (YYYY-MM-DD format) to calculate groupings from
+     * @returns {string} Formatted announcements HTML with grouped headers
+     */
+    function formatAnnouncements(events, since) {
+      if (events.length === 0) return "";
+
+      const sinceDate = new Date(since);
+      const currentYear = sinceDate.getFullYear();
+      const currentMonth = sinceDate.getMonth();
+
+      // Calculate next week's date range from the since date (Monday-based week)
+      const nextWeekStartDate = new Date(sinceDate);
+      const dayOfWeek = sinceDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const daysUntilNextMonday = dayOfWeek === 0 ? 8 : 8 - dayOfWeek; // If Sunday, add 8 days; otherwise 8 - dayOfWeek
+      nextWeekStartDate.setDate(sinceDate.getDate() + daysUntilNextMonday);
+      nextWeekStartDate.setHours(0, 0, 0, 0);
+
+      const nextMonthStartDate = new Date(sinceDate);
+      nextMonthStartDate.setMonth(sinceDate.getMonth() + 1, 1);
+      nextMonthStartDate.setHours(0, 0, 0, 0);
+
+      const nextWeekStart = toLocalDateTime(nextWeekStartDate);
+      const nextMonthStart = toLocalDateTime(nextMonthStartDate);
+
+      // Group events by categories
+      const groups = {
+        nextWeek: [],
+        laterThisMonth: [],
+        byMonth: new Map(),
+      };
+
+      events.forEach((event) => {
+        if (event.start < nextWeekStart) {
+          groups.nextWeek.push(event);
+          return;
+        }
+
+        if (event.start < nextMonthStart) {
+          groups.laterThisMonth.push(event);
+          return;
+        }
+
+        if (event.recurring) {
+          return;
+        }
+
+        const monthKey = event.start.slice(0, 7); // YYYY-MM format
+        if (!groups.byMonth.has(monthKey)) {
+          groups.byMonth.set(monthKey, []);
+        }
+        groups.byMonth.get(monthKey).push(event);
+      });
 
       /**
-       * Renders all service meetings as HTML
-       * @param {Array} services - Array of service objects
-       * @returns {string} Complete HTML string for all services
+       * Formats a single event as HTML
+       * @param {Object} event - Event object
+       * @returns {string} HTML string for the event
        */
-      function renderServiceMeetings(services) {
-        return services
-          .map((service) => renderServiceMeeting(service))
-          .join("");
-      }
+      function formatEvent(event) {
+        const dateInfo = czDateTimeOf(event.start);
+        const endInfo = event.end ? czDateTimeOf(event.end) : null;
 
-      /**
-       * Formats announcements from events with grouped headers
-       * @param {Array} events - Calendar events (already concatenated and sorted by start)
-       * @param {string} since - Reference date string (YYYY-MM-DD format) to calculate groupings from
-       * @returns {string} Formatted announcements HTML with grouped headers
-       */
-      function formatAnnouncements(events, since) {
-        if (events.length === 0) return "";
+        // Get weekday abbreviations (first two letters in lowercase)
+        const startWeekday = dateInfo.weekday.substring(0, 2).toLowerCase();
+        const endWeekday = endInfo
+          ? endInfo.weekday.substring(0, 2).toLowerCase()
+          : "";
 
-        const sinceDate = new Date(since);
-        const currentYear = sinceDate.getFullYear();
-        const currentMonth = sinceDate.getMonth();
+        const timeStr = dateInfo.time ? ` ${dateInfo.time}` : "";
 
-        // Calculate next week's date range from the since date (Monday-based week)
-        const nextWeekStartDate = new Date(sinceDate);
-        const dayOfWeek = sinceDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-        const daysUntilNextMonday = dayOfWeek === 0 ? 8 : 8 - dayOfWeek; // If Sunday, add 8 days; otherwise 8 - dayOfWeek
-        nextWeekStartDate.setDate(sinceDate.getDate() + daysUntilNextMonday);
-        nextWeekStartDate.setHours(0, 0, 0, 0);
-
-        const nextMonthStartDate = new Date(sinceDate);
-        nextMonthStartDate.setMonth(sinceDate.getMonth() + 1, 1);
-        nextMonthStartDate.setHours(0, 0, 0, 0);
-
-        const nextWeekStart = toLocalDateTime(nextWeekStartDate);
-        const nextMonthStart = toLocalDateTime(nextMonthStartDate);
-
-        // Group events by categories
-        const groups = {
-          nextWeek: [],
-          laterThisMonth: [],
-          byMonth: new Map(),
-        };
-
-        events.forEach((event) => {
-          if (event.start < nextWeekStart) {
-            groups.nextWeek.push(event);
-            return;
-          }
-
-          if (event.start < nextMonthStart) {
-            groups.laterThisMonth.push(event);
-            return;
-          }
-
-          if (event.recurring) {
-            return;
-          }
-
-          const monthKey = event.start.slice(0, 7); // YYYY-MM format
-          if (!groups.byMonth.has(monthKey)) {
-            groups.byMonth.set(monthKey, []);
-          }
-          groups.byMonth.get(monthKey).push(event);
-        });
-
-        /**
-         * Formats a single event as HTML
-         * @param {Object} event - Event object
-         * @returns {string} HTML string for the event
-         */
-        function formatEvent(event) {
-          const dateInfo = czDateTimeOf(event.start);
-          const endInfo = event.end ? czDateTimeOf(event.end) : null;
-
-          // Get weekday abbreviations (first two letters in lowercase)
-          const startWeekday = dateInfo.weekday.substring(0, 2).toLowerCase();
-          const endWeekday = endInfo
-            ? endInfo.weekday.substring(0, 2).toLowerCase()
+        // Compare dates only (not full date/time strings) to avoid showing end date for same-day events
+        const startDateOnly = dateInfo.dateIso;
+        const endDateOnly = endInfo ? endInfo.dateIso : null;
+        const endStr =
+          endInfo && endDateOnly !== startDateOnly
+            ? ` - ${endWeekday} ${endInfo.date}`
             : "";
 
-          const timeStr = dateInfo.time ? ` ${dateInfo.time}` : "";
-
-          // Compare dates only (not full date/time strings) to avoid showing end date for same-day events
-          const startDateOnly = dateInfo.dateIso;
-          const endDateOnly = endInfo ? endInfo.dateIso : null;
-          const endStr =
-            endInfo && endDateOnly !== startDateOnly
-              ? ` - ${endWeekday} ${endInfo.date}`
-              : "";
-
-          // Calculate duration in days if event spans multiple days
-          let durationStr = "";
-          if (endInfo && endDateOnly !== startDateOnly) {
-            // Use spanDays from event duration if available, otherwise calculate manually
-            let diffDays;
-            if (event.duration && typeof event.duration.spanDays === "number") {
-              diffDays = event.duration.spanDays;
-            }
-            if (diffDays > 1) {
-              durationStr = ` (${diffDays}d)`;
-            }
+        // Calculate duration in days if event spans multiple days
+        let durationStr = "";
+        if (endInfo && endDateOnly !== startDateOnly) {
+          // Use spanDays from event duration if available, otherwise calculate manually
+          let diffDays;
+          if (event.duration && typeof event.duration.spanDays === "number") {
+            diffDays = event.duration.spanDays;
           }
-
-          // Check if this is a promo event and apply gray styling
-          const isPromoEvent = event.tags && event.tags.promo;
-          const isLaterEvent = new Date(event.start) >= nextWeekStartDate;
-          const isLowPriorityEvent =
-            isPromoEvent || (event.recurring && isLaterEvent);
-          const grayClass = isLowPriorityEvent ? ' class="text-gray-500"' : "";
-          const fontWeight = isLowPriorityEvent
-            ? "font-medium"
-            : "font-semibold";
-
-          // Format attachments as clickable links
-          let attachmentsStr = "";
-          if (event.attachments && event.attachments.length > 0) {
-            const attachmentLinks = event.attachments
-              .map((attachment) => {
-                const url = attachment.webViewLink || attachment.url;
-                const name = attachment.label || attachment.name || "Příloha";
-                return url
-                  ? `<a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${name}</a>`
-                  : name;
-              })
-              .filter((link) => link)
-              .join(" | ");
-
-            if (attachmentLinks) {
-              attachmentsStr = `<br /><span class="text-sm ml-4">${attachmentLinks}</span>`;
-            }
+          if (diffDays > 1) {
+            durationStr = ` (${diffDays}d)`;
           }
+        }
 
-          return `<span${grayClass}>${startWeekday} ${
-            dateInfo.date
-          }${timeStr}${endStr}${durationStr} <span class="ml-2 ${fontWeight}">${
-            event.subject || event.name || "Událost"
-          }</span>${
-            event.body ? ` - ${event.body}` : ""
+        // Check if this is a promo event and apply gray styling
+        const isPromoEvent = event.tags && event.tags.promo;
+        const isLaterEvent = new Date(event.start) >= nextWeekStartDate;
+        const isLowPriorityEvent =
+          isPromoEvent || (event.recurring && isLaterEvent);
+        const grayClass = isLowPriorityEvent ? ' class="text-gray-500"' : "";
+        const fontWeight = isLowPriorityEvent
+          ? "font-medium"
+          : "font-semibold";
+
+        // Format attachments as clickable links
+        let attachmentsStr = "";
+        if (event.attachments && event.attachments.length > 0) {
+          const attachmentLinks = event.attachments
+            .map((attachment) => {
+              const url = attachment.webViewLink || attachment.url;
+              const name = attachment.label || attachment.name || "Příloha";
+              return url
+                ? `<a href="${url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${name}</a>`
+                : name;
+            })
+            .filter((link) => link)
+            .join(" | ");
+
+          if (attachmentLinks) {
+            attachmentsStr = `<br /><span class="text-sm ml-4">${attachmentLinks}</span>`;
+          }
+        }
+
+        return `<span${grayClass}>${startWeekday} ${dateInfo.date
+          }${timeStr}${endStr}${durationStr} <span class="ml-2 ${fontWeight}">${event.subject || event.name || "Událost"
+          }</span>${event.body ? ` - ${event.body}` : ""
           }${attachmentsStr}</span>`;
-        }
-
-        let result = [];
-
-        // Add "Next Week" section
-        if (groups.nextWeek.length > 0) {
-          result.push('<strong class="text-gray-600">Příští týden</strong>');
-          result.push(...groups.nextWeek.map(formatEvent));
-        }
-
-        // Add "Later This Month" section
-        if (groups.laterThisMonth.length > 0) {
-          result.push(
-            '<strong class="text-gray-600">Později tento měsíc</strong>'
-          );
-          result.push(...groups.laterThisMonth.map(formatEvent));
-        }
-
-        // Add monthly sections
-        const sortedMonths = [...groups.byMonth.keys()].sort();
-        sortedMonths.forEach((monthKey) => {
-          const monthEvents = groups.byMonth.get(monthKey);
-          if (monthEvents.length > 0) {
-            const monthName = czDateTimeOf(`${monthKey}-01`).monthName;
-            const year = monthKey.slice(0, 4);
-            const monthHeader =
-              year === currentYear ? monthName : `${monthName} ${year}`;
-
-            result.push(
-              `<strong class="text-gray-600">${monthHeader}</strong>`
-            );
-            result.push(...monthEvents.map(formatEvent));
-          }
-        });
-
-        return result.join("<br />");
       }
 
-      /**
-       * Main application initialization
-       */
-      async function initializeApp() {
-        try {
-          // Show loading state
-          const appElement = document.getElementById("app");
-          appElement.innerHTML = '<div class="mt-8">Načítání...</div>';
+      let result = [];
 
-          // First, fetch services to determine the start date for events
-          const services = await fetchServices();
+      // Add "Next Week" section
+      if (groups.nextWeek.length > 0) {
+        result.push('<strong class="text-gray-600">Příští týden</strong>');
+        result.push(...groups.nextWeek.map(formatEvent));
+      }
 
-          // Determine the since date - use first service date or today if no services
-          const sinceDate =
-            services.length > 0
-              ? services[0].date + " 10:00"
-              : today() + " 10:00";
+      // Add "Later This Month" section
+      if (groups.laterThisMonth.length > 0) {
+        result.push(
+          '<strong class="text-gray-600">Později tento měsíc</strong>'
+        );
+        result.push(...groups.laterThisMonth.map(formatEvent));
+      }
 
-          // Fetch events and promo events from the first service date
-          const [events, promoEvents] = await Promise.all([
-            fetchEvents({ since: sinceDate }),
-            fetchPromo({ since: sinceDate }),
-          ]);
+      // Add monthly sections
+      const sortedMonths = [...groups.byMonth.keys()].sort();
+      sortedMonths.forEach((monthKey) => {
+        const monthEvents = groups.byMonth.get(monthKey);
+        if (monthEvents.length > 0) {
+          const monthName = czDateTimeOf(`${monthKey}-01`).monthName;
+          const year = monthKey.slice(0, 4);
+          const monthHeader =
+            year === currentYear ? monthName : `${monthName} ${year}`;
 
-          // Add announcements to the first service if there are upcoming events
-          if (services.length > 0) {
-            const upcomingEvents = events
-              .concat(promoEvents)
-              .filter((event) => !event.tags.hide)
-              .sort((a, b) => a.start.localeCompare(b.start));
+          result.push(
+            `<strong class="text-gray-600">${monthHeader}</strong>`
+          );
+          result.push(...monthEvents.map(formatEvent));
+        }
+      });
 
-            if (upcomingEvents.length > 0) {
-              services[0].announcements = formatAnnouncements(
-                upcomingEvents,
-                sinceDate
-              );
-            }
-          }
+      return result.join("<br />");
+    }
 
-          // Render the services to the DOM
-          appElement.innerHTML = renderServiceMeetings(services);
-          // Make links in announcements clickable and open in new tab
-          document.querySelectorAll("#announcements a").forEach((link) => {
-            link.classList.add(
-              "text-blue-600",
-              "hover:text-blue-800",
-              "underline"
+    /**
+     * Main application initialization
+     */
+    async function initializeApp() {
+      try {
+        // Show loading state
+        const appElement = document.getElementById("app");
+        appElement.innerHTML = '<div class="mt-8">Načítání...</div>';
+
+        // First, fetch services to determine the start date for events
+        const services = await fetchServices();
+
+        // Determine the since date - use first service date or today if no services
+        const sinceDate =
+          services.length > 0
+            ? services[0].date + " 10:00"
+            : today() + " 10:00";
+
+        // Fetch events and promo events from the first service date
+        const [events, promoEvents] = await Promise.all([
+          fetchEvents({ since: sinceDate }),
+          fetchPromo({ since: sinceDate }),
+        ]);
+
+        // Add announcements to the first service if there are upcoming events
+        if (services.length > 0) {
+          const upcomingEvents = events
+            .concat(promoEvents)
+            .filter((event) => !event.tags.hide)
+            .sort((a, b) => a.start.localeCompare(b.start));
+
+          if (upcomingEvents.length > 0) {
+            services[0].announcements = formatAnnouncements(
+              upcomingEvents,
+              sinceDate
             );
-            link.setAttribute("target", "_blank");
-          });
-        } catch (error) {
-          console.error("Error initializing application:", error);
-          document.getElementById("app").innerHTML = `
+          }
+        }
+
+        // Render the services to the DOM
+        appElement.innerHTML = renderServiceMeetings(services);
+        // Make links in announcements clickable and open in new tab
+        document.querySelectorAll("#announcements a").forEach((link) => {
+          link.classList.add(
+            "text-blue-600",
+            "hover:text-blue-800",
+            "underline"
+          );
+          link.setAttribute("target", "_blank");
+        });
+      } catch (error) {
+        console.error("Error initializing application:", error);
+        document.getElementById("app").innerHTML = `
             <div class="mt-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               <strong>Chyba při načítání dat:</strong> ${error.message}
             </div>
           `;
-        }
       }
+    }
 
-      // Initialize the application when the page loads
-      initializeApp();
-    </script>
-  </body>
+    // Initialize the application when the page loads
+    initializeApp();
+  </script>
+</body>
+
 </html>
