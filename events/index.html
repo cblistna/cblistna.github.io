@@ -23,9 +23,13 @@
     <div id="events-title" class="flex slide">
       <p id="title" class="text-5xl pt-2 font-medium m-auto">
         Oznámení
-        <span class="text-4xl font-light" id="current-date"></span>
+        <span class="text-4xl font-light" id="sunday"></span>
+        <span class="text-3xl font-medium block text-center pt-8"
+          >cblistna.cz</span
+        >
       </p>
     </div>
+
     <div id="next-week-events" class="slide pt-1">
       <p
         class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
@@ -34,15 +38,18 @@
       </p>
       <div class="-mt-4" id="next-week-calendar"></div>
     </div>
+
     <div id="upcoming-events"></div>
-    <div id="other-events" class="slide pt-1">
+
+    <div id="promo-events" class="slide pt-1">
       <p
         class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
       >
         Jiné události
       </p>
-      <div class="-mt-4" id="other-events-calendar"></div>
+      <div class="-mt-4" id="promo-events-calendar"></div>
     </div>
+
     <div id="planned-events" class="slide pt-1">
       <p
         class="text-2xl text-right bg-gray-700 text-white -mx-2 pr-4 pb-1 mt-4 mb-4"
@@ -51,93 +58,15 @@
       </p>
       <div class="-mt-4" id="planned-events-calendar"></div>
     </div>
-    <div id="events-footer" class="flex slide">
-      <p id="title" class="text-5xl pt-2 font-medium m-auto">cblistna.cz</p>
-    </div>
+
     <script type="module">
       import {
         fetchCombinedEvents,
-        fetchPromo,
         czDateTimeOf,
         today,
         toLocalDate,
-        toLocalDateTime,
       } from "../js/calendar.js";
 
-      /**
-       * Groups events by date
-       * @param {Array} events - Array of events
-       * @returns {Array} Array of day objects with events
-       */
-      function groupEventsByDay(events) {
-        const grouped = events.reduce((acc, event) => {
-          const dateKey = event.start.substring(0, 10);
-          if (!acc[dateKey]) {
-            acc[dateKey] = [];
-          }
-          acc[dateKey].push(event);
-          return acc;
-        }, {});
-
-        return Object.keys(grouped)
-          .sort()
-          .map((dateKey) => ({
-            date: czDateTimeOf(dateKey + " 00:00"),
-            events: grouped[dateKey],
-          }));
-      }
-
-      /**
-       * Filters events for the current week (recurring events)
-       * @param {Array} events - Array of events
-       * @param {string} weekStart - Start of the week in "yyyy-MM-dd" format
-       * @param {string} weekEnd - End of the week in "yyyy-MM-dd" format
-       * @returns {Array} Filtered events
-       */
-      function filterWeekEvents(events, weekStart, weekEnd) {
-        return events.filter((event) => {
-          const eventDate = event.start.substring(0, 10);
-          return (
-            eventDate >= weekStart && eventDate <= weekEnd && event.recurring
-          );
-        });
-      }
-
-      /**
-       * Filters upcoming events (non-recurring or important)
-       * @param {Array} events - Array of events
-       * @param {string} weekEnd - End of the current week in "yyyy-MM-dd" format
-       * @returns {Array} Filtered events
-       */
-      function filterUpcomingEvents(events, weekEnd) {
-        return events.filter((event) => {
-          const eventDate = event.start.substring(0, 10);
-          return (
-            eventDate > weekEnd &&
-            (!event.recurring || event.tags.important) &&
-            !event.tags.plan
-          );
-        });
-      }
-
-      /**
-       * Filters planned events
-       * @param {Array} events - Array of events
-       * @param {string} weekEnd - End of the current week in "yyyy-MM-dd" format
-       * @returns {Array} Filtered events
-       */
-      function filterPlannedEvents(events, weekEnd) {
-        return events.filter((event) => {
-          const eventDate = event.start.substring(0, 10);
-          return eventDate > weekEnd && event.tags.plan;
-        });
-      }
-
-      /**
-       * Renders a calendar day with events using string templates
-       * @param {Object} day - Day object with date and events
-       * @returns {string} HTML string
-       */
       function renderCalendarDay(day) {
         const eventsHtml = day.events
           .map((event) => {
@@ -209,51 +138,6 @@
         `;
       }
 
-      /**
-       * Renders a calendar day for promo events using string templates
-       * @param {Object} day - Day object with date and events
-       * @returns {string} HTML string
-       */
-      function renderCalendarDayPromo(day) {
-        const eventsHtml = day.events
-          .map((event) => {
-            const attachmentLinks =
-              event.attachments && event.attachments.length > 0
-                ? event.attachments
-                    .map(
-                      (attachment) =>
-                        `<a href="${attachment.webViewLink}" target="_blank">${event.subject}</a>`
-                    )
-                    .join("")
-                : `<span>${event.subject}</span>`;
-
-            return `
-          <p class="mt-3">
-            <span class="font-medium text-5xl">
-              ${attachmentLinks}
-            </span>
-          </p>
-        `;
-          })
-          .join("");
-
-        return `
-          <div class="mt-10">
-            <p class="text-4xl font-normal">
-              ${day.date.weekday.toLowerCase()}, ${
-          day.date.day
-        }. ${day.date.monthName.toLowerCase()}
-            </p>
-            ${eventsHtml}
-          </div>
-        `;
-      }
-
-      /**
-       * Renders an event highlight slide using string templates
-       * @param {Object} event - Event object
-       * @returns {string} HTML string
-       */
       function renderEventHighlight(event) {
         const eventDateTime = czDateTimeOf(event.start);
         const timeDisplay = eventDateTime.time ? `v ${eventDateTime.time}` : "";
@@ -300,35 +184,46 @@
         `;
       }
 
-      /**
-       * Updates DOM element with HTML content
-       * @param {string} elementId - Element ID
-       * @param {string} html - HTML content
-       */
-      function updateElement(elementId, html) {
-        const element = document.getElementById(elementId);
-        if (element) {
-          element.innerHTML = html;
+      function clipTo(start, end) {
+        return (event) => {
+          const eventDate = event.start.substring(0, 10);
+          return eventDate >= start && (!end ? true : eventDate <= end);
+        };
+      }
+
+      function calendarOf(events) {
+        return Object.entries(
+          events.reduce((acc, event) => {
+            const dateKey = event.start.substring(0, 10);
+            if (!acc[dateKey]) {
+              acc[dateKey] = [];
+            }
+            acc[dateKey].push(event);
+            return acc;
+          }, {})
+        ).map(([date, events]) => ({ date, events }));
+      }
+
+      function renderCalendarTo(elementId, events) {
+        const target = document.getElementById(elementId);
+        if (!target) return;
+        if (!events || events.length === 0) {
+          target.parentElement.remove();
+          return;
         }
+        target.innerHTML = calendarOf(events)
+          .map(({ date, events }) => ({ date: czDateTimeOf(date), events }))
+          .map(renderCalendarDay)
+          .join("\n");
       }
 
-      /**
-       * Renders calendar data to DOM element
-       * @param {string} elementId - Element ID
-       * @param {Array} calendar - Calendar data
-       * @param {Function} renderer - Render function
-       */
-      function renderCalendar(elementId, calendar, renderer) {
-        const html = calendar.map(renderer).join("");
-        updateElement(elementId, html);
+      function addDays(dateStr, days) {
+        const date = new Date(dateStr + "T00:00:00");
+        date.setDate(date.getDate() + days);
+        return toLocalDate(date);
       }
 
-      /**
-       * Calculates week boundaries using string dates
-       * @param {string} referenceDate - Reference date in "yyyy-MM-dd" format
-       * @returns {Object} Week boundaries as strings
-       */
-      function getWeekBoundaries(referenceDate) {
+      function weekOf(referenceDate) {
         const refDate = new Date(referenceDate + "T00:00:00");
         const dayOfWeek = refDate.getDay();
 
@@ -356,183 +251,71 @@
         };
       }
 
-      /**
-       * Adds days to a date string
-       * @param {string} dateStr - Date string in "yyyy-MM-dd" format
-       * @param {number} days - Number of days to add
-       * @returns {string} New date string in "yyyy-MM-dd" format
-       */
-      function addDays(dateStr, days) {
-        const date = new Date(dateStr + "T00:00:00");
-        date.setDate(date.getDate() + days);
-        return toLocalDate(date);
-      }
-
       async function main() {
         try {
           const url = new URL(window.location.href);
-          let referenceDateStr = today();
+          let referenceDate = today();
 
           if (url.searchParams.has("w")) {
             const weekOffset = parseInt(url.searchParams.get("w")) || 0;
-            referenceDateStr = addDays(referenceDateStr, weekOffset * 7);
+            referenceDate = addDays(referenceDate, weekOffset * 7);
           }
 
-          const week = getWeekBoundaries(referenceDateStr);
-          console.table(week);
+          const week = weekOf(referenceDate);
 
-          // Set current date in title
-          const currentDate = czDateTimeOf(week.prevSunday + " 00:00");
-          document.getElementById("current-date").textContent = `${
-            currentDate.day
-          }. ${currentDate.monthName.toLowerCase()} ${currentDate.year}`;
+          const sunday = czDateTimeOf(week.sunday + " 00:00");
+          document.getElementById("sunday").textContent = `${
+            sunday.day
+          }. ${sunday.monthName.toLowerCase()} ${sunday.year}`;
 
-          // Fetch combined events (calendar + services)
-          const sinceDateTime = week.monday + " 00:00";
-          const events = await fetchCombinedEvents(sinceDateTime);
+          const events = await fetchCombinedEvents(week.next.monday + " 00:00");
 
-          // Filter events by category
-          const weekEvents = filterWeekEvents(events, week.monday, week.sunday);
-          const upcomingEvents = filterUpcomingEvents(events, week.sunday);
-          const plannedEvents = filterPlannedEvents(events, week.sunday);
+          renderCalendarTo(
+            "next-week-calendar",
+            events
+              .filter(clipTo(week.sunday, week.next.sunday))
+              .filter((event) => event.recurring)
+          );
 
-          // Group events by day and render
-          if (weekEvents.length > 0) {
-            const weekCalendar = groupEventsByDay(weekEvents);
-            renderCalendar(
-              "next-week-calendar",
-              weekCalendar,
-              renderCalendarDay
-            );
-          }
+          events
+            .filter(clipTo(week.sunday))
+            .filter(
+              ({ recurring, tags: t }) => !recurring && !t.plan && !t.promo
+            )
+            .forEach((event) => {
+              document.getElementById("upcoming-events").innerHTML +=
+                renderEventHighlight(event);
+            });
 
-          // Handle upcoming events highlights
-          const upcomingHighlights = upcomingEvents
-            .filter((event) => event.eventId === event.eventId) // Keep unique events
-            .slice(0, 3); // Limit to first 3 upcoming events
+          renderCalendarTo(
+            "promo-events-calendar",
+            events
+              .filter(clipTo(week.sunday))
+              .filter((event) => event.tags.promo)
+              .map((event) => {
+                console.log("Processing promo event:", event);
+                return event;
+              })
+          );
 
-          if (upcomingHighlights.length > 0) {
-            const upcomingHtml = upcomingHighlights
-              .map(renderEventHighlight)
-              .join("");
-            updateElement("upcoming-events", upcomingHtml);
-          }
-
-          // Render planned events
-          if (plannedEvents.length > 0) {
-            const plannedCalendar = groupEventsByDay(plannedEvents);
-            renderCalendar(
-              "planned-events-calendar",
-              plannedCalendar,
-              renderCalendarDay
-            );
-          }
-
-          // Fetch and render promo events
-          const promoEvents = await fetchPromo({ since: sinceDateTime });
-          if (promoEvents.length > 0) {
-            const promoCalendar = groupEventsByDay(promoEvents);
-            renderCalendar(
-              "other-events-calendar",
-              promoCalendar,
-              renderCalendarDayPromo
-            );
-          } else {
-            document.getElementById("other-events").remove();
-          }
+          renderCalendarTo(
+            "planned-events-calendar",
+            events
+              .filter(clipTo(week.next.sunday))
+              .filter((event) => event.tags.plan)
+          );
         } catch (error) {
           console.error("Error loading events:", error);
         }
       }
 
-      // Initialize when DOM is loaded
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", main);
       } else {
         main();
       }
     </script>
-    <!-- Auto-scroll functionality -->
-    <script>
-      // Create visual indicator element
-      const indicator = document.createElement("div");
-      indicator.style.position = "fixed";
-      indicator.style.bottom = "20px"; // Bottom position
-      indicator.style.right = "20px"; // Right position
-      indicator.style.width = "50px"; // Adjust width for text
-      indicator.style.height = "50px"; // Adjust height for text
-      indicator.style.borderRadius = "5px"; // Square with rounded corners
-      indicator.style.backgroundColor = "rgba(96, 165, 250, 0.2)"; // Blue-400 with low opacity
-      indicator.style.color = "#ffffff"; // White text for better contrast on dark background
-      indicator.style.display = "none";
-      indicator.style.fontFamily = "Arial, sans-serif";
-      indicator.style.fontSize = "14px";
-      indicator.style.textAlign = "center";
-      indicator.style.lineHeight = "50px"; // Center text vertically
-      indicator.title = "Auto-scroll active (Enter to toggle)";
-      document.body.appendChild(indicator);
 
-      let isScrolling = false;
-      let scrollInterval;
-      let intervalSeconds = 5; // Initial interval in seconds
-      const minInterval = 1; // Minimum interval (1 second)
-      const maxInterval = 10; // Maximum interval (10 seconds)
-      const step = 1; // Adjustment step in seconds
-
-      function autoScroll() {
-        const currentPosition = window.pageYOffset + 1; // Add 1 to ensure looping
-        const maxPosition =
-          document.documentElement.scrollHeight - window.innerHeight;
-
-        if (currentPosition >= maxPosition) {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-          window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
-        }
-      }
-
-      function toggleScroll() {
-        if (isScrolling) {
-          clearInterval(scrollInterval);
-          indicator.style.display = "none";
-        } else {
-          scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
-          indicator.textContent = `${intervalSeconds}s`; // Update indicator text
-          indicator.style.display = "block";
-        }
-        isScrolling = !isScrolling;
-      }
-
-      function adjustInterval(direction) {
-        const newInterval =
-          direction === "-" ? intervalSeconds - step : intervalSeconds + step;
-
-        intervalSeconds = Math.min(
-          Math.max(newInterval, minInterval),
-          maxInterval
-        );
-
-        if (isScrolling) {
-          clearInterval(scrollInterval);
-          scrollInterval = setInterval(autoScroll, intervalSeconds * 1000);
-        }
-
-        // Update the displayed interval value in the indicator
-        indicator.textContent = `${intervalSeconds}s`;
-      }
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          // Use Enter key for toggling
-          e.preventDefault();
-          toggleScroll();
-        }
-
-        if (["+", "-"].includes(e.key)) {
-          e.preventDefault();
-          adjustInterval(e.key);
-        }
-      });
-    </script>
+    <script src="autoscroll.js"></script>
   </body>
 </html>
