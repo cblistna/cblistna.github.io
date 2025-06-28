@@ -10,7 +10,7 @@
  *   today,
  *   fetchEvents,
  *   fetchServices,
- *   fetchPromo,
+ *   fetchFileEvents,
  *   fetchMessages,
  *   mergeServiceToEvent
  * } from "./calendar.js";
@@ -195,22 +195,22 @@ export async function fetchServices(sheetId = SERVICES_SHEET) {
 }
 
 /**
- * Fetches promo events from a Google Drive folder and groups them as calendar events.
- * @param {Object} [params={}] - Parameters for fetching promo events
- * @param {string} [params.folderId=PROMO_FOLDER_ID] - The Google Drive folder ID to fetch promo files from
+ * Fetches file events from a Google Drive folder and groups them as calendar events.
+ * @param {Object} [params={}] - Parameters for fetching file events
+ * @param {string} [params.folderId=PROMO_FOLDER_ID] - The Google Drive folder ID to fetch files from
  * @param {string} [params.since] - Local ISO date time to fetch events since (default: today)
  * @returns {Promise<Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>>}
  * @example
- * // Fetch promo events from default folder since today
- * const promoEvents = await fetchPromo();
+ * // Fetch file events from default folder since today
+ * const fileEvents = await fetchFileEvents();
  *
- * // Fetch promo events from specific folder since a specific date
- * const promoEvents = await fetchPromo({
+ * // Fetch file events from specific folder since a specific date
+ * const fileEvents = await fetchFileEvents({
  *   folderId: 'custom-folder-id',
  *   since: '2025-06-01 00:00'
  * });
  */
-export async function fetchPromo(params = {}) {
+export async function fetchFileEvents(params = {}) {
   const { folderId = PROMO_FOLDER_ID, since = today() + " 00:00" } = params;
 
   const { files } = await GOOGLE.filesOf({
@@ -226,7 +226,7 @@ export async function fetchPromo(params = {}) {
 
   return events
     .map((event) => {
-      event.tags.promo = true;
+      event.tags.fileEvent = true;
       return event;
     })
     .filter((event) => event.start >= sinceDate)
@@ -322,7 +322,7 @@ export function mergeServicesToEvents(events, services) {
 }
 
 /**
- * Fetches and combines calendar events, services, and promo events into a single sorted array.
+ * Fetches and combines calendar events, services, and file events into a single sorted array.
  * Merges service data into events where applicable.
  *
  * @param {string} [since] - Local ISO date time to fetch events since (default: today)
@@ -338,10 +338,12 @@ export async function fetchCombinedEvents(since = today() + " 00:00") {
   return Promise.all([
     fetchEvents({ since }),
     fetchServices(),
-    fetchPromo({ since }),
-  ]).then(([events, services, promo]) => {
+    fetchFileEvents({ since }),
+  ]).then(([events, services, fileEvents]) => {
     mergeServicesToEvents(events, services);
-    return events.concat(promo).sort((a, b) => a.start.localeCompare(b.start));
+    return events
+      .concat(fileEvents)
+      .sort((a, b) => a.start.localeCompare(b.start));
   });
 }
 
@@ -627,6 +629,7 @@ function calculateFileEventDuration(start, end) {
 function groupFilesToEvents(files) {
   const eventMap = new Map();
   for (const file of files) {
+    if (!/^\d{4}-\d{2}-\d{2}/.test(file.name)) continue;
     const parsed = parseEventFileName(file.name);
     const eventKey = `${parsed.start}__${parsed.subject}`;
     let start = parsed.start;
