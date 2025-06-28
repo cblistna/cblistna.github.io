@@ -86,7 +86,7 @@
                         `<br/><a href="${
                           attachment.url || attachment.webViewLink
                         }" target="_blank" class="ml-24 pl-2 text-blue-400">${
-                          attachment.name || attachment.label
+                          attachment.label
                         }</a>`
                     )
                     .join("")
@@ -156,9 +156,7 @@
                   (attachment) =>
                     `<span class="block pt-2 text-blue-400"><a href="${
                       attachment.url || attachment.webViewLink
-                    }" target="_blank">${
-                      attachment.name || attachment.label
-                    }</a></span>`
+                    }" target="_blank">${attachment.label}</a></span>`
                 )
                 .join("")
             : "";
@@ -296,10 +294,6 @@
             events
               .filter(clipTo(week.sunday))
               .filter((event) => event.tags.promo)
-              .map((event) => {
-                console.log("Processing promo event:", event);
-                return event;
-              })
           );
 
           renderCalendarTo(

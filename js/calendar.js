@@ -527,6 +527,10 @@ function parseGoogleCalendarEvent(rawEvent) {
       .map((attachment) => ({
         fileId: (attachment.fileId || "").trim(),
         name: (attachment.title || attachment.name || "").trim(),
+        label: (attachment.title || attachment.name || "")
+          .trim()
+          .replace(/\.[^.]+$/, ""),
+        // Use mimeType or mime, fallback to empty string
         mime: (attachment.mimeType || attachment.mime || "").trim(),
         url: (attachment.fileUrl || attachment.url || "").trim(),
         ref: (attachment.iconLink || attachment.ref || "").trim(),
@@ -587,7 +591,7 @@ function parseEventFileName(name) {
   });
   const subject = subjectRaw.replace(/\s+/g, " ").trim();
   const body = sections[2] ? sections[2].trim() : "";
-  const attachmentName = sections[3] ? sections[3].trim() : "";
+  const attachmentName = (sections[3] ?? subject ?? name).trim();
   return { start, end, subject, tags, body, attachmentName };
 }
 
@@ -666,7 +670,7 @@ function groupFilesToEvents(files) {
       eventMap.get(eventKey).attachments.push({
         id: file.id,
         name: file.name,
-        label: attachmentLabel,
+        label: attachmentLabel || file.name,
         mimeType: file.mimeType,
         webViewLink: file.webViewLink,
         webContentLink: file.webContentLink,
