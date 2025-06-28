@@ -67,7 +67,7 @@
         toLocalDate,
       } from "../js/calendar.js";
 
-      function renderCalendarDay(day) {
+      function CalendarDay(day) {
         const eventsHtml = day.events
           .map((event) => {
             const eventDateTime = czDateTimeOf(event.start);
@@ -117,7 +117,11 @@
               <span class="inline-block w-10 font-normal text-4xl">
                 ${timeDisplay}<span class="text-3xl font-normal">${minutesDisplay}</span>
               </span>
-              <span class="ml-14 font-medium text-5xl">${event.subject}</span>
+              <span class="ml-14 font-medium text-5xl">${event.subject}${
+              event.duration.spanDays > 1
+                ? ` (${event.duration.spanDays}d)`
+                : ""
+            }</span>
               ${descriptionHtml}
               ${serviceInfo}
               ${attachmentsHtml}
@@ -138,7 +142,7 @@
         `;
       }
 
-      function renderEventHighlight(event) {
+      function EventHighlight(event) {
         const eventDateTime = czDateTimeOf(event.start);
         const timeDisplay = eventDateTime.time ? `v ${eventDateTime.time}` : "";
         const descriptionHtml = event.body
@@ -213,7 +217,7 @@
         }
         target.innerHTML = calendarOf(events)
           .map(({ date, events }) => ({ date: czDateTimeOf(date), events }))
-          .map(renderCalendarDay)
+          .map(CalendarDay)
           .join("\n");
       }
 
@@ -284,7 +288,7 @@
             )
             .forEach((event) => {
               document.getElementById("upcoming-events").innerHTML +=
-                renderEventHighlight(event);
+                EventHighlight(event);
             });
 
           renderCalendarTo(
