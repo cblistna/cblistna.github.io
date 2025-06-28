@@ -16,7 +16,7 @@
       import {
         fetchServices,
         fetchEvents,
-        fetchShared,
+        fetchFileEvents,
         mergeServicesToEvents,
         czDateTimeOf,
         today,
@@ -291,7 +291,7 @@
           // Fetch events and promo events from the first service date
           const [events, promoEvents] = await Promise.all([
             fetchEvents({ since: sinceDate }),
-            fetchShared({ since: sinceDate }),
+            fetchFileEvents({ since: sinceDate }),
           ]);
 
           // Add announcements to the first service if there are upcoming events
