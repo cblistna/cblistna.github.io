@@ -339,7 +339,7 @@
                 acc.plan.push(event);
               } else if (event.start <= todayPlus7) {
                 acc.regular.push(event);
-              } else {
+              } else if (!event.recurring) {
                 acc.upcoming.push(event);
               }
               return acc;
