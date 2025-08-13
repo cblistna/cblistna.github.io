@@ -294,11 +294,18 @@
             fetchFileEvents({ since: sinceDate }),
           ]);
 
-          // Add announcements to the first service if there are upcoming events
+          const addDaysTo = (date, days) => {
+            const base = new Date(date)
+            base.setDate(base.getDate() + 7)
+            return toLocalDateTime(base).substring(0, 10);
+          }
+          
+          const sincePlus7Days = addDaysTo(sinceDate, 7);
+
           if (services.length > 0) {
             const upcomingEvents = events
               .concat(promoEvents)
-              .filter((event) => !event.tags.hide)
+              .filter((event) => !event.tags.hide && (!event.recurring || event.start < sincePlus7Days))
               .sort((a, b) => a.start.localeCompare(b.start));
 
             if (upcomingEvents.length > 0) {
