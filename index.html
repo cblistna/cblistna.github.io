@@ -288,10 +288,11 @@
               date.day
             }. ${date.monthShortName.toLowerCase()}</div>
             <div class="msgTitle mr-2 font-semibold">
-              <a href="${audio.webViewLink}" title="${
-          audio.name
-        }" target="_blank">
-                ${title}</a></div>
+              ${
+                audio
+                  ? `<a href="${audio?.webViewLink}" title="${audio?.name}" target="_blank">`
+                  : ""
+              }${title}</a></div>
             <div
               class="msgAuthor font-weight-normal text-muted mr-3 font-light"
             >${speaker}</div><span
