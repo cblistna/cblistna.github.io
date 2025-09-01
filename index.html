@@ -290,16 +290,29 @@
             <div class="msgTitle mr-2 font-semibold">
               ${
                 audio
-                  ? `<a href="${audio?.webViewLink}" title="${audio?.name}" target="_blank">`
-                  : ""
-              }${title}</a></div>
+                  ? `<a href="${audio?.webViewLink}" title="${audio?.name}" target="_blank" class="inline-flex items-center gap-1">
+                      ${title}
+                      <span class="inline-block w-5 h-5 pl-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#666666" class="w-full h-full" aria-label="Audio">
+                          <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z"/>
+                        </svg>
+                      </span>
+                    </a>`
+                  : title
+              }</div>
             <div
               class="msgAuthor font-weight-normal text-muted mr-3 font-light"
             >${speaker}</div><span
               class="msgDoc font-light"
             >${
               text
-                ? `<a href="${text.webViewLink}" title="${text.name}" target="_blank">(text)</a>`
+                ? `<a href="${text.webViewLink}" title="${text.name}" target="_blank" class="inline-flex items-center gap-1">
+                    (text <span class="inline-block w-4 h-4 pl-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#666666" class="w-full h-full" aria-label="Text">
+                        <path d="M4 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4zm0 4h10v2H4z"/>
+                      </svg>
+                    </span>)
+                  </a>`
                 : ""
             }</span>
           </div>
