@@ -22,11 +22,7 @@
         today,
         toLocalDateTime,
       } from "../js/calendar.js";
-      /**
-       * Renders a service meeting event as HTML using modern template literals
-       * @param {Object} service - The service object containing meeting details
-       * @returns {string} HTML string for the service meeting
-       */
+
       function renderServiceMeeting(service) {
         const dateInfo = czDateTimeOf(service.date);
 
@@ -79,7 +75,9 @@
                   ? `
                 <tr>
                   <td class="text-sm text-right pr-2 align-text-top"><b>Oznámení</b></td>
-                  <td id="announcements" class="align-text-top">${service.announcements}</td>
+                  <td id="announcements" class="align-text-top">
+                    <a href="https://cblistna.cz/events" target="_blank">Prezentace</a>
+                  </td>
                 </tr>
               `
                   : ""
@@ -303,7 +301,7 @@
             base.setDate(base.getDate() + 7)
             return toLocalDateTime(base).substring(0, 10);
           }
-          
+
           const sincePlus7Days = addDaysTo(sinceDate, 7);
 
           if (services.length > 0) {
