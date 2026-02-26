@@ -21,6 +21,7 @@
  * @property {string} mime
  * @property {string} url
  * @property {string} directUrl
+ * @property {string} resourceKey
  * @property {string} ref
  *
  * @typedef {Object} Duration
@@ -57,6 +58,7 @@ import {
  * @property {string} mime
  * @property {string} url
  * @property {string} directUrl
+ * @property {string} resourceKey
  * @property {string} ref
  */
 
@@ -119,16 +121,33 @@ function extractResourceKey(...urls) {
   return "";
 }
 
+function driveThumbnailUrl(fileId, resourceKey, size = 4096) {
+  if (!fileId) return "";
+  const url = new URL("https://drive.google.com/thumbnail");
+  url.searchParams.set("id", fileId);
+  url.searchParams.set("sz", `w${size}`);
+  if (resourceKey) url.searchParams.set("resourcekey", resourceKey);
+  return url.toString();
+}
+
 function directUrlForAttachment(attachment) {
   const mimeType = (attachment.mime || attachment.mimeType || "").trim();
   if (!isInlinePreviewMime(mimeType)) return "";
   const fileId = (attachment.fileId || attachment.id || "").trim();
-  const resourceKey = extractResourceKey(
-    attachment.webViewLink,
-    attachment.webContentLink,
-    attachment.url
-  );
-  if (fileId) return driveDirectViewUrl(fileId, resourceKey);
+  const resourceKey = (attachment.resourceKey || "").trim();
+  const derivedResourceKey = resourceKey
+    ? resourceKey
+    : extractResourceKey(
+        attachment.webViewLink,
+        attachment.webContentLink,
+        attachment.url
+      );
+  if (fileId) {
+    return (
+      driveThumbnailUrl(fileId, derivedResourceKey) ||
+      driveDirectViewUrl(fileId, derivedResourceKey)
+    );
+  }
   return (attachment.webContentLink || "").trim();
 }
 
@@ -576,7 +595,13 @@ function parseGoogleCalendarEvent(rawEvent) {
         const mime = (attachment.mimeType || attachment.mime || "").trim();
         const url = (attachment.fileUrl || attachment.url || "").trim();
         const ref = (attachment.iconLink || attachment.ref || "").trim();
-        const directUrl = directUrlForAttachment({ fileId, mime, url });
+        const resourceKey = extractResourceKey(url);
+        const directUrl = directUrlForAttachment({
+          fileId,
+          mime,
+          url,
+          resourceKey,
+        });
         return {
           fileId,
           name,
@@ -584,6 +609,7 @@ function parseGoogleCalendarEvent(rawEvent) {
           mime,
           url,
           directUrl,
+          resourceKey,
           ref,
         };
       })
@@ -719,11 +745,16 @@ function groupFilesToEvents(files) {
     }
     const attachmentLabel = parsed.attachmentName || parsed.subject;
     if (attachmentLabel) {
+      const resourceKey = extractResourceKey(
+        file.webViewLink,
+        file.webContentLink
+      );
       const directUrl = directUrlForAttachment({
         id: file.id,
         mimeType: file.mimeType,
         webViewLink: file.webViewLink,
         webContentLink: file.webContentLink,
+        resourceKey,
       });
       eventMap.get(eventKey).attachments.push({
         id: file.id,
@@ -733,6 +764,7 @@ function groupFilesToEvents(files) {
         webViewLink: file.webViewLink,
         webContentLink: file.webContentLink,
         directUrl,
+        resourceKey,
       });
     }
     if (parsed.body) {

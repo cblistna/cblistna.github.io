@@ -68,7 +68,16 @@
       } from "../js/calendar.js";
 
       function attachmentHref(attachment) {
-        return attachment.directUrl || attachment.url || attachment.webViewLink;
+        if (attachment.directUrl) {
+          const viewerUrl = new URL("image.html", window.location.href);
+          viewerUrl.searchParams.set("src", attachment.directUrl);
+          const fallback = attachment.url || attachment.webViewLink;
+          if (fallback) {
+            viewerUrl.searchParams.set("fallback", fallback);
+          }
+          return viewerUrl.toString();
+        }
+        return attachment.url || attachment.webViewLink;
       }
 
       function CalendarDay(day) {
