@@ -20,6 +20,7 @@
  * @property {string} name
  * @property {string} mime
  * @property {string} url
+ * @property {string} directUrl
  * @property {string} ref
  *
  * @typedef {Object} Duration
@@ -55,6 +56,7 @@ import {
  * @property {string} name
  * @property {string} mime
  * @property {string} url
+ * @property {string} directUrl
  * @property {string} ref
  */
 
@@ -88,6 +90,47 @@ const LOCAL_DATE_TIME_FORMAT = new Intl.DateTimeFormat("cs-CZ", {
   hour24: true,
   TZ,
 });
+
+function isInlinePreviewMime(mimeType) {
+  const normalized = (mimeType || "").toLowerCase();
+  return normalized.startsWith("image/");
+}
+
+function driveDirectViewUrl(fileId, resourceKey) {
+  if (!fileId) return "";
+  const url = new URL("https://drive.google.com/uc");
+  url.searchParams.set("export", "view");
+  url.searchParams.set("id", fileId);
+  if (resourceKey) url.searchParams.set("resourcekey", resourceKey);
+  return url.toString();
+}
+
+function extractResourceKey(...urls) {
+  for (const raw of urls) {
+    if (!raw) continue;
+    try {
+      const parsed = new URL(raw);
+      const key = parsed.searchParams.get("resourcekey");
+      if (key) return key;
+    } catch {
+      continue;
+    }
+  }
+  return "";
+}
+
+function directUrlForAttachment(attachment) {
+  const mimeType = (attachment.mime || attachment.mimeType || "").trim();
+  if (!isInlinePreviewMime(mimeType)) return "";
+  const fileId = (attachment.fileId || attachment.id || "").trim();
+  const resourceKey = extractResourceKey(
+    attachment.webViewLink,
+    attachment.webContentLink,
+    attachment.url
+  );
+  if (fileId) return driveDirectViewUrl(fileId, resourceKey);
+  return (attachment.webContentLink || "").trim();
+}
 
 /**
  * Returns the current date and time in the format 'yyyy-MM-dd hh:mm'.
@@ -524,17 +567,26 @@ function parseGoogleCalendarEvent(rawEvent) {
   function parseAttachments(attachments) {
     if (!Array.isArray(attachments)) return [];
     return attachments
-      .map((attachment) => ({
-        fileId: (attachment.fileId || "").trim(),
-        name: (attachment.title || attachment.name || "").trim(),
-        label: (attachment.title || attachment.name || "")
+      .map((attachment) => {
+        const fileId = (attachment.fileId || "").trim();
+        const name = (attachment.title || attachment.name || "").trim();
+        const label = (attachment.title || attachment.name || "")
           .trim()
-          .replace(/\.[^.]+$/, ""),
-        // Use mimeType or mime, fallback to empty string
-        mime: (attachment.mimeType || attachment.mime || "").trim(),
-        url: (attachment.fileUrl || attachment.url || "").trim(),
-        ref: (attachment.iconLink || attachment.ref || "").trim(),
-      }))
+          .replace(/\.[^.]+$/, "");
+        const mime = (attachment.mimeType || attachment.mime || "").trim();
+        const url = (attachment.fileUrl || attachment.url || "").trim();
+        const ref = (attachment.iconLink || attachment.ref || "").trim();
+        const directUrl = directUrlForAttachment({ fileId, mime, url });
+        return {
+          fileId,
+          name,
+          label,
+          mime,
+          url,
+          directUrl,
+          ref,
+        };
+      })
       .filter(
         (attachment) =>
           attachment.fileId &&
@@ -628,7 +680,7 @@ function calculateFileEventDuration(start, end) {
 /**
  * Parses Google Drive API file data into calendar event objects, grouping attachments.
  * @param {Array<{name: string, id: string, mimeType: string, webViewLink: string, webContentLink: string}>} files
- * @returns {Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>}
+ * @returns {Array<{start: string, end?: string, subject: string, tags: Record<string, string|boolean>, body?: string, attachments: Array<{id: string, name: string, label: string, mimeType: string, webViewLink: string, webContentLink: string, directUrl: string}>, duration: {days: number, hours: number, minutes: number, spanDays: number}}>}
  */
 function groupFilesToEvents(files) {
   const eventMap = new Map();
@@ -667,6 +719,12 @@ function groupFilesToEvents(files) {
     }
     const attachmentLabel = parsed.attachmentName || parsed.subject;
     if (attachmentLabel) {
+      const directUrl = directUrlForAttachment({
+        id: file.id,
+        mimeType: file.mimeType,
+        webViewLink: file.webViewLink,
+        webContentLink: file.webContentLink,
+      });
       eventMap.get(eventKey).attachments.push({
         id: file.id,
         name: file.name,
@@ -674,6 +732,7 @@ function groupFilesToEvents(files) {
         mimeType: file.mimeType,
         webViewLink: file.webViewLink,
         webContentLink: file.webContentLink,
+        directUrl,
       });
     }
     if (parsed.body) {

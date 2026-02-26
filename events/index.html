@@ -67,6 +67,10 @@
         toLocalDate,
       } from "../js/calendar.js";
 
+      function attachmentHref(attachment) {
+        return attachment.directUrl || attachment.url || attachment.webViewLink;
+      }
+
       function CalendarDay(day) {
         const eventsHtml = day.events
           .map((event) => {
@@ -84,7 +88,7 @@
                     .map(
                       (attachment) =>
                         `<br/><a href="${
-                          attachment.url || attachment.webViewLink
+                          attachmentHref(attachment)
                         }" target="_blank" class="block sm:inline ml-8 sm:ml-16 lg:ml-24 sm:pl-2 text-blue-400 break-words">${
                           attachment.label
                         }</a>`
@@ -155,7 +159,7 @@
                 .map(
                   (attachment) =>
                     `<span class="block pt-2 text-blue-400 break-words"><a href="${
-                      attachment.url || attachment.webViewLink
+                      attachmentHref(attachment)
                     }" target="_blank">${attachment.label}</a></span>`
                 )
                 .join("")
