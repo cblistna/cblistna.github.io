@@ -16,6 +16,17 @@
         min-height: 100vh;
         scroll-snap-align: start;
       }
+
+      .event-description a {
+        color: #93c5fd;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.15em;
+      }
+
+      .event-description a:hover {
+        color: #bfdbfe;
+      }
     </style>
   </head>
 
@@ -116,7 +127,7 @@
                 : "";
 
             const descriptionHtml = event.body
-              ? `<span class="block sm:inline mt-1 sm:mt-0 text-base sm:text-2xl lg:text-4xl ml-4 sm:ml-5 text-gray-300 font-light leading-relaxed">${addBlankTargetToLinks(
+              ? `<span class="event-description block sm:inline mt-1 sm:mt-0 text-base sm:text-2xl lg:text-4xl ml-4 sm:ml-5 text-gray-300 font-light leading-relaxed">${addBlankTargetToLinks(
                   event.body
                 )}</span>`
               : "";
@@ -171,7 +182,7 @@
         const eventDateTime = czDateTimeOf(event.start);
         const timeDisplay = eventDateTime.time ? `v ${eventDateTime.time}` : "";
         const descriptionHtml = event.body
-          ? `<span class="block pt-2 text-base sm:text-2xl lg:text-4xl text-gray-300 font-light leading-relaxed">${addBlankTargetToLinks(
+          ? `<span class="event-description block pt-2 text-base sm:text-2xl lg:text-4xl text-gray-300 font-light leading-relaxed">${addBlankTargetToLinks(
               event.body
             )}</span>`
           : "";
