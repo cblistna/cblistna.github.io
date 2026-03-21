@@ -15,6 +15,68 @@
         overflow-x: hidden;
         overflow-y: visible !important;
       }
+
+      /* Event spacing */
+      .calEvent {
+        padding-top: 1rem;
+        padding-bottom: 0.25rem;
+      }
+      .calEvent:first-child {
+        padding-top: 0;
+      }
+
+      /* Calendar section: mobile responsive */
+      @media (max-width: 639px) {
+        /* Event row: allow wrapping so subject moves to new line */
+        .calEvent .evtDateCol > p {
+          flex-wrap: wrap;
+          font-size: 0.875rem;
+          line-height: 1.25rem;
+        }
+        /* Weekday span: auto-size, reduce excessive right padding */
+        .calEvent .evtDateCol > p > span:first-child {
+          width: auto;
+          padding-right: 0.75rem;
+        }
+        /* Day, month, time spans: auto-size instead of fixed width */
+        .calEvent .evtDateCol > p > span:nth-child(2),
+        .calEvent .evtDateCol > p > span:nth-child(3) {
+          width: auto;
+        }
+        .calEvent .evtDateCol > p > span:nth-child(4) {
+          width: auto;
+          padding-left: 0.5rem;
+        }
+        /* Subject: full width on its own line, larger font */
+        .calEvent .evtDateCol > p > span:last-child {
+          flex-basis: 100%;
+          padding-left: 0;
+          padding-top: 0.1rem;
+          text-align: left;
+          font-size: 1.25rem;
+          line-height: 1.75rem;
+        }
+        /* Hide empty spacer spans in detail and link rows */
+        .calEvent .evtTitleDetail span:empty,
+        .calEvent .font-weight-normal span:empty {
+          display: none;
+        }
+        /* Description and links: smaller, left-aligned, no indent */
+        .calEvent .evtDetail {
+          margin-left: 0 !important;
+          padding-left: 0.75rem;
+          font-size: 0.8rem;
+          line-height: 1.15rem;
+          text-align: left;
+        }
+        .calEvent .evtLinks {
+          margin-left: 0 !important;
+          padding-left: 0.75rem;
+          font-size: 0.8rem;
+          line-height: 1.15rem;
+          text-align: left;
+        }
+      }
     </style>
   </head>
 
@@ -222,7 +284,8 @@
         return `
       <div class="calEvent">
         <div class="evtDateCol">
-          <p class="flex flex-row px-3 text-xl pb-2">
+           <p class="flex flex-row px-3 text-xl pb-0">
+
             <span class="w-12 pr-12 font-thin">${s.weekday
               .substring(0, 2)
               .toLowerCase()}</span>
@@ -255,10 +318,10 @@
               attachments.length
                 ? `
               <div class="font-weight-normal">
-                <p>
+                <p class="flex flex-row flex-row items-center">
                   <span class="w-16 ml-1"></span>
                   <span class="w-16 ml-8"></span>
-                  <span class="evtLinks w-auto ml-48">
+                  <span class="evtLinks w-auto ml-16">
                   ${attachments
                     .map(
                       (attachment) =>
