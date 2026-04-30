@@ -27,6 +27,154 @@
       .event-description a:hover {
         color: #bfdbfe;
       }
+
+      #presenter-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: none;
+        overflow: auto;
+        padding: 1rem;
+        background: rgba(3, 7, 18, 0.97);
+      }
+
+      body.presenter-mode {
+        overflow: hidden;
+      }
+
+      body.presenter-mode #presenter-overlay {
+        display: block;
+      }
+
+      .presenter-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0 1rem;
+        background: linear-gradient(rgba(3, 7, 18, 0.98), rgba(3, 7, 18, 0.88));
+        backdrop-filter: blur(10px);
+      }
+
+      .presenter-status {
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+
+      .presenter-help {
+        color: #cbd5e1;
+        font-size: 0.875rem;
+        text-align: right;
+      }
+
+      #presenter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        align-items: start;
+      }
+
+      .presenter-thumb {
+        border: 2px solid rgba(148, 163, 184, 0.35);
+        border-radius: 0.9rem;
+        padding: 0.75rem;
+        background: rgba(17, 24, 39, 0.96);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease,
+          transform 0.16s ease;
+      }
+
+      .presenter-thumb:hover {
+        transform: translateY(-2px);
+        border-color: rgba(191, 219, 254, 0.7);
+      }
+
+      .presenter-thumb.is-active {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.28),
+          0 24px 48px rgba(0, 0, 0, 0.32);
+      }
+
+      .presenter-thumb-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.6rem;
+        color: #e5e7eb;
+        font-size: 0.95rem;
+      }
+
+      .presenter-thumb-label {
+        font-weight: 600;
+      }
+
+      .presenter-thumb-stage {
+        overflow: hidden;
+        border-radius: 0.7rem;
+        background: #111827;
+      }
+
+      .presenter-thumb-inner {
+        transform-origin: top left;
+        pointer-events: none;
+      }
+
+      .slide-shell {
+        box-sizing: border-box;
+        width: 100vw;
+        min-height: 100vh;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        background: #111827;
+        color: #fff;
+        overflow-x: hidden;
+        line-height: 1.375;
+      }
+
+      @media (min-width: 640px) {
+        .slide-shell {
+          padding-left: 1.5rem;
+          padding-right: 1.5rem;
+          line-height: 1.5;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .slide-shell {
+          padding-left: 2.5rem;
+          padding-right: 2.5rem;
+        }
+      }
+
+      .slide-shell .slide {
+        min-height: 100vh;
+      }
+
+      #audience-stage {
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        display: none;
+        overflow: auto;
+        background: #111827;
+      }
+
+      body.audience-mode {
+        overflow: hidden;
+      }
+
+      body.audience-mode #audience-stage {
+        display: block;
+      }
+
+      .audience-slide {
+        min-height: 100vh;
+      }
     </style>
   </head>
 
@@ -291,6 +439,411 @@
         };
       }
 
+      const presenterState = {
+        slides: [],
+        activeSlideIndex: 0,
+        presenterMode: false,
+        audienceMode: false,
+        presenterOverlay: null,
+        presenterGrid: null,
+        presenterStatus: null,
+        presenterThumbs: [],
+        audienceStage: null,
+        audienceWindow: null,
+        audienceWindowAvailable: true,
+        channel:
+          typeof BroadcastChannel !== "undefined"
+            ? new BroadcastChannel("events-presenter")
+            : null,
+      };
+
+      function presenterAudienceMode() {
+        return new URL(window.location.href).searchParams.get("audience") === "1";
+      }
+
+      function refreshSlides() {
+        presenterState.slides = Array.from(document.querySelectorAll(".slide"));
+        return presenterState.slides;
+      }
+
+      function clampSlideIndex(index) {
+        if (presenterState.slides.length === 0) return 0;
+        return Math.max(0, Math.min(index, presenterState.slides.length - 1));
+      }
+
+      function slideOffsetTop(slide) {
+        const rect = slide.getBoundingClientRect();
+        return rect.top + window.pageYOffset;
+      }
+
+      function syncScrollToSlide(index, behavior = "auto") {
+        const slide = presenterState.slides[index];
+        if (!slide) return;
+        window.scrollTo({ top: slideOffsetTop(slide), behavior });
+      }
+
+      function detectCurrentSlideIndex() {
+        if (presenterState.slides.length === 0) return 0;
+
+        const viewportCenter = window.innerHeight / 2;
+        let activeIndex = 0;
+        let closestDistance = Number.POSITIVE_INFINITY;
+
+        presenterState.slides.forEach((slide, index) => {
+          const rect = slide.getBoundingClientRect();
+          const center = rect.top + Math.min(rect.height, window.innerHeight) / 2;
+          const distance = Math.abs(center - viewportCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            activeIndex = index;
+          }
+        });
+
+        return activeIndex;
+      }
+
+      function slideHeight(slide) {
+        return Math.max(slide.getBoundingClientRect().height, window.innerHeight);
+      }
+
+      function createSlideShell(slide) {
+        const shell = document.createElement("div");
+        shell.className = "slide-shell";
+
+        const clone = slide.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.querySelectorAll("[id]").forEach((element) => {
+          element.removeAttribute("id");
+        });
+
+        shell.appendChild(clone);
+        return shell;
+      }
+
+      function ensurePresenterOverlay() {
+        if (presenterState.presenterOverlay) return;
+
+        const overlay = document.createElement("div");
+        overlay.id = "presenter-overlay";
+        overlay.innerHTML = `
+          <div class="presenter-toolbar">
+            <div class="presenter-status"></div>
+            <div class="presenter-help">P zavre, sipky meni snimek, klik vybere snimek</div>
+          </div>
+          <div id="presenter-grid"></div>
+        `;
+
+        document.body.appendChild(overlay);
+        presenterState.presenterOverlay = overlay;
+        presenterState.presenterGrid = overlay.querySelector("#presenter-grid");
+        presenterState.presenterStatus = overlay.querySelector(".presenter-status");
+      }
+
+      function ensureAudienceStage() {
+        if (presenterState.audienceStage) return;
+
+        const stage = document.createElement("div");
+        stage.id = "audience-stage";
+        document.body.appendChild(stage);
+        presenterState.audienceStage = stage;
+      }
+
+      function updatePresenterThumbLayouts() {
+        presenterState.presenterThumbs.forEach((thumb, index) => {
+          const slide = presenterState.slides[index];
+          const stage = thumb.querySelector(".presenter-thumb-stage");
+          const inner = thumb.querySelector(".presenter-thumb-inner");
+          if (!slide || !stage || !inner) return;
+
+          const width = window.innerWidth;
+          const height = slideHeight(slide);
+          const stageWidth = stage.clientWidth || 320;
+          const scale = stageWidth / width;
+
+          stage.style.height = `${height * scale}px`;
+          inner.style.width = `${width}px`;
+          inner.style.height = `${height}px`;
+          inner.style.transform = `scale(${scale})`;
+        });
+      }
+
+      function updatePresenterStatus() {
+        if (!presenterState.presenterStatus) return;
+
+        const suffix = presenterState.audienceWindowAvailable
+          ? ""
+          : " | druhe okno bylo zablokovano";
+
+        presenterState.presenterStatus.textContent = `Snimek ${
+          presenterState.activeSlideIndex + 1
+        } / ${presenterState.slides.length}${suffix}`;
+      }
+
+      function updatePresenterOverview() {
+        presenterState.presenterThumbs.forEach((thumb, index) => {
+          thumb.classList.toggle("is-active", index === presenterState.activeSlideIndex);
+        });
+        updatePresenterStatus();
+      }
+
+      function renderPresenterOverview() {
+        ensurePresenterOverlay();
+        presenterState.presenterGrid.replaceChildren();
+        presenterState.presenterThumbs = presenterState.slides.map((slide, index) => {
+          const thumb = document.createElement("div");
+          thumb.className = "presenter-thumb";
+          thumb.tabIndex = 0;
+
+          const meta = document.createElement("div");
+          meta.className = "presenter-thumb-meta";
+          meta.innerHTML = `
+            <span class="presenter-thumb-label">Snimek ${index + 1}</span>
+            <span>${slide.id || "udalosti"}</span>
+          `;
+
+          const stage = document.createElement("div");
+          stage.className = "presenter-thumb-stage";
+
+          const inner = document.createElement("div");
+          inner.className = "presenter-thumb-inner";
+          inner.appendChild(createSlideShell(slide));
+          stage.appendChild(inner);
+
+          thumb.appendChild(meta);
+          thumb.appendChild(stage);
+
+          thumb.addEventListener("click", () => {
+            setActiveSlide(index);
+          });
+
+          thumb.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setActiveSlide(index);
+            }
+          });
+
+          presenterState.presenterGrid.appendChild(thumb);
+          return thumb;
+        });
+
+        updatePresenterThumbLayouts();
+        updatePresenterOverview();
+      }
+
+      function renderAudienceSlide() {
+        if (!presenterState.audienceMode) return;
+
+        ensureAudienceStage();
+        const slide = presenterState.slides[presenterState.activeSlideIndex];
+        if (!slide) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "audience-slide";
+        wrapper.appendChild(createSlideShell(slide));
+        presenterState.audienceStage.replaceChildren(wrapper);
+      }
+
+      function broadcastPresenterState() {
+        presenterState.channel?.postMessage({
+          type: "presenter-state",
+          presenterMode: presenterState.presenterMode,
+          slideIndex: presenterState.activeSlideIndex,
+        });
+      }
+
+      function audienceWindowUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.set("audience", "1");
+        url.searchParams.set("slide", String(presenterState.activeSlideIndex));
+        return url.toString();
+      }
+
+      function openAudienceWindow() {
+        if (
+          presenterState.audienceWindow &&
+          !presenterState.audienceWindow.closed
+        ) {
+          presenterState.audienceWindow.focus();
+          return;
+        }
+
+        presenterState.audienceWindow = window.open(
+          audienceWindowUrl(),
+          "events-audience-screen",
+          "popup,width=1280,height=720"
+        );
+
+        presenterState.audienceWindowAvailable = !!presenterState.audienceWindow;
+      }
+
+      function setActiveSlide(index) {
+        presenterState.activeSlideIndex = clampSlideIndex(index);
+        syncScrollToSlide(
+          presenterState.activeSlideIndex,
+          presenterState.presenterMode ? "auto" : "smooth"
+        );
+
+        if (presenterState.presenterMode) {
+          updatePresenterOverview();
+          broadcastPresenterState();
+        }
+
+        if (presenterState.audienceMode) {
+          renderAudienceSlide();
+        }
+      }
+
+      function dispatchModeChange() {
+        document.dispatchEvent(
+          new CustomEvent("events:modechange", {
+            detail: {
+              presenterMode: presenterState.presenterMode,
+              audienceMode: presenterState.audienceMode,
+            },
+          })
+        );
+      }
+
+      function enterPresenterMode() {
+        refreshSlides();
+        if (presenterState.slides.length === 0) return;
+
+        presenterState.presenterMode = true;
+        presenterState.activeSlideIndex = detectCurrentSlideIndex();
+        presenterState.audienceWindowAvailable = true;
+
+        document.body.classList.add("presenter-mode");
+        renderPresenterOverview();
+        syncScrollToSlide(presenterState.activeSlideIndex);
+        openAudienceWindow();
+        updatePresenterStatus();
+        broadcastPresenterState();
+        dispatchModeChange();
+      }
+
+      function exitPresenterMode() {
+        if (!presenterState.presenterMode) return;
+
+        presenterState.presenterMode = false;
+        document.body.classList.remove("presenter-mode");
+        broadcastPresenterState();
+        dispatchModeChange();
+
+        if (
+          presenterState.audienceWindow &&
+          !presenterState.audienceWindow.closed
+        ) {
+          presenterState.audienceWindow.close();
+        }
+
+        syncScrollToSlide(presenterState.activeSlideIndex);
+      }
+
+      function navigateSlide(offset) {
+        setActiveSlide(presenterState.activeSlideIndex + offset);
+      }
+
+      function setupPresentation() {
+        refreshSlides();
+        presenterState.audienceMode = presenterAudienceMode();
+
+        presenterState.channel?.addEventListener("message", ({ data }) => {
+          if (!data || data.type !== "presenter-state") return;
+          if (!presenterState.audienceMode) return;
+
+          presenterState.activeSlideIndex = clampSlideIndex(data.slideIndex || 0);
+          renderAudienceSlide();
+
+          if (data.presenterMode === false) {
+            window.close();
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          const target = event.target;
+          if (
+            target instanceof HTMLElement &&
+            (target.isContentEditable ||
+              ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+          ) {
+            return;
+          }
+
+          if (event.key === "P" && !presenterState.audienceMode) {
+            event.preventDefault();
+            if (presenterState.presenterMode) {
+              exitPresenterMode();
+            } else {
+              enterPresenterMode();
+            }
+            return;
+          }
+
+          if (event.key === "Escape") {
+            if (presenterState.presenterMode) {
+              event.preventDefault();
+              exitPresenterMode();
+            } else if (presenterState.audienceMode) {
+              event.preventDefault();
+              window.close();
+            }
+            return;
+          }
+
+          if (presenterState.presenterMode) {
+            if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) {
+              event.preventDefault();
+              navigateSlide(1);
+              return;
+            }
+
+            if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(event.key)) {
+              event.preventDefault();
+              navigateSlide(-1);
+              return;
+            }
+
+            if (event.key === "Home") {
+              event.preventDefault();
+              setActiveSlide(0);
+              return;
+            }
+
+            if (event.key === "End") {
+              event.preventDefault();
+              setActiveSlide(presenterState.slides.length - 1);
+            }
+          }
+        });
+
+        window.addEventListener("resize", () => {
+          if (presenterState.presenterMode) {
+            updatePresenterThumbLayouts();
+          }
+          if (presenterState.audienceMode) {
+            renderAudienceSlide();
+          }
+        });
+
+        window.addEventListener("scroll", () => {
+          if (presenterState.presenterMode || presenterState.audienceMode) return;
+          presenterState.activeSlideIndex = detectCurrentSlideIndex();
+        });
+
+        if (presenterState.audienceMode) {
+          document.body.classList.add("audience-mode");
+          const url = new URL(window.location.href);
+          presenterState.activeSlideIndex = clampSlideIndex(
+            parseInt(url.searchParams.get("slide"), 10) || 0
+          );
+          renderAudienceSlide();
+        }
+
+        dispatchModeChange();
+      }
+
       async function main() {
         try {
           const url = new URL(window.location.href);
@@ -342,6 +895,8 @@
           );
         } catch (error) {
           console.error("Error loading events:", error);
+        } finally {
+          setupPresentation();
         }
       }
 

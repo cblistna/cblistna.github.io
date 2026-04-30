@@ -22,6 +22,10 @@ let intervalSeconds = 5; // Initial interval in seconds
 const minInterval = 1; // Minimum interval (1 second)
 const maxInterval = 10; // Maximum interval (10 seconds)
 const step = 1; // Adjustment step in seconds
+let presentationMode = {
+  presenterMode: false,
+  audienceMode: false,
+};
 
 function autoScroll() {
   const currentPosition = window.pageYOffset + 1; // Add 1 to ensure looping
@@ -36,6 +40,10 @@ function autoScroll() {
 }
 
 function toggleScroll() {
+  if (presentationMode.presenterMode || presentationMode.audienceMode) {
+    return;
+  }
+
   if (isScrolling) {
     clearInterval(scrollInterval);
     indicator.style.display = "none";
@@ -48,6 +56,10 @@ function toggleScroll() {
 }
 
 function adjustInterval(direction) {
+  if (presentationMode.presenterMode || presentationMode.audienceMode) {
+    return;
+  }
+
   const newInterval =
     direction === "-" ? intervalSeconds - step : intervalSeconds + step;
 
@@ -62,7 +74,21 @@ function adjustInterval(direction) {
   indicator.textContent = `${intervalSeconds}s`;
 }
 
+document.addEventListener("events:modechange", (event) => {
+  presentationMode = event.detail || presentationMode;
+
+  if ((presentationMode.presenterMode || presentationMode.audienceMode) && isScrolling) {
+    clearInterval(scrollInterval);
+    indicator.style.display = "none";
+    isScrolling = false;
+  }
+});
+
 document.addEventListener("keydown", (e) => {
+  if (presentationMode.presenterMode || presentationMode.audienceMode) {
+    return;
+  }
+
   if (e.key === "Enter") {
     // Use Enter key for toggling
     e.preventDefault();
