@@ -379,6 +379,20 @@
         };
       }
 
+      function startsWithinPresentationWindow(event, sundayDate) {
+        const eventDate = event.start.substring(0, 10);
+
+        if (eventDate > sundayDate) {
+          return true;
+        }
+
+        if (eventDate < sundayDate) {
+          return false;
+        }
+
+        return event.start.length === 10 || event.start >= `${sundayDate} 12:00`;
+      }
+
       function calendarOf(events) {
         return Object.entries(
           events.reduce((acc, event) => {
@@ -861,17 +875,18 @@
             sunday.day
           }. ${sunday.monthName.toLowerCase()} ${sunday.year}`;
 
-          const events = await fetchCombinedEvents(week.next.monday + " 00:00");
+          const events = await fetchCombinedEvents(week.sunday + " 00:00");
 
           renderCalendarTo(
             "next-week-calendar",
             events
               .filter(clipTo(week.sunday, week.next.sunday))
+              .filter((event) => startsWithinPresentationWindow(event, week.sunday))
               .filter((event) => event.recurring)
           );
 
           events
-            .filter(clipTo(week.sunday))
+            .filter((event) => startsWithinPresentationWindow(event, week.sunday))
             .filter(
               ({ recurring, tags: t }) => !recurring && !t.plan && !t.promo
             )
@@ -883,14 +898,14 @@
           renderCalendarTo(
             "promo-events-calendar",
             events
-              .filter(clipTo(week.sunday))
+              .filter((event) => startsWithinPresentationWindow(event, week.sunday))
               .filter((event) => event.tags.promo)
           );
 
           renderCalendarTo(
             "planned-events-calendar",
             events
-              .filter(clipTo(week.next.sunday))
+              .filter((event) => startsWithinPresentationWindow(event, week.sunday))
               .filter((event) => event.tags.plan)
           );
         } catch (error) {
