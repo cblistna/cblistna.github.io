@@ -875,7 +875,7 @@
             sunday.day
           }. ${sunday.monthName.toLowerCase()} ${sunday.year}`;
 
-          const events = await fetchCombinedEvents(week.sunday + " 00:00");
+          const events = await fetchCombinedEvents(week.sunday + " 11:00");
 
           renderCalendarTo(
             "next-week-calendar",
